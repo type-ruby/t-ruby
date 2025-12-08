@@ -14,7 +14,9 @@ module TRuby
     def check
       @errors = []
       @functions = {}
+      @type_aliases = {}
 
+      check_type_alias_errors
       check_syntax_errors
       check_type_validation
       check_duplicate_definitions
@@ -23,6 +25,23 @@ module TRuby
     end
 
     private
+
+    def check_type_alias_errors
+      @lines.each_with_index do |line, idx|
+        next unless line.match?(/^\s*type\s+\w+/)
+
+        match = line.match(/^\s*type\s+(\w+)\s*=\s*(.+)$/)
+        next unless match
+
+        alias_name = match[1]
+
+        if @type_aliases[alias_name]
+          @errors << "Line #{idx + 1}: Type alias '#{alias_name}' is already defined at line #{@type_aliases[alias_name]}"
+        else
+          @type_aliases[alias_name] = idx + 1
+        end
+      end
+    end
 
     def check_syntax_errors
       @lines.each_with_index do |line, idx|
@@ -52,7 +71,7 @@ module TRuby
         return_type = match[2]
 
         # Check return type
-        if return_type && !VALID_TYPES.include?(return_type)
+        if return_type && !VALID_TYPES.include?(return_type) && !@type_aliases.key?(return_type)
           @errors << "Line #{idx + 1}: Unknown return type '#{return_type}'"
         end
 
@@ -71,7 +90,7 @@ module TRuby
 
         param_type = match[2]
         next unless param_type
-        next if VALID_TYPES.include?(param_type)
+        next if VALID_TYPES.include?(param_type) || @type_aliases.key?(param_type)
 
         @errors << "Line #{line_idx + 1}: Unknown parameter type '#{param_type}'"
       end

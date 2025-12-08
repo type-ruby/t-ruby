@@ -9,6 +9,9 @@ module TRuby
     def erase
       result = @source.dup
 
+      # Remove type alias definitions: type AliasName = TypeDefinition
+      result = result.gsub(/^\s*type\s+\w+\s*=\s*.+?$\n?/, '')
+
       # Remove parameter type annotations: (name: Type) -> (name)
       # Matches: parameter_name: TypeName
       result = result.gsub(/\b(\w+)\s*:\s*\w+/, '\1')

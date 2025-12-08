@@ -12,10 +12,19 @@ module TRuby
 
     def parse
       functions = []
+      type_aliases = []
       i = 0
 
       while i < @lines.length
         line = @lines[i]
+
+        # Match type alias definitions
+        if line.match?(/^\s*type\s+\w+/)
+          alias_info = parse_type_alias(line)
+          if alias_info
+            type_aliases << alias_info
+          end
+        end
 
         # Match function definitions
         if line.match?(/^\s*def\s+\w+/)
@@ -30,11 +39,27 @@ module TRuby
 
       {
         type: :success,
-        functions: functions
+        functions: functions,
+        type_aliases: type_aliases
       }
     end
 
     private
+
+    def parse_type_alias(line)
+      # Match: type AliasName = TypeDefinition
+      match = line.match(/^\s*type\s+(\w+)\s*=\s*(.+?)\s*$/)
+
+      return nil unless match
+
+      alias_name = match[1]
+      definition = match[2].strip
+
+      {
+        name: alias_name,
+        definition: definition
+      }
+    end
 
     def parse_function_definition(line)
       # Match: def function_name(params): return_type or def function_name(params)
