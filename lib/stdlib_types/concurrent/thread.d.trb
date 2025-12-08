@@ -1,0 +1,80 @@
+# T-Ruby Standard Library Type Definitions
+# Concurrent: Thread class
+
+interface Thread
+  # Control
+  run: Thread
+  wakeup: Thread
+  join: Thread | nil
+  value: Object
+  kill: Thread
+  terminate: Thread
+  exit: Thread
+  raise: void
+
+  # Status
+  alive?: Boolean
+  stop?: Boolean
+  status: String | Boolean | nil
+  pending_interrupt?: Boolean
+
+  # Thread variables
+  []: Object | nil
+  []=: Object
+  key?: Boolean
+  keys: Array<Symbol>
+  thread_variable_get: Object | nil
+  thread_variable_set: Object
+  thread_variable?: Boolean
+  thread_variables: Array<Symbol>
+
+  # Information
+  name: String | nil
+  name=: String
+  inspect: String
+  to_s: String
+  priority: Integer
+  priority=: Integer
+  group: ThreadGroup | nil
+  backtrace: Array<String> | nil
+  backtrace_locations: Array<BacktraceLocation> | nil
+
+  # Safe level (deprecated)
+  safe_level: Integer
+  abort_on_exception: Boolean
+  abort_on_exception=: Boolean
+  report_on_exception: Boolean
+  report_on_exception=: Boolean
+end
+
+# Thread class methods (static)
+interface ThreadClass
+  # Creation
+  new: Thread
+  start: Thread
+  fork: Thread
+
+  # Current thread
+  current: Thread
+  main: Thread
+  list: Array<Thread>
+
+  # Control
+  pass: void
+  stop: void
+  exit: void
+  kill: Thread
+
+  # Configuration
+  abort_on_exception: Boolean
+  abort_on_exception=: Boolean
+  report_on_exception: Boolean
+  report_on_exception=: Boolean
+
+  # Scheduling
+  pending_interrupt?: Boolean
+  handle_interrupt: Object
+end
+
+type ThreadGroup = Object
+type BacktraceLocation = Object

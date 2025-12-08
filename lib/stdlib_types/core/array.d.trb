@@ -1,0 +1,133 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Array class
+
+interface Array<T>
+  # Size and capacity
+  length: Integer
+  size: Integer
+  count: Integer
+  empty?: Boolean
+
+  # Element access
+  []: T | nil
+  first: T | nil
+  last: T | nil
+  at: T | nil
+  fetch: T
+  sample: T | nil
+  dig: T | nil
+
+  # Adding elements
+  push: Array<T>
+  <<: Array<T>
+  unshift: Array<T>
+  insert: Array<T>
+  append: Array<T>
+  prepend: Array<T>
+
+  # Removing elements
+  pop: T | nil
+  shift: T | nil
+  delete: T | nil
+  delete_at: T | nil
+  delete_if: Array<T>
+  reject!: Array<T> | nil
+  clear: Array<T>
+  compact: Array<T>
+  compact!: Array<T> | nil
+
+  # Searching
+  include?: Boolean
+  index: Integer | nil
+  rindex: Integer | nil
+  find_index: Integer | nil
+  bsearch: T | nil
+  bsearch_index: Integer | nil
+
+  # Iteration
+  each: Array<T>
+  each_index: Array<T>
+  each_with_index: Array<T>
+  reverse_each: Array<T>
+  map: Array<T>
+  map!: Array<T>
+  collect: Array<T>
+  collect!: Array<T>
+  select: Array<T>
+  select!: Array<T> | nil
+  filter: Array<T>
+  filter!: Array<T> | nil
+  reject: Array<T>
+  find: T | nil
+  detect: T | nil
+  find_all: Array<T>
+
+  # Transformation
+  flatten: Array<T>
+  flatten!: Array<T> | nil
+  reverse: Array<T>
+  reverse!: Array<T>
+  rotate: Array<T>
+  rotate!: Array<T>
+  shuffle: Array<T>
+  shuffle!: Array<T>
+  sort: Array<T>
+  sort!: Array<T>
+  sort_by: Array<T>
+  sort_by!: Array<T>
+  uniq: Array<T>
+  uniq!: Array<T> | nil
+
+  # Combining
+  +: Array<T>
+  -: Array<T>
+  &: Array<T>
+  |: Array<T>
+  concat: Array<T>
+  union: Array<T>
+  intersection: Array<T>
+  difference: Array<T>
+  zip: Array<Array<T>>
+  product: Array<Array<T>>
+
+  # Slicing
+  slice: Array<T> | T | nil
+  slice!: Array<T> | T | nil
+  take: Array<T>
+  take_while: Array<T>
+  drop: Array<T>
+  drop_while: Array<T>
+
+  # Reduction
+  reduce: T
+  inject: T
+  sum: T
+  min: T | nil
+  max: T | nil
+  minmax: Array<T>
+
+  # Predicates
+  any?: Boolean
+  all?: Boolean
+  none?: Boolean
+  one?: Boolean
+
+  # Conversion
+  to_a: Array<T>
+  to_ary: Array<T>
+  to_s: String
+  to_h: Hash<T, T>
+  join: String
+  inspect: String
+
+  # Other
+  fill: Array<T>
+  replace: Array<T>
+  assoc: Array<T> | nil
+  rassoc: Array<T> | nil
+  pack: String
+  combination: Array<Array<T>>
+  permutation: Array<Array<T>>
+  repeated_combination: Array<Array<T>>
+  repeated_permutation: Array<Array<T>>
+end

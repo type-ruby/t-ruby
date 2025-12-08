@@ -1,0 +1,81 @@
+# T-Ruby Standard Library Type Definitions
+# Core: String class
+
+interface String
+  # Length and size
+  length: Integer
+  size: Integer
+  bytesize: Integer
+  empty?: Boolean
+
+  # Character access
+  []: String
+  chars: Array<String>
+  bytes: Array<Integer>
+  codepoints: Array<Integer>
+
+  # Case conversion
+  upcase: String
+  downcase: String
+  capitalize: String
+  swapcase: String
+
+  # Whitespace handling
+  strip: String
+  lstrip: String
+  rstrip: String
+  chomp: String
+  chop: String
+
+  # Search and replace
+  include?: Boolean
+  index: Integer | nil
+  rindex: Integer | nil
+  count: Integer
+  gsub: String
+  sub: String
+  tr: String
+
+  # Splitting and joining
+  split: Array<String>
+  lines: Array<String>
+  each_line: void
+  each_char: void
+
+  # Comparison
+  ==: Boolean
+  <=>: Integer
+  casecmp: Integer | nil
+  start_with?: Boolean
+  end_with?: Boolean
+  match?: Boolean
+
+  # Conversion
+  to_i: Integer
+  to_f: Float
+  to_s: String
+  to_str: String
+  to_sym: Symbol
+  inspect: String
+
+  # Encoding
+  encoding: Encoding
+  encode: String
+  force_encoding: String
+  valid_encoding?: Boolean
+
+  # Other
+  reverse: String
+  concat: String
+  +: String
+  *: String
+  <<: String
+  freeze: String
+  frozen?: Boolean
+  dup: String
+  clone: String
+end
+
+# String formatting helper types
+type StringFormat = String
+type Encoding = Object

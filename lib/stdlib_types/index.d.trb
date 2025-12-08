@@ -1,0 +1,102 @@
+# T-Ruby Standard Library Type Definitions Index
+# Version: 0.1.0
+# Compatible with: Ruby 3.0+
+
+# This file serves as an index for all standard library type definitions.
+# Each section below references the individual type definition files.
+
+# =============================================================================
+# Core Types
+# =============================================================================
+# Core Ruby classes and their methods
+
+# String - Text manipulation and encoding
+# Location: core/string.d.trb
+
+# Integer - Numeric operations and iteration
+# Location: core/integer.d.trb
+
+# Array<T> - Ordered collection with generic type parameter
+# Location: core/array.d.trb
+
+# Hash<K, V> - Key-value mapping with generic type parameters
+# Location: core/hash.d.trb
+
+# Symbol - Immutable identifiers
+# Location: core/symbol.d.trb
+
+# Object - Base class for all Ruby objects
+# Location: core/object.d.trb
+
+# =============================================================================
+# Built-in Type Aliases
+# =============================================================================
+
+type Boolean = true | false
+type Numeric = Integer | Float
+type StringLike = String | Symbol
+type ArrayLike<T> = Array<T>
+type HashLike<K, V> = Hash<K, V>
+
+# Nilable type shortcuts
+type NilableString = String | nil
+type NilableInteger = Integer | nil
+type NilableBoolean = Boolean | nil
+
+# =============================================================================
+# I/O Types
+# =============================================================================
+# File system and I/O operations
+
+# IO - Base I/O class
+# Location: io/io.d.trb
+
+# File - File operations
+# Location: io/file.d.trb
+
+# Dir - Directory operations
+# Location: io/dir.d.trb
+
+# =============================================================================
+# Concurrency Types
+# =============================================================================
+# Threading and synchronization
+
+# Thread - Thread management
+# Location: concurrent/thread.d.trb
+
+# Mutex, ConditionVariable, Queue, SizedQueue, MonitorMixin
+# Location: concurrent/mutex.d.trb
+
+# =============================================================================
+# Network Types
+# =============================================================================
+# Networking and HTTP
+
+# Socket, TCPSocket, TCPServer, UDPSocket, UNIXSocket, UNIXServer
+# Location: net/socket.d.trb
+
+# HTTP, HTTPRequest, HTTPResponse
+# Location: net/http.d.trb
+
+# =============================================================================
+# Usage Instructions
+# =============================================================================
+#
+# To use these type definitions in your T-Ruby project:
+#
+# 1. Add the stdlib_types directory to your declaration search path
+# 2. Types will be automatically available for type checking
+#
+# Example .trb.yml configuration:
+#
+#   paths:
+#     types:
+#       - ./lib/stdlib_types
+#
+# Or in your code:
+#
+#   def process(items: Array<String>): Hash<String, Integer>
+#     # ...
+#   end
+#

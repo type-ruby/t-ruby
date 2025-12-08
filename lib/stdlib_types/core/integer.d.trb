@@ -1,0 +1,79 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Integer class
+
+interface Integer
+  # Arithmetic operations
+  +: Integer
+  -: Integer
+  *: Integer
+  /: Integer
+  %: Integer
+  **: Integer
+  -@: Integer
+
+  # Comparison
+  ==: Boolean
+  <=>: Integer
+  <: Boolean
+  >: Boolean
+  <=: Boolean
+  >=: Boolean
+  between?: Boolean
+
+  # Bitwise operations
+  &: Integer
+  |: Integer
+  ^: Integer
+  ~: Integer
+  <<: Integer
+  >>: Integer
+
+  # Division
+  div: Integer
+  modulo: Integer
+  divmod: Array<Integer>
+  remainder: Integer
+  fdiv: Float
+
+  # Conversion
+  to_i: Integer
+  to_int: Integer
+  to_f: Float
+  to_s: String
+  to_r: Rational
+  inspect: String
+
+  # Predicates
+  zero?: Boolean
+  positive?: Boolean
+  negative?: Boolean
+  even?: Boolean
+  odd?: Boolean
+  integer?: Boolean
+
+  # Iteration
+  times: void
+  upto: void
+  downto: void
+  step: void
+
+  # Absolute value
+  abs: Integer
+  magnitude: Integer
+
+  # Other
+  succ: Integer
+  pred: Integer
+  next: Integer
+  ceil: Integer
+  floor: Integer
+  round: Integer
+  truncate: Integer
+
+  # Digits
+  digits: Array<Integer>
+  bit_length: Integer
+end
+
+type Float = Object
+type Rational = Object

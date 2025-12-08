@@ -1,0 +1,120 @@
+# T-Ruby Standard Library Type Definitions
+# Net: HTTP classes
+
+interface HTTPResponse
+  # Response information
+  code: String
+  message: String
+  http_version: String
+
+  # Body
+  body: String | nil
+  entity: String | nil
+  read_body: String | nil
+
+  # Headers
+  []: String | nil
+  each_header: void
+  each_name: void
+  each_value: void
+  each: void
+  header: Hash<String, String>
+  to_hash: Hash<String, Array<String>>
+  key?: Boolean
+  get_fields: Array<String> | nil
+
+  # Content
+  content_type: String | nil
+  content_length: Integer | nil
+  content_encoding: Array<String>
+  charset: String | nil
+
+  # Status predicates
+  is_a?: Boolean
+  kind_of?: Boolean
+
+  # Other
+  inspect: String
+  uri: URI | nil
+end
+
+interface HTTPRequest
+  # Request information
+  method: String
+  path: String
+  uri: URI
+  body: String | nil
+  body=: String
+
+  # Headers
+  []: String | nil
+  []=: void
+  add_field: void
+  set_form_data: void
+  each_header: void
+  to_hash: Hash<String, Array<String>>
+
+  # Content
+  content_type: String | nil
+  content_type=: void
+  content_length: Integer | nil
+  content_length=: void
+
+  # Body handling
+  body_stream: IO | nil
+  body_stream=: void
+  set_body_internal: void
+
+  # Authentication
+  basic_auth: void
+end
+
+interface HTTP
+  # Connection
+  start: HTTP | Object
+  finish: void
+  started?: Boolean
+  active?: Boolean
+
+  # Request methods
+  get: HTTPResponse
+  head: HTTPResponse
+  post: HTTPResponse
+  put: HTTPResponse
+  patch: HTTPResponse
+  delete: HTTPResponse
+  options: HTTPResponse
+  trace: HTTPResponse
+  request: HTTPResponse
+
+  # Configuration
+  address: String
+  port: Integer
+  local_host: String | nil
+  local_port: Integer | nil
+  proxy_address: String | nil
+  proxy_port: Integer | nil
+  proxy_user: String | nil
+  proxy_pass: String | nil
+
+  # Timeouts
+  open_timeout: Integer | nil
+  open_timeout=: Integer
+  read_timeout: Integer | nil
+  read_timeout=: Integer
+  write_timeout: Integer | nil
+  write_timeout=: Integer
+
+  # SSL
+  use_ssl?: Boolean
+  use_ssl=: Boolean
+  ssl_timeout: Integer | nil
+  ssl_timeout=: Integer
+  verify_mode: Integer | nil
+  verify_mode=: Integer
+
+  # Other
+  inspect: String
+end
+
+type URI = Object

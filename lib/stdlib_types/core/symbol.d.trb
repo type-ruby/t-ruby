@@ -1,0 +1,50 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Symbol class
+
+interface Symbol
+  # Comparison
+  ==: Boolean
+  <=>: Integer | nil
+  ===: Boolean
+  casecmp: Integer | nil
+  casecmp?: Boolean
+
+  # Conversion
+  to_s: String
+  to_sym: Symbol
+  to_proc: Proc
+  id2name: String
+  name: String
+  inspect: String
+
+  # String-like methods
+  length: Integer
+  size: Integer
+  empty?: Boolean
+  encoding: Encoding
+
+  # Case conversion
+  upcase: Symbol
+  downcase: Symbol
+  capitalize: Symbol
+  swapcase: Symbol
+
+  # Pattern matching
+  match: MatchData | nil
+  match?: Boolean
+  =~: Integer | nil
+
+  # Predicates
+  start_with?: Boolean
+  end_with?: Boolean
+
+  # Slicing
+  []: String | nil
+  slice: String | nil
+
+  # Other
+  succ: Symbol
+  next: Symbol
+end
+
+type MatchData = Object

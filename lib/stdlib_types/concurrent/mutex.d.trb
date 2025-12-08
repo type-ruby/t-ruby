@@ -1,0 +1,84 @@
+# T-Ruby Standard Library Type Definitions
+# Concurrent: Mutex and synchronization primitives
+
+interface Mutex
+  # Locking
+  lock: Mutex
+  unlock: Mutex
+  try_lock: Boolean
+  synchronize: Object
+
+  # Status
+  locked?: Boolean
+  owned?: Boolean
+
+  # Sleeping
+  sleep: Integer
+end
+
+interface ConditionVariable
+  # Waiting
+  wait: void
+
+  # Signaling
+  signal: void
+  broadcast: void
+end
+
+interface Queue
+  # Adding
+  push: Queue
+  <<: Queue
+  enq: Queue
+
+  # Removing
+  pop: Object
+  shift: Object
+  deq: Object
+
+  # Status
+  empty?: Boolean
+  length: Integer
+  size: Integer
+  num_waiting: Integer
+
+  # Control
+  clear: Queue
+  close: Queue
+  closed?: Boolean
+end
+
+interface SizedQueue
+  # Adding
+  push: SizedQueue
+  <<: SizedQueue
+  enq: SizedQueue
+
+  # Removing
+  pop: Object
+  shift: Object
+  deq: Object
+
+  # Size
+  max: Integer
+  max=: Integer
+  empty?: Boolean
+  length: Integer
+  size: Integer
+  num_waiting: Integer
+
+  # Control
+  clear: SizedQueue
+  close: SizedQueue
+  closed?: Boolean
+end
+
+interface MonitorMixin
+  mon_enter: void
+  mon_exit: void
+  mon_locked?: Boolean
+  mon_owned?: Boolean
+  mon_synchronize: Object
+  mon_try_enter: Boolean
+  new_cond: ConditionVariable
+end

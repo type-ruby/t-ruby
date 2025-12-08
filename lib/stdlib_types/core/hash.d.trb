@@ -1,0 +1,105 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Hash class
+
+interface Hash<K, V>
+  # Size
+  length: Integer
+  size: Integer
+  count: Integer
+  empty?: Boolean
+
+  # Access
+  []: V | nil
+  fetch: V
+  dig: V | nil
+  values_at: Array<V>
+  fetch_values: Array<V>
+  default: V | nil
+  default_proc: Proc | nil
+
+  # Keys and values
+  keys: Array<K>
+  values: Array<V>
+  key: K | nil
+  key?: Boolean
+  has_key?: Boolean
+  include?: Boolean
+  member?: Boolean
+  value?: Boolean
+  has_value?: Boolean
+
+  # Adding/updating
+  []=: V
+  store: V
+  merge: Hash<K, V>
+  merge!: Hash<K, V>
+  update: Hash<K, V>
+  replace: Hash<K, V>
+  default=: V
+
+  # Removing
+  delete: V | nil
+  delete_if: Hash<K, V>
+  reject!: Hash<K, V> | nil
+  keep_if: Hash<K, V>
+  select!: Hash<K, V> | nil
+  clear: Hash<K, V>
+  shift: Array<K | V> | nil
+  compact: Hash<K, V>
+  compact!: Hash<K, V> | nil
+
+  # Iteration
+  each: Hash<K, V>
+  each_pair: Hash<K, V>
+  each_key: Hash<K, V>
+  each_value: Hash<K, V>
+
+  # Transformation
+  map: Array<V>
+  collect: Array<V>
+  transform_keys: Hash<K, V>
+  transform_keys!: Hash<K, V>
+  transform_values: Hash<K, V>
+  transform_values!: Hash<K, V>
+  select: Hash<K, V>
+  filter: Hash<K, V>
+  reject: Hash<K, V>
+  slice: Hash<K, V>
+  except: Hash<K, V>
+  invert: Hash<V, K>
+  flatten: Array<K | V>
+  to_a: Array<Array<K | V>>
+
+  # Predicates
+  any?: Boolean
+  all?: Boolean
+  none?: Boolean
+  one?: Boolean
+
+  # Comparison
+  ==: Boolean
+  <: Boolean
+  >: Boolean
+  <=: Boolean
+  >=: Boolean
+  compare_by_identity: Hash<K, V>
+  compare_by_identity?: Boolean
+
+  # Conversion
+  to_h: Hash<K, V>
+  to_hash: Hash<K, V>
+  to_s: String
+  to_proc: Proc
+  inspect: String
+
+  # Other
+  assoc: Array<K | V> | nil
+  rassoc: Array<K | V> | nil
+  rehash: Hash<K, V>
+  freeze: Hash<K, V>
+  frozen?: Boolean
+  dup: Hash<K, V>
+  clone: Hash<K, V>
+end
+
+type Proc = Object

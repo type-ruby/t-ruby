@@ -1,0 +1,97 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Object class (base class for all objects)
+
+interface Object
+  # Identity
+  __id__: Integer
+  object_id: Integer
+  hash: Integer
+
+  # Comparison
+  ==: Boolean
+  ===: Boolean
+  eql?: Boolean
+  equal?: Boolean
+  <=>: Integer | nil
+
+  # Type checking
+  class: Class
+  is_a?: Boolean
+  kind_of?: Boolean
+  instance_of?: Boolean
+  respond_to?: Boolean
+  respond_to_missing?: Boolean
+
+  # Conversion
+  to_s: String
+  inspect: String
+  to_a: Array<Object>
+  to_ary: Array<Object> | nil
+  to_h: Hash<Object, Object>
+  to_hash: Hash<Object, Object> | nil
+  to_i: Integer
+  to_int: Integer | nil
+  to_str: String | nil
+
+  # Duplication
+  dup: Object
+  clone: Object
+
+  # Freezing
+  freeze: Object
+  frozen?: Boolean
+
+  # Taint (deprecated but still present)
+  taint: Object
+  tainted?: Boolean
+  untaint: Object
+  trust: Object
+  untrust: Object
+  untrusted?: Boolean
+
+  # Method handling
+  method: Method
+  public_method: Method
+  methods: Array<Symbol>
+  public_methods: Array<Symbol>
+  protected_methods: Array<Symbol>
+  private_methods: Array<Symbol>
+  singleton_methods: Array<Symbol>
+  send: Object
+  public_send: Object
+  __send__: Object
+
+  # Instance variables
+  instance_variables: Array<Symbol>
+  instance_variable_get: Object | nil
+  instance_variable_set: Object
+  instance_variable_defined?: Boolean
+  remove_instance_variable: Object
+
+  # Nil check
+  nil?: Boolean
+
+  # Tap and yield_self
+  tap: Object
+  yield_self: Object
+  then: Object
+
+  # Display
+  display: nil
+  pp: Object
+  p: Object
+  puts: nil
+  print: nil
+
+  # Extension
+  extend: Object
+  singleton_class: Class
+
+  # Eval
+  instance_eval: Object
+  instance_exec: Object
+end
+
+type Class = Object
+type Method = Object
+type Module = Object
