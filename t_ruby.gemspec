@@ -16,4 +16,7 @@ Gem::Specification.new do |spec|
   spec.bindir = "bin"
   spec.executables = ["trc"]
   spec.require_paths = ["lib"]
+
+  # Runtime dependencies
+  spec.add_dependency "listen", "~> 3.8"
 end

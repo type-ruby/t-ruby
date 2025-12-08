@@ -13,6 +13,7 @@ require_relative "t_ruby/rbs_generator"
 require_relative "t_ruby/declaration_generator"
 require_relative "t_ruby/compiler"
 require_relative "t_ruby/lsp_server"
+require_relative "t_ruby/watcher"
 require_relative "t_ruby/cli"
 
 module TRuby
