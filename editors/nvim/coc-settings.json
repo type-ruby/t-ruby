@@ -1,0 +1,12 @@
+{
+  "languageserver": {
+    "t-ruby": {
+      "command": "trc",
+      "args": ["--lsp"],
+      "filetypes": ["truby"],
+      "rootPatterns": [".trb.yml", ".git/"],
+      "initializationOptions": {},
+      "settings": {}
+    }
+  }
+}
