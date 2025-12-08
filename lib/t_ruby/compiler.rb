@@ -33,9 +33,16 @@ module TRuby
     private
 
     def transform(source)
-      # Milestone 0: 타입 제거 없이 그대로 복사
-      # Milestone 1에서 타입 제거 로직 구현 예정
-      source
+      # Milestone 1: Parse and erase type annotations
+      parser = Parser.new(source)
+      parse_result = parser.parse
+
+      if parse_result[:type] == :success
+        eraser = TypeErasure.new(source)
+        eraser.erase
+      else
+        source
+      end
     end
   end
 end
