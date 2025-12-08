@@ -31,10 +31,11 @@ This document outlines the testing principles and practices followed in the t-ru
 
 Tests are organized by:
 - **Spec file structure**: Each class/module has its own spec file
-  - `spec/t_ruby/version_spec.rb`
-  - `spec/t_ruby/config_spec.rb`
-  - `spec/t_ruby/compiler_spec.rb`
-  - `spec/t_ruby/cli_spec.rb`
+  - Core: `version_spec.rb`, `config_spec.rb`, `compiler_spec.rb`, `cli_spec.rb`
+  - Type System: `parser_spec.rb`, `union_type_spec.rb`, `generics_spec.rb`, `intersection_type_spec.rb`
+  - Tooling: `lsp_server_spec.rb`, `declaration_generator_spec.rb`, `watcher_spec.rb`
+  - Advanced: `constraint_checker_spec.rb`, `type_inferencer_spec.rb`, `type_checker_spec.rb`
+  - Performance: `cache_spec.rb`, `runtime_validator_spec.rb`, `package_manager_spec.rb`
 
 - **Context groups**: Related test cases are grouped using `describe` and `context` blocks
   - Tests follow AAA pattern: Arrange, Act, Assert
@@ -75,13 +76,21 @@ open coverage/index.html
 
 ## Current Test Coverage
 
-| Area | Coverage | Status |
-|------|----------|--------|
-| Total | 100% | ✅ |
-| Version | 100% | ✅ |
-| Config | 100% | ✅ |
-| Compiler | 100% | ✅ |
-| CLI | 100% | ✅ |
+**Total: 260 examples, 0 failures**
+
+| Module | Tests | Status |
+|--------|-------|--------|
+| Core (Parser, Compiler, CLI) | 57 | ✅ |
+| Type System (Union, Generic, Intersection) | 24 | ✅ |
+| LSP Server | 29 | ✅ |
+| Declaration Generator | 34 | ✅ |
+| Constraint Checker | 16 | ✅ |
+| Type Inferencer | 25 | ✅ |
+| Runtime Validator | 15 | ✅ |
+| Type Checker | 20 | ✅ |
+| Cache System | 20 | ✅ |
+| Package Manager | 18 | ✅ |
+| Watcher | 2 | ✅ |
 
 ## Contributing Tests
 

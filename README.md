@@ -2,8 +2,8 @@
 
 > Typed Ruby, inspired by TypeScript. Write `.trb`, compile to `.rb` and `.rbs`.
 
-[![Test Coverage](https://img.shields.io/badge/coverage-85.35%25-brightgreen)](./TESTING.md)
-[![RSpec Tests](https://img.shields.io/badge/tests-112%20passing-brightgreen)](./spec)
+[![Test Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)](./TESTING.md)
+[![RSpec Tests](https://img.shields.io/badge/tests-260%20passing-brightgreen)](./spec)
 [![Ruby 3.0+](https://img.shields.io/badge/ruby-3.0+-red.svg)](https://www.ruby-lang.org/)
 
 `t-ruby` is an experimental typed layer for Ruby.
@@ -23,30 +23,21 @@ The goal of t-ruby is to bring a TypeScript-like developer experience to Ruby, w
 
 ## Status
 
-**Active development.** Current implementation covers Milestones 1 and 2.
+**All milestones completed.** 260 tests passing.
 
-### ✅ Completed
+### ✅ Milestone 1 – Basic Type Parsing & Erasure
+* Parameter/return type annotations, type erasure, error handling
 
-**Milestone 1 – Basic Type Parsing & Erasure**
-* Parameter and return type annotations
-* Type erasure to produce valid Ruby code
-* Comprehensive error handling and validation
-* 100% test coverage
+### ✅ Milestone 2 – Core Type System
+* Type aliases, interfaces, union/intersection types, generics, RBS generation
 
-**Milestone 2 – Core Type System**
-* `type` aliases with circular reference detection
-* `interface` definitions with multi-line support
-* Union types: `String | Integer | nil`
-* Generic types: `Array<String>`, `Map<K, V>` with nested support
-* Intersection types: `Readable & Writable`
-* RBS file generation with full type projection
-* **Test Coverage**: 112 tests, 85.35% coverage
+### ✅ Milestone 3 – Ecosystem & Tooling
+* LSP server, `.d.trb` declaration files, IDE integration (VS Code, Vim, Neovim), stdlib types
 
-### 🚀 In Progress / Planned
+### ✅ Milestone 4 – Advanced Features
+* Constraint system, type inference, runtime validation, static type checking, caching, package management
 
-See [ROADMAP.md](./ROADMAP.md) for details on:
-* Milestone 3: Ecosystem & Tooling (LSP, IDE integration, stdlib types)
-* Milestone 4: Advanced Features (constraints, inference, runtime validation, type checking)
+See [ROADMAP.md](./ROADMAP.md) for architecture details.
 
 ---
 
@@ -127,17 +118,17 @@ ruby build/hello.rb
 
 ### Type System Components
 
-| Component | Purpose | Example |
-|-----------|---------|---------|
-| **Parser** | Parse function definitions and type annotations | `def foo(x: String): Integer` |
-| **TypeAliasRegistry** | Manage and validate type aliases | `type UserId = String` |
-| **UnionTypeParser** | Parse union types | `String \| Integer \| nil` |
-| **GenericTypeParser** | Parse generic types with nesting | `Array<String>`, `Map<K, V>` |
-| **IntersectionTypeParser** | Parse intersection types | `Readable & Writable` |
-| **InterfaceParser** | Parse interface definitions | `interface Readable ... end` |
-| **TypeErasure** | Remove type annotations from source | Converts `.trb` to valid `.rb` |
-| **RBSGenerator** | Generate Ruby signature files | Produces `.rbs` format |
-| **ErrorHandler** | Validate types and report errors | Type checking, duplicate detection |
+| Component | Purpose |
+|-----------|---------|
+| **Parser** | Parse type annotations |
+| **TypeAliasRegistry** | Manage type aliases |
+| **TypeChecker** | Static type checking |
+| **TypeInferencer** | Automatic type inference |
+| **RuntimeValidator** | Runtime check generation |
+| **ConstraintChecker** | Type constraints |
+| **TypeErasure** | Remove annotations |
+| **RBSGenerator** | Generate `.rbs` files |
+| **PackageManager** | Package distribution |
 
 ### Parser Architecture
 
@@ -290,46 +281,15 @@ For detailed testing principles and guidelines, see [TESTING.md](./TESTING.md).
 
 ## Roadmap
 
-For a detailed roadmap including Milestone 3 and 4 phases, see [ROADMAP.md](./ROADMAP.md).
+See [ROADMAP.md](./ROADMAP.md) for details.
 
-### ✅ Milestone 0 – "Hello, t-ruby"
-
-* ✓ `trc` CLI skeleton
-* ✓ `.trb.yml` reader
-* ✓ `.trb` → `.rb` copy
-* ✓ First working prototype
-
-### ✅ Milestone 1 – Basic Syntax & Type Erasure
-
-* ✓ Parameter types: `name: String`
-* ✓ Return types: `): String`
-* ✓ Remove type annotations
-* ✓ Comprehensive error reporting
-
-### ✅ Milestone 2 – Core Type System
-
-* ✓ `type` aliases with circular reference detection
-* ✓ `interface` definitions with multi-line support
-* ✓ Generics: `Array<T>`, `Map<K, V>` with nesting
-* ✓ Union types: `String | Integer | nil`
-* ✓ Intersection types: `A & B`
-* ✓ RBS file generation and projection
-
-### 🚀 Milestone 3 – Ecosystem & Tooling
-
-* `.d.trb` declaration files
-* Language Server Protocol (LSP) support
-* IDE integration (VS Code, Vim, JetBrains)
-* Standard library type definitions
-
-### 🚀 Milestone 4 – Advanced Features
-
-* Type constraints system
-* Type inference system
-* Runtime type validation
-* Static type checking
-* Performance optimization
-* Package management
+| Milestone | Status |
+|-----------|--------|
+| 0 – Hello t-ruby | ✅ |
+| 1 – Type Parsing & Erasure | ✅ |
+| 2 – Core Type System | ✅ |
+| 3 – Ecosystem & Tooling | ✅ |
+| 4 – Advanced Features | ✅ |
 
 ---
 
