@@ -7,11 +7,15 @@ module TRuby
 
       Usage:
         trc <file.trb>           Compile a .trb file to .rb
+        trc --decl <file.trb>    Generate .d.trb declaration file
+        trc --lsp                Start LSP server (for IDE integration)
         trc --version, -v        Show version
         trc --help, -h           Show this help
 
       Examples:
         trc hello.trb            Compile hello.trb to build/hello.rb
+        trc --decl hello.trb     Generate hello.d.trb declaration file
+        trc --lsp                Start language server for VS Code
     HELP
 
     def self.run(args)
@@ -33,11 +37,38 @@ module TRuby
         return
       end
 
+      if @args.include?("--lsp")
+        start_lsp_server
+        return
+      end
+
+      if @args.include?("--decl")
+        input_file = @args[@args.index("--decl") + 1]
+        generate_declaration(input_file)
+        return
+      end
+
       input_file = @args.first
       compile(input_file)
     end
 
     private
+
+    def start_lsp_server
+      server = LSPServer.new
+      server.run
+    end
+
+    def generate_declaration(input_file)
+      config = Config.new
+      generator = DeclarationGenerator.new
+
+      output_path = generator.generate_file(input_file, config.out_dir)
+      puts "Generated: #{input_file} -> #{output_path}"
+    rescue ArgumentError => e
+      puts "Error: #{e.message}"
+      exit 1
+    end
 
     def compile(input_file)
       config = Config.new

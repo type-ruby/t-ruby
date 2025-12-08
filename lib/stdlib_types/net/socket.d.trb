@@ -1,0 +1,103 @@
+# T-Ruby Standard Library Type Definitions
+# Net: Socket classes
+
+interface BasicSocket
+  # Reading
+  recv: String
+  recv_nonblock: String
+  recvmsg: Array<Object>
+  recvmsg_nonblock: Array<Object>
+
+  # Writing
+  send: Integer
+  sendmsg: Integer
+  sendmsg_nonblock: Integer
+
+  # Control
+  close: nil
+  close_read: nil
+  close_write: nil
+  shutdown: Integer
+
+  # Information
+  local_address: Addrinfo
+  remote_address: Addrinfo
+  getpeername: String
+  getsockname: String
+
+  # Options
+  getsockopt: SocketOption
+  setsockopt: Integer
+
+  # Conversion
+  to_io: IO
+end
+
+interface Socket
+  # Connection
+  connect: Integer
+  connect_nonblock: Integer
+  bind: Integer
+  listen: Integer
+  accept: Array<Socket>
+  accept_nonblock: Array<Socket>
+
+  # Inherits BasicSocket methods
+  recv: String
+  send: Integer
+  close: nil
+  local_address: Addrinfo
+  remote_address: Addrinfo
+end
+
+interface TCPSocket
+  # Inherits from BasicSocket
+  recv: String
+  send: Integer
+  close: nil
+
+  # TCP specific
+  local_address: Addrinfo
+  remote_address: Addrinfo
+end
+
+interface TCPServer
+  # Server operations
+  accept: TCPSocket
+  accept_nonblock: TCPSocket
+  listen: Integer
+  close: nil
+
+  # Information
+  addr: Array<Object>
+  local_address: Addrinfo
+end
+
+interface UDPSocket
+  # UDP specific
+  bind: Integer
+  connect: Integer
+  send: Integer
+  recvfrom: Array<Object>
+  recvfrom_nonblock: Array<Object>
+end
+
+interface UNIXSocket
+  # Unix domain socket
+  recv_io: IO
+  send_io: void
+  path: String
+  addr: Array<Object>
+  peeraddr: Array<Object>
+end
+
+interface UNIXServer
+  accept: UNIXSocket
+  accept_nonblock: UNIXSocket
+  listen: Integer
+  close: nil
+  path: String
+end
+
+type Addrinfo = Object
+type SocketOption = Object

@@ -1,0 +1,67 @@
+# T-Ruby Standard Library Type Definitions
+# IO: Dir class
+
+interface Dir
+  # Reading
+  read: String | nil
+  each: Dir
+  each_child: Dir
+  children: Array<String>
+  entries: Array<String>
+
+  # Position
+  pos: Integer
+  pos=: Integer
+  tell: Integer
+  seek: Dir
+  rewind: Dir
+
+  # Status
+  close: nil
+  closed?: Boolean
+
+  # Information
+  path: String
+  to_path: String
+  fileno: Integer
+  inspect: String
+end
+
+# Dir class methods (static)
+interface DirClass
+  # Opening
+  open: Dir
+  new: Dir
+
+  # Listing
+  entries: Array<String>
+  children: Array<String>
+  each: void
+  each_child: void
+  foreach: void
+
+  # Glob
+  glob: Array<String>
+  []: Array<String>
+
+  # Current directory
+  pwd: String
+  getwd: String
+  chdir: Integer | Object
+  home: String
+
+  # Directory manipulation
+  mkdir: Integer
+  rmdir: Integer
+  delete: Integer
+  unlink: Integer
+
+  # Predicates
+  exist?: Boolean
+  exists?: Boolean
+  empty?: Boolean
+
+  # Temporary directory
+  tmpdir: String
+  mktmpdir: String
+end

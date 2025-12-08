@@ -1,0 +1,83 @@
+# T-Ruby Standard Library Type Definitions
+# IO: IO class
+
+interface IO
+  # Reading
+  read: String | nil
+  readpartial: String
+  read_nonblock: String
+  gets: String | nil
+  getc: String | nil
+  getbyte: Integer | nil
+  readline: String
+  readlines: Array<String>
+  readchar: String
+  readbyte: Integer
+  each: IO
+  each_line: IO
+  each_byte: IO
+  each_char: IO
+  each_codepoint: IO
+
+  # Writing
+  write: Integer
+  print: nil
+  puts: nil
+  putc: Object
+  <<: IO
+  printf: nil
+  write_nonblock: Integer
+
+  # Position
+  pos: Integer
+  pos=: Integer
+  tell: Integer
+  seek: Integer
+  rewind: Integer
+  lineno: Integer
+  lineno=: Integer
+
+  # Buffer
+  flush: IO
+  sync: Boolean
+  sync=: Boolean
+  fsync: Integer | nil
+  fdatasync: Integer | nil
+
+  # Status
+  eof: Boolean
+  eof?: Boolean
+  closed?: Boolean
+  tty?: Boolean
+  isatty: Boolean
+
+  # Control
+  close: nil
+  close_read: nil
+  close_write: nil
+  close_on_exec?: Boolean
+  close_on_exec=: Boolean
+
+  # File descriptor
+  fileno: Integer
+  to_i: Integer
+  to_io: IO
+
+  # Encoding
+  external_encoding: Encoding | nil
+  internal_encoding: Encoding | nil
+  set_encoding: IO
+  binmode: IO
+  binmode?: Boolean
+
+  # Other
+  stat: FileStat
+  path: String | nil
+  to_path: String | nil
+  inspect: String
+  pid: Integer | nil
+  autoclose?: Boolean
+  autoclose=: Boolean
+end
+
+type FileStat = Object

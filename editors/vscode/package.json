@@ -1,0 +1,104 @@
+{
+  "name": "t-ruby",
+  "displayName": "T-Ruby",
+  "description": "T-Ruby language support with type annotations for Ruby",
+  "version": "0.1.0",
+  "publisher": "t-ruby",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "keywords": [
+    "ruby",
+    "t-ruby",
+    "type",
+    "typescript",
+    "static typing"
+  ],
+  "activationEvents": [
+    "onLanguage:t-ruby"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "t-ruby",
+        "aliases": ["T-Ruby", "t-ruby", "trb"],
+        "extensions": [".trb", ".d.trb"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "t-ruby",
+        "scopeName": "source.t-ruby",
+        "path": "./syntaxes/t-ruby.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "T-Ruby",
+      "properties": {
+        "t-ruby.lspPath": {
+          "type": "string",
+          "default": "trc",
+          "description": "Path to the T-Ruby compiler (trc) executable"
+        },
+        "t-ruby.enableLSP": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Language Server Protocol support"
+        },
+        "t-ruby.diagnostics.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time diagnostics"
+        },
+        "t-ruby.completion.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable autocomplete suggestions"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "t-ruby.compile",
+        "title": "T-Ruby: Compile Current File"
+      },
+      {
+        "command": "t-ruby.generateDeclaration",
+        "title": "T-Ruby: Generate Declaration File"
+      },
+      {
+        "command": "t-ruby.restartLSP",
+        "title": "T-Ruby: Restart Language Server"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^18.x",
+    "@types/vscode": "^1.75.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.45.0",
+    "typescript": "^5.2.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/type-ruby/t-ruby"
+  },
+  "license": "MIT"
+}

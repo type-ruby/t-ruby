@@ -1,0 +1,121 @@
+# T-Ruby Standard Library Type Definitions
+# IO: File class
+
+interface File
+  # Inherits from IO
+  read: String | nil
+  write: Integer
+  close: nil
+  closed?: Boolean
+
+  # File-specific reading/writing
+  truncate: Integer
+  flock: Integer | Boolean
+
+  # Path information
+  path: String
+  to_path: String
+
+  # Time information
+  atime: Time
+  mtime: Time
+  ctime: Time
+  birthtime: Time
+
+  # Size
+  size: Integer
+
+  # Permissions
+  chmod: Integer
+  chown: Integer
+  lstat: FileStat
+
+  # Other
+  inspect: String
+end
+
+# File class methods (static)
+interface FileClass
+  # Opening/creating files
+  open: File
+  new: File
+
+  # Reading
+  read: String
+  binread: String
+  readlines: Array<String>
+  foreach: void
+
+  # Writing
+  write: Integer
+  binwrite: Integer
+
+  # File information
+  exist?: Boolean
+  exists?: Boolean
+  file?: Boolean
+  directory?: Boolean
+  symlink?: Boolean
+  readable?: Boolean
+  writable?: Boolean
+  executable?: Boolean
+  size: Integer
+  size?: Integer | nil
+  zero?: Boolean
+  empty?: Boolean
+  owned?: Boolean
+  grpowned?: Boolean
+  pipe?: Boolean
+  socket?: Boolean
+  blockdev?: Boolean
+  chardev?: Boolean
+  setuid?: Boolean
+  setgid?: Boolean
+  sticky?: Boolean
+  identical?: Boolean
+
+  # Path operations
+  expand_path: String
+  absolute_path: String
+  realpath: String
+  realdirpath: String
+  dirname: String
+  basename: String
+  extname: String
+  split: Array<String>
+  join: String
+  fnmatch: Boolean
+  fnmatch?: Boolean
+
+  # File manipulation
+  delete: Integer
+  unlink: Integer
+  rename: Integer
+  link: Integer
+  symlink: Integer
+  readlink: String
+  truncate: Integer
+  chmod: Integer
+  chown: Integer
+  lchmod: Integer
+  lchown: Integer
+  utime: Integer
+  lutime: Integer
+
+  # Time
+  atime: Time
+  mtime: Time
+  ctime: Time
+  birthtime: Time
+
+  # Stats
+  stat: FileStat
+  lstat: FileStat
+  ftype: String
+
+  # Misc
+  umask: Integer
+  path: String
+end
+
+type Time = Object
