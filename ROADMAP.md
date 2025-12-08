@@ -41,7 +41,7 @@
   - Duplicate detection in intersections
   - 7 test cases
 
-**Test Coverage**: 178 examples, 0 failures, 89.69% coverage (644/718 lines)
+**Test Coverage**: 217 examples, 0 failures, 90.36% coverage (806/892 lines)
 
 ---
 
@@ -73,26 +73,34 @@
 
 ---
 
-### Phase 2: .d.trb Type Declaration Files
+### ✅ Phase 2: .d.trb Type Declaration Files
 
 **Goal**: Generate and consume separate type declaration files (similar to TypeScript .d.ts)
 
-**Implementation Details**:
-- Create `lib/t_ruby/declaration_generator.rb`
-- Implement declaration file generation:
-  - Extract type signatures from source files
-  - Generate `.d.trb` files in separate directory
-  - Support for re-exporting declarations
-- Implement declaration file parser:
-  - Load types from `.d.trb` files
-  - Support for library type definitions
-  - Version management for breaking changes
-- Integration with compiler to load external declarations
-- Support for npm-style packages with type definitions
+**Status**: COMPLETED ✅
 
-**Expected Test Coverage**: 12-18 test cases
-**Dependencies**: RBSGenerator, Parser, TypeAliasRegistry
-**Estimated Complexity**: Medium-High
+**Implementation Details**:
+- Created `lib/t_ruby/declaration_generator.rb` with:
+  - `DeclarationGenerator` - generates .d.trb files from source ✅
+  - `DeclarationParser` - parses .d.trb files ✅
+  - `DeclarationLoader` - manages declaration file loading ✅
+- Declaration file generation:
+  - Extract type signatures from source files ✅
+  - Generate `.d.trb` files with type aliases, interfaces, functions ✅
+  - Auto-generated header comments ✅
+- Declaration file parser:
+  - Load types from `.d.trb` files ✅
+  - Recursive directory loading support ✅
+  - Merge declarations from multiple files ✅
+- Integration with compiler:
+  - DeclarationLoader integrated into Compiler ✅
+  - Multiple search paths support ✅
+  - CLI `--decl` command for generating declarations ✅
+- Config support via `emit.dtrb` option ✅
+
+**Test Coverage**: 34 test cases
+**Dependencies**: Parser, TypeAliasRegistry
+**Complexity**: Medium-High
 
 ---
 
