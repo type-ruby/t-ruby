@@ -6,3 +6,9 @@ CLAUDE.md
 .codex
 AGENT.md
 /.idea
+
+# Test and coverage
+/coverage
+/coverage.html
+.rspec_status
+*.lcov
