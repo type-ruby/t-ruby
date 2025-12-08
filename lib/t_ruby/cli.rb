@@ -7,11 +7,13 @@ module TRuby
 
       Usage:
         trc <file.trb>           Compile a .trb file to .rb
+        trc --lsp                Start LSP server (for IDE integration)
         trc --version, -v        Show version
         trc --help, -h           Show this help
 
       Examples:
         trc hello.trb            Compile hello.trb to build/hello.rb
+        trc --lsp                Start language server for VS Code
     HELP
 
     def self.run(args)
@@ -33,11 +35,21 @@ module TRuby
         return
       end
 
+      if @args.include?("--lsp")
+        start_lsp_server
+        return
+      end
+
       input_file = @args.first
       compile(input_file)
     end
 
     private
+
+    def start_lsp_server
+      server = LSPServer.new
+      server.run
+    end
 
     def compile(input_file)
       config = Config.new
