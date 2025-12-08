@@ -142,6 +142,55 @@ strict:
 
 ---
 
+## IDE 및 에디터 통합
+
+t-ruby는 구문 강조, LSP 통합, 개발 도구를 통해 인기 에디터들을 최우선으로 지원합니다.
+
+### 지원 에디터
+
+| 에디터 | 구문 강조 | LSP 지원 | 문서 |
+|--------|:--------:|:--------:|------|
+| **VS Code** | ✅ | ✅ | [시작하기](./docs/vscode/ko/getting-started.md) |
+| **Vim** | ✅ | ❌ | [시작하기](./docs/vim/ko/getting-started.md) |
+| **Neovim** | ✅ | ✅ | [시작하기](./docs/neovim/ko/getting-started.md) |
+
+### 빠른 설치
+
+**VS Code:**
+```bash
+# VS Code 마켓플레이스에서
+ext install t-ruby
+
+# 또는 소스에서
+cd editors/vscode && npm install && npm run compile
+code --install-extension .
+```
+
+**Vim:**
+```vim
+" vim-plug 사용
+Plug 'type-ruby/t-ruby', { 'rtp': 'editors/vim' }
+```
+
+**Neovim:**
+```lua
+-- lazy.nvim 사용
+{ "type-ruby/t-ruby", ft = { "truby" }, config = function()
+    require("t-ruby-lsp").setup()
+end }
+```
+
+### 언어별 문서
+
+| | English | 한국어 | 日本語 |
+|---|---------|--------|--------|
+| **VS Code** | [Guide](./docs/vscode/en/getting-started.md) | [가이드](./docs/vscode/ko/getting-started.md) | [ガイド](./docs/vscode/ja/getting-started.md) |
+| **Vim** | [Guide](./docs/vim/en/getting-started.md) | [가이드](./docs/vim/ko/getting-started.md) | [ガイド](./docs/vim/ja/getting-started.md) |
+| **Neovim** | [Guide](./docs/neovim/en/getting-started.md) | [가이드](./docs/neovim/ko/getting-started.md) | [ガイド](./docs/neovim/ja/getting-started.md) |
+| **구문 강조** | [Guide](./docs/syntax-highlighting/en/guide.md) | [가이드](./docs/syntax-highlighting/ko/guide.md) | [ガイド](./docs/syntax-highlighting/ja/guide.md) |
+
+---
+
 ## 철학 (Philosophy)
 
 t-ruby 는 Ruby 를 대체하려는 언어가 아닙니다.

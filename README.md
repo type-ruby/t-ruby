@@ -333,6 +333,55 @@ For a detailed roadmap including Milestone 3 and 4 phases, see [ROADMAP.md](./RO
 
 ---
 
+## IDE & Editor Integration
+
+t-ruby provides first-class support for popular editors with syntax highlighting, LSP integration, and development tools.
+
+### Supported Editors
+
+| Editor | Syntax Highlighting | LSP Support | Documentation |
+|--------|:------------------:|:-----------:|---------------|
+| **VS Code** | ✅ | ✅ | [Getting Started](./docs/vscode/en/getting-started.md) |
+| **Vim** | ✅ | ❌ | [Getting Started](./docs/vim/en/getting-started.md) |
+| **Neovim** | ✅ | ✅ | [Getting Started](./docs/neovim/en/getting-started.md) |
+
+### Quick Install
+
+**VS Code:**
+```bash
+# From VS Code Marketplace
+ext install t-ruby
+
+# Or from source
+cd editors/vscode && npm install && npm run compile
+code --install-extension .
+```
+
+**Vim:**
+```vim
+" Using vim-plug
+Plug 'type-ruby/t-ruby', { 'rtp': 'editors/vim' }
+```
+
+**Neovim:**
+```lua
+-- Using lazy.nvim
+{ "type-ruby/t-ruby", ft = { "truby" }, config = function()
+    require("t-ruby-lsp").setup()
+end }
+```
+
+### Documentation by Language
+
+| | English | 한국어 | 日本語 |
+|---|---------|--------|--------|
+| **VS Code** | [Guide](./docs/vscode/en/getting-started.md) | [가이드](./docs/vscode/ko/getting-started.md) | [ガイド](./docs/vscode/ja/getting-started.md) |
+| **Vim** | [Guide](./docs/vim/en/getting-started.md) | [가이드](./docs/vim/ko/getting-started.md) | [ガイド](./docs/vim/ja/getting-started.md) |
+| **Neovim** | [Guide](./docs/neovim/en/getting-started.md) | [가이드](./docs/neovim/ko/getting-started.md) | [ガイド](./docs/neovim/ja/getting-started.md) |
+| **Syntax Highlighting** | [Guide](./docs/syntax-highlighting/en/guide.md) | [가이드](./docs/syntax-highlighting/ko/guide.md) | [ガイド](./docs/syntax-highlighting/ja/guide.md) |
+
+---
+
 ## Philosophy
 
 t-ruby does not aim to replace Ruby.

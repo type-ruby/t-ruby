@@ -142,6 +142,55 @@ strict:
 
 ---
 
+## IDE・エディタ統合
+
+t-rubyは、シンタックスハイライト、LSP統合、開発ツールを備え、人気のエディタをファーストクラスでサポートします。
+
+### サポートエディタ
+
+| エディタ | シンタックスハイライト | LSPサポート | ドキュメント |
+|----------|:--------------------:|:-----------:|-------------|
+| **VS Code** | ✅ | ✅ | [はじめに](./docs/vscode/ja/getting-started.md) |
+| **Vim** | ✅ | ❌ | [はじめに](./docs/vim/ja/getting-started.md) |
+| **Neovim** | ✅ | ✅ | [はじめに](./docs/neovim/ja/getting-started.md) |
+
+### クイックインストール
+
+**VS Code:**
+```bash
+# VS Codeマーケットプレイスから
+ext install t-ruby
+
+# またはソースから
+cd editors/vscode && npm install && npm run compile
+code --install-extension .
+```
+
+**Vim:**
+```vim
+" vim-plugを使用
+Plug 'type-ruby/t-ruby', { 'rtp': 'editors/vim' }
+```
+
+**Neovim:**
+```lua
+-- lazy.nvimを使用
+{ "type-ruby/t-ruby", ft = { "truby" }, config = function()
+    require("t-ruby-lsp").setup()
+end }
+```
+
+### 言語別ドキュメント
+
+| | English | 한국어 | 日本語 |
+|---|---------|--------|--------|
+| **VS Code** | [Guide](./docs/vscode/en/getting-started.md) | [가이드](./docs/vscode/ko/getting-started.md) | [ガイド](./docs/vscode/ja/getting-started.md) |
+| **Vim** | [Guide](./docs/vim/en/getting-started.md) | [가이드](./docs/vim/ko/getting-started.md) | [ガイド](./docs/vim/ja/getting-started.md) |
+| **Neovim** | [Guide](./docs/neovim/en/getting-started.md) | [가이드](./docs/neovim/ko/getting-started.md) | [ガイド](./docs/neovim/ja/getting-started.md) |
+| **シンタックスハイライト** | [Guide](./docs/syntax-highlighting/en/guide.md) | [가이드](./docs/syntax-highlighting/ko/guide.md) | [ガイド](./docs/syntax-highlighting/ja/guide.md) |
+
+---
+
 ## 哲学（Philosophy）
 
 t-ruby は Ruby を置き換える言語ではありません。
