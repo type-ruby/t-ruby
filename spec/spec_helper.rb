@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "tmpdir"
+require "fileutils"
+
 # SimpleCov configuration for code coverage tracking
 require "simplecov"
 require "simplecov-cobertura"

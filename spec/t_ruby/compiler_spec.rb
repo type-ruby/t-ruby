@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require "fileutils"
+require "tmpdir"
 
 describe TRuby::Compiler do
   let(:config) { TRuby::Config.new }
@@ -70,24 +71,22 @@ describe TRuby::Compiler do
 
       it "preserves file content during compilation (Milestone 0)" do
         Dir.mktmpdir do |tmpdir|
-          content = <<~RUBY
-            def greet(person)
-              puts "Hello, #{person}!"
-            end
-
-            greet("world")
-          RUBY
-
           input_file = File.join(tmpdir, "script.trb")
-          File.write(input_file, content)
+          # Write content with string interpolation
+          File.write(input_file, 'def greet(person)' + "\n" +
+                                 '  puts "Hello, #{person}!"' + "\n" +
+                                 'end' + "\n" +
+                                 "\n" +
+                                 'greet("world")' + "\n")
 
           allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
 
           compiler = TRuby::Compiler.new(config)
           output_path = compiler.compile(input_file)
 
+          expected_content = File.read(input_file)
           output_content = File.read(output_path)
-          expect(output_content).to eq(content)
+          expect(output_content).to eq(expected_content)
         end
       end
 
