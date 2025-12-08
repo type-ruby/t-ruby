@@ -16,5 +16,13 @@ require_relative "t_ruby/lsp_server"
 require_relative "t_ruby/watcher"
 require_relative "t_ruby/cli"
 
+# Milestone 4: Advanced Features
+require_relative "t_ruby/constraint_checker"
+require_relative "t_ruby/type_inferencer"
+require_relative "t_ruby/runtime_validator"
+require_relative "t_ruby/type_checker"
+require_relative "t_ruby/cache"
+require_relative "t_ruby/package_manager"
+
 module TRuby
 end
