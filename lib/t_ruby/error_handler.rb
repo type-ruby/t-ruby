@@ -15,8 +15,10 @@ module TRuby
       @errors = []
       @functions = {}
       @type_aliases = {}
+      @interfaces = {}
 
       check_type_alias_errors
+      check_interface_errors
       check_syntax_errors
       check_type_validation
       check_duplicate_definitions
@@ -25,6 +27,23 @@ module TRuby
     end
 
     private
+
+    def check_interface_errors
+      @lines.each_with_index do |line, idx|
+        next unless line.match?(/^\s*interface\s+\w+/)
+
+        match = line.match(/^\s*interface\s+(\w+)/)
+        next unless match
+
+        interface_name = match[1]
+
+        if @interfaces[interface_name]
+          @errors << "Line #{idx + 1}: Interface '#{interface_name}' is already defined at line #{@interfaces[interface_name]}"
+        else
+          @interfaces[interface_name] = idx + 1
+        end
+      end
+    end
 
     def check_type_alias_errors
       @lines.each_with_index do |line, idx|

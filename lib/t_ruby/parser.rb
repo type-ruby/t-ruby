@@ -13,6 +13,7 @@ module TRuby
     def parse
       functions = []
       type_aliases = []
+      interfaces = []
       i = 0
 
       while i < @lines.length
@@ -23,6 +24,16 @@ module TRuby
           alias_info = parse_type_alias(line)
           if alias_info
             type_aliases << alias_info
+          end
+        end
+
+        # Match interface definitions
+        if line.match?(/^\s*interface\s+\w+/)
+          interface_info, next_i = parse_interface(i)
+          if interface_info
+            interfaces << interface_info
+            i = next_i
+            next
           end
         end
 
@@ -40,7 +51,8 @@ module TRuby
       {
         type: :success,
         functions: functions,
-        type_aliases: type_aliases
+        type_aliases: type_aliases,
+        interfaces: interfaces
       }
     end
 
@@ -63,13 +75,14 @@ module TRuby
 
     def parse_function_definition(line)
       # Match: def function_name(params): return_type or def function_name(params)
-      match = line.match(/^\s*def\s+(\w+)\s*\((.*?)\)\s*(?::\s*(\w+))?\s*$/)
+      # Updated to support union types with pipes in return type
+      match = line.match(/^\s*def\s+(\w+)\s*\((.*?)\)\s*(?::\s*(.+?))?\s*$/)
 
       return nil unless match
 
       function_name = match[1]
       params_str = match[2]
-      return_type = match[3]
+      return_type = match[3]&.strip
 
       params = parse_parameters(params_str)
 
@@ -96,15 +109,56 @@ module TRuby
     end
 
     def parse_single_parameter(param)
-      # Match: name: Type or just name
-      match = param.match(/^(\w+)(?::\s*(\w+))?$/)
+      # Match: name: Type or name: Union | Type or just name
+      # Updated to handle union types with pipes
+      match = param.match(/^(\w+)(?::\s*(.+?))?$/)
 
       return nil unless match
 
       {
         name: match[1],
-        type: match[2]
+        type: match[2]&.strip
       }
+    end
+
+    def parse_interface(start_index)
+      line = @lines[start_index]
+      match = line.match(/^\s*interface\s+(\w+)/)
+
+      return [nil, start_index] unless match
+
+      interface_name = match[1]
+      members = []
+      i = start_index + 1
+
+      # Parse members until we find 'end'
+      while i < @lines.length
+        current_line = @lines[i]
+
+        # Check for end of interface
+        break if current_line.match?(/^\s*end\s*$/)
+
+        # Parse member if it has a type annotation
+        if current_line.match?(/^\s*\w+\s*:\s*/)
+          member_match = current_line.match(/^\s*(\w+)\s*:\s*(.+?)\s*$/)
+          if member_match
+            members << {
+              name: member_match[1],
+              type: member_match[2].strip
+            }
+          end
+        end
+
+        i += 1
+      end
+
+      [
+        {
+          name: interface_name,
+          members: members
+        },
+        i  # Return index of 'end' line
+      ]
     end
   end
 end
