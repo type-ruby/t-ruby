@@ -8,7 +8,8 @@ module TRuby
       "emit" => {
         "rb" => true,
         "rbs" => false,
-        "dtrb" => false
+        "dtrb" => false,
+        "wasm" => false
       },
       "paths" => {
         "src" => "./src",

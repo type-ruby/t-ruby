@@ -7,6 +7,7 @@ module TRuby
 
       Usage:
         trc <file.trb>           Compile a .trb file to .rb
+        trc --wasm <file.trb>    Compile a .trb file to WebAssembly (.wasm)
         trc --watch, -w          Watch input files and recompile on change
         trc --decl <file.trb>    Generate .d.trb declaration file
         trc --lsp                Start LSP server (for IDE integration)
@@ -15,6 +16,7 @@ module TRuby
 
       Examples:
         trc hello.trb            Compile hello.trb to build/hello.rb
+        trc --wasm hello.trb     Compile hello.trb to build/hello.wasm
         trc -w                   Watch all .trb files in current directory
         trc -w src/              Watch all .trb files in src/ directory
         trc --watch hello.trb    Watch specific file for changes
@@ -48,6 +50,12 @@ module TRuby
 
       if @args.include?("--watch") || @args.include?("-w")
         start_watch_mode
+        return
+      end
+
+      if @args.include?("--wasm")
+        input_file = @args[@args.index("--wasm") + 1]
+        compile_to_wasm(input_file)
         return
       end
 
@@ -98,6 +106,37 @@ module TRuby
 
       output_path = compiler.compile(input_file)
       puts "Compiled: #{input_file} -> #{output_path}"
+    rescue ArgumentError => e
+      puts "Error: #{e.message}"
+      exit 1
+    end
+
+    def compile_to_wasm(input_file)
+      config = Config.new
+      compiler = Compiler.new(config)
+
+      result = compiler.compile_to_wasm(input_file)
+
+      if result.nil?
+        puts "Error: Failed to compile to WASM"
+        exit 1
+      end
+
+      if result.success?
+        puts "Compiled: #{input_file} -> #{result.wat_path}"
+        if result.wasm_path && File.exist?(result.wasm_path)
+          puts "Binary:   #{result.wasm_path}"
+        end
+      else
+        puts "Errors:"
+        result.errors.each { |e| puts "  - #{e}" }
+        exit 1
+      end
+
+      if result.warnings.any?
+        puts "Warnings:"
+        result.warnings.each { |w| puts "  - #{w}" }
+      end
     rescue ArgumentError => e
       puts "Error: #{e.message}"
       exit 1

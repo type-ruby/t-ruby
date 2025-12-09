@@ -55,6 +55,16 @@ module TRuby
         generate_dtrb_file(input_path, out_dir)
       end
 
+      # Generate .wasm file if enabled in config
+      if @config.emit["wasm"]
+        if @use_ir && parser.ir_program
+          generate_wasm_from_ir(base_filename, out_dir, parser.ir_program)
+        else
+          @warnings ||= []
+          @warnings << "WASM generation requires IR mode"
+        end
+      end
+
       output_path
     end
 
@@ -68,6 +78,23 @@ module TRuby
       parser = Parser.new(source, use_combinator: true)
       parser.parse
       parser.ir_program
+    end
+
+    # Compile to WASM from source file
+    def compile_to_wasm(input_path, output_path = nil)
+      ir_program = compile_to_ir(input_path)
+      return nil unless ir_program
+
+      out_dir = @config.out_dir
+      FileUtils.mkdir_p(out_dir)
+
+      base_filename = File.basename(input_path, ".trb")
+      output_path ||= File.join(out_dir, base_filename + ".wasm")
+
+      generator = WASMGenerator.new
+      result = generator.compile_to_wasm(ir_program, output_path)
+
+      WASMResult.new(result)
     end
 
     # Compile from IR program directly
@@ -165,6 +192,16 @@ module TRuby
     def generate_dtrb_file(input_path, out_dir)
       generator = DeclarationGenerator.new
       generator.generate_file(input_path, out_dir)
+    end
+
+    # Generate WASM from IR
+    def generate_wasm_from_ir(base_filename, out_dir, ir_program)
+      generator = WASMGenerator.new
+      wasm_path = File.join(out_dir, base_filename + ".wasm")
+      result = generator.compile_to_wasm(ir_program, wasm_path)
+
+      @wasm_result = WASMResult.new(result)
+      @wasm_result
     end
   end
 

@@ -1,0 +1,111 @@
+# graphics.trb - T-Ruby WASM Graphics Example
+# This demonstrates using T-Ruby with HTML Canvas via WASM
+# Compile with: trc --wasm graphics.trb
+
+# Color utilities (RGBA as 32-bit integer)
+def rgb(r: Integer, g: Integer, b: Integer): Integer
+  (255 << 24) | (b << 16) | (g << 8) | r
+end
+
+def rgba(r: Integer, g: Integer, b: Integer, a: Integer): Integer
+  (a << 24) | (b << 16) | (g << 8) | r
+end
+
+# Extract color components
+def get_red(color: Integer): Integer
+  color & 255
+end
+
+def get_green(color: Integer): Integer
+  (color >> 8) & 255
+end
+
+def get_blue(color: Integer): Integer
+  (color >> 16) & 255
+end
+
+def get_alpha(color: Integer): Integer
+  (color >> 24) & 255
+end
+
+# Linear interpolation
+def lerp(a: Integer, b: Integer, t: Integer): Integer
+  # t is 0-100 (percent)
+  a + ((b - a) * t) / 100
+end
+
+# Color blending
+def blend_colors(c1: Integer, c2: Integer, t: Integer): Integer
+  r = lerp(get_red(c1), get_red(c2), t)
+  g = lerp(get_green(c1), get_green(c2), t)
+  b = lerp(get_blue(c1), get_blue(c2), t)
+  a = lerp(get_alpha(c1), get_alpha(c2), t)
+  rgba(r, g, b, a)
+end
+
+# Distance calculation (squared, to avoid sqrt)
+def distance_squared(x1: Integer, y1: Integer, x2: Integer, y2: Integer): Integer
+  dx = x2 - x1
+  dy = y2 - y1
+  dx * dx + dy * dy
+end
+
+# Check if point is inside rectangle
+def point_in_rect(px: Integer, py: Integer, rx: Integer, ry: Integer, rw: Integer, rh: Integer): Boolean
+  px >= rx && px < rx + rw && py >= ry && py < ry + rh
+end
+
+# Check if point is inside circle (uses squared distance)
+def point_in_circle(px: Integer, py: Integer, cx: Integer, cy: Integer, radius: Integer): Boolean
+  distance_squared(px, py, cx, cy) <= radius * radius
+end
+
+# Simple 2D vector operations
+def vec2_add_x(x1: Integer, x2: Integer): Integer
+  x1 + x2
+end
+
+def vec2_add_y(y1: Integer, y2: Integer): Integer
+  y1 + y2
+end
+
+def vec2_scale_x(x: Integer, scale: Integer): Integer
+  x * scale
+end
+
+def vec2_scale_y(y: Integer, scale: Integer): Integer
+  y * scale
+end
+
+# Pixel coordinate to buffer index
+def pixel_index(x: Integer, y: Integer, width: Integer): Integer
+  (y * width + x) * 4
+end
+
+# Animation helpers
+def ease_in_quad(t: Integer): Integer
+  # t is 0-100
+  (t * t) / 100
+end
+
+def ease_out_quad(t: Integer): Integer
+  # t is 0-100
+  100 - ease_in_quad(100 - t)
+end
+
+def ease_in_out_quad(t: Integer): Integer
+  if t < 50
+    return ease_in_quad(t * 2) / 2
+  end
+  50 + ease_out_quad((t - 50) * 2) / 2
+end
+
+# Bounce effect
+def bounce(t: Integer, amplitude: Integer): Integer
+  # Simple bounce using remainder
+  cycle = t % 200
+  if cycle < 100
+    return (cycle * amplitude) / 100
+  end
+  ((200 - cycle) * amplitude) / 100
+end

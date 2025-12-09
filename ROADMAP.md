@@ -159,14 +159,50 @@
 
 ## 🔮 Milestone 7: Next Generation
 
-| Feature | Description |
-|---------|-------------|
-| JetBrains IDE Plugin | IntelliJ IDEA, RubyMine 플러그인 (LSP 기반) |
-| External SMT Solver (Z3) | Z3 통합으로 고급 타입 추론 강화 |
-| WebAssembly Target | `.wasm` 컴파일 타겟 지원 |
-| LSP v3 | Language Server Protocol 3.x 지원 |
-| Type-safe Metaprogramming | 메타프로그래밍 타입 안전성 |
-| Gradual Typing Migration | 기존 Ruby 코드 점진적 마이그레이션 도구 |
+| Feature | Description | Status |
+|---------|-------------|--------|
+| JetBrains IDE Plugin | IntelliJ IDEA, RubyMine 플러그인 (LSP 기반) | 🔜 Planned |
+| External SMT Solver (Z3) | Z3 통합으로 고급 타입 추론 강화 | ✅ Done |
+| WebAssembly Target | `.wasm` 컴파일 타겟 지원 | ✅ Done |
+| LSP v3 | Language Server Protocol 3.17 지원 | ✅ Done |
+| Type-safe Metaprogramming | 메타프로그래밍 타입 안전성 | ✅ Done |
+| Gradual Typing Migration | 기존 Ruby 코드 점진적 마이그레이션 도구 | 🔜 Planned |
+
+### ✅ Completed Features
+
+#### WebAssembly Target (WASM)
+- T-Ruby → WebAssembly Text Format (WAT) 컴파일
+- `trc --wasm` 명령어 지원
+- 브라우저/Node.js 실행 가능
+- 런타임 함수 (abs, min, max) 포함
+- 문서: [docs/WASM.md](docs/WASM.md)
+
+#### LSP v3.17 Protocol
+- Inlay Hints (인라인 타입 힌트)
+- Call Hierarchy (호출 계층)
+- Type Hierarchy (타입 계층)
+- Folding Ranges (코드 접기)
+- Selection Range (스마트 선택)
+- Linked Editing Range (동기화 편집)
+- Code Lens (참조 수, 멤버 수)
+- Signature Help (함수 시그니처)
+- Rename Support (이름 변경)
+- Code Actions (Quick Fixes)
+
+#### Type-safe Metaprogramming
+- `define_method` 분석
+- `method_missing` 타입 추적
+- `class_eval` 분석
+- ActiveRecord 동적 finder 지원 (`find_by_*`)
+- `#: dynamic_methods` 어노테이션
+- `#: method_missing` 패턴 선언
+
+#### Z3 SMT Solver Integration
+- Z3 외부 솔버 연동 (선택적)
+- Refinement Types 검증 (`Integer where x > 0`)
+- 서브타입 관계 증명
+- SMT-LIB2 포맷 생성
+- 내장 폴백 솔버
 
 ### JetBrains IDE Plugin
 - IntelliJ Platform Plugin SDK 기반

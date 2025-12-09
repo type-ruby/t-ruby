@@ -1036,6 +1036,483 @@ module TRuby
     end
 
     #==========================================================================
+    # Z3 External Solver Integration
+    #==========================================================================
+
+    # Interface for Z3 SMT solver via command line
+    # Requires Z3 to be installed: https://github.com/Z3Prover/z3
+    class Z3Solver
+      attr_reader :available, :version, :timeout
+
+      def initialize(timeout: 30000)
+        @timeout = timeout
+        @available = check_availability
+        @version = get_version if @available
+        @assertions = []
+        @declarations = {}
+      end
+
+      # Check if Z3 is available
+      def self.available?
+        system("which z3 > /dev/null 2>&1")
+      end
+
+      # Create a solver with fallback to built-in if Z3 not available
+      def self.create(use_z3: true, timeout: 30000)
+        if use_z3 && available?
+          Z3Solver.new(timeout: timeout)
+        else
+          BuiltInSolver.new
+        end
+      end
+
+      # Declare an integer variable
+      def declare_int(name)
+        @declarations[name] = :int
+        "(declare-const #{name} Int)"
+      end
+
+      # Declare a boolean variable
+      def declare_bool(name)
+        @declarations[name] = :bool
+        "(declare-const #{name} Bool)"
+      end
+
+      # Declare a sort (type)
+      def declare_sort(name)
+        @declarations[name] = :sort
+        "(declare-sort #{name})"
+      end
+
+      # Declare a function
+      def declare_fun(name, param_sorts, return_sort)
+        param_str = param_sorts.map { |s| sort_to_smt(s) }.join(" ")
+        @declarations[name] = { params: param_sorts, returns: return_sort }
+        "(declare-fun #{name} (#{param_str}) #{sort_to_smt(return_sort)})"
+      end
+
+      # Add assertion
+      def assert(formula)
+        @assertions << "(assert #{formula_to_smt(formula)})"
+      end
+
+      # Assert equality
+      def assert_eq(left, right)
+        @assertions << "(assert (= #{expr_to_smt(left)} #{expr_to_smt(right)}))"
+      end
+
+      # Assert inequality
+      def assert_neq(left, right)
+        @assertions << "(assert (not (= #{expr_to_smt(left)} #{expr_to_smt(right)})))"
+      end
+
+      # Assert less than
+      def assert_lt(left, right)
+        @assertions << "(assert (< #{expr_to_smt(left)} #{expr_to_smt(right)}))"
+      end
+
+      # Assert less than or equal
+      def assert_le(left, right)
+        @assertions << "(assert (<= #{expr_to_smt(left)} #{expr_to_smt(right)}))"
+      end
+
+      # Assert greater than
+      def assert_gt(left, right)
+        @assertions << "(assert (> #{expr_to_smt(left)} #{expr_to_smt(right)}))"
+      end
+
+      # Assert greater than or equal
+      def assert_ge(left, right)
+        @assertions << "(assert (>= #{expr_to_smt(left)} #{expr_to_smt(right)}))"
+      end
+
+      # Assert subtype relation (modeled as function)
+      def assert_subtype(sub, sup)
+        # Model subtyping as an uninterpreted relation
+        @assertions << "(assert (subtype #{sub} #{sup}))"
+      end
+
+      # Check satisfiability
+      def check_sat
+        return { result: :unknown, error: "Z3 not available" } unless @available
+
+        smt_input = build_smt_input("(check-sat)")
+        result = run_z3(smt_input)
+
+        case result.strip
+        when "sat"
+          { result: :sat }
+        when "unsat"
+          { result: :unsat }
+        else
+          { result: :unknown, output: result }
+        end
+      end
+
+      # Get model (satisfying assignment)
+      def get_model
+        return { result: :unknown, error: "Z3 not available" } unless @available
+
+        smt_input = build_smt_input("(check-sat)\n(get-model)")
+        result = run_z3(smt_input)
+
+        if result.include?("sat") && !result.include?("unsat")
+          parse_model(result)
+        else
+          { result: :unsat, output: result }
+        end
+      end
+
+      # Solve and return solution
+      def solve
+        result = get_model
+        if result[:result] == :sat
+          {
+            success: true,
+            solution: result[:model],
+            raw: result[:raw]
+          }
+        else
+          {
+            success: false,
+            reason: result[:result],
+            output: result[:output]
+          }
+        end
+      end
+
+      # Reset solver state
+      def reset
+        @assertions = []
+        @declarations = {}
+      end
+
+      # Push a context
+      def push
+        @assertions << "(push)"
+      end
+
+      # Pop a context
+      def pop
+        @assertions << "(pop)"
+      end
+
+      # Generate SMT-LIB2 input
+      def to_smt2
+        build_smt_input("(check-sat)\n(get-model)")
+      end
+
+      private
+
+      def check_availability
+        system("which z3 > /dev/null 2>&1")
+      end
+
+      def get_version
+        `z3 --version 2>/dev/null`.strip rescue "unknown"
+      end
+
+      def build_smt_input(query)
+        parts = []
+
+        # Declare sorts
+        @declarations.each do |name, type|
+          case type
+          when :sort
+            parts << "(declare-sort #{name})"
+          when :int
+            parts << "(declare-const #{name} Int)"
+          when :bool
+            parts << "(declare-const #{name} Bool)"
+          when Hash
+            param_str = type[:params].map { |s| sort_to_smt(s) }.join(" ")
+            parts << "(declare-fun #{name} (#{param_str}) #{sort_to_smt(type[:returns])})"
+          end
+        end
+
+        # Add assertions
+        parts.concat(@assertions)
+
+        # Add query
+        parts << query
+
+        parts.join("\n")
+      end
+
+      def run_z3(input)
+        require "open3"
+        require "tempfile"
+
+        Tempfile.create(["z3_input", ".smt2"]) do |file|
+          file.write(input)
+          file.flush
+
+          stdout, stderr, status = Open3.capture3("z3", "-T:#{@timeout / 1000}", file.path)
+          stdout
+        end
+      rescue => e
+        "error: #{e.message}"
+      end
+
+      def formula_to_smt(formula)
+        case formula
+        when Variable
+          formula.name
+        when BoolConst
+          formula.value.to_s
+        when Not
+          "(not #{formula_to_smt(formula.operand)})"
+        when And
+          "(and #{formula_to_smt(formula.left)} #{formula_to_smt(formula.right)})"
+        when Or
+          "(or #{formula_to_smt(formula.left)} #{formula_to_smt(formula.right)})"
+        when Implies
+          "(=> #{formula_to_smt(formula.antecedent)} #{formula_to_smt(formula.consequent)})"
+        when Iff
+          "(= #{formula_to_smt(formula.left)} #{formula_to_smt(formula.right)})"
+        when TypeEqual
+          "(= #{expr_to_smt(formula.left)} #{expr_to_smt(formula.right)})"
+        when Subtype
+          "(subtype #{expr_to_smt(formula.subtype)} #{expr_to_smt(formula.supertype)})"
+        when String
+          formula
+        else
+          formula.to_s
+        end
+      end
+
+      def expr_to_smt(expr)
+        case expr
+        when TypeVar, Variable
+          expr.name
+        when ConcreteType
+          expr.name
+        when Integer
+          expr.to_s
+        when String
+          expr
+        else
+          expr.to_s
+        end
+      end
+
+      def sort_to_smt(sort)
+        case sort
+        when :int, "Int" then "Int"
+        when :bool, "Bool" then "Bool"
+        when :real, "Real" then "Real"
+        else sort.to_s
+        end
+      end
+
+      def parse_model(output)
+        model = {}
+        raw_model = output.match(/\(model(.*)\)/m)&.captures&.first || ""
+
+        # Parse define-fun declarations
+        raw_model.scan(/\(define-fun\s+(\w+)\s+\(\)\s+\w+\s+(\S+)\)/) do |name, value|
+          model[name] = parse_value(value)
+        end
+
+        { result: :sat, model: model, raw: raw_model }
+      end
+
+      def parse_value(value)
+        case value
+        when "true" then true
+        when "false" then false
+        when /^-?\d+$/ then value.to_i
+        when /^-?\d+\.\d+$/ then value.to_f
+        else value
+        end
+      end
+    end
+
+    # Wrapper for built-in solver to match Z3Solver interface
+    class BuiltInSolver
+      attr_reader :solver
+
+      def initialize
+        @solver = ConstraintSolver.new
+        @available = true
+      end
+
+      def available?
+        true
+      end
+
+      def declare_int(name)
+        @solver.fresh_var(name)
+      end
+
+      def declare_bool(name)
+        @solver.fresh_var(name)
+      end
+
+      def assert(formula)
+        @solver.add_constraint(formula)
+      end
+
+      def assert_eq(left, right)
+        @solver.add_equal(left, right)
+      end
+
+      def assert_subtype(sub, sup)
+        @solver.add_subtype(sub, sup)
+      end
+
+      def check_sat
+        result = @solver.solve
+        { result: result[:success] ? :sat : :unsat }
+      end
+
+      def get_model
+        result = @solver.solve
+        if result[:success]
+          { result: :sat, model: result[:solution] }
+        else
+          { result: :unsat, errors: result[:errors] }
+        end
+      end
+
+      def solve
+        result = @solver.solve
+        {
+          success: result[:success],
+          solution: result[:solution],
+          errors: result[:errors]
+        }
+      end
+
+      def reset
+        @solver = ConstraintSolver.new
+      end
+
+      def push
+        # Not supported in built-in solver
+      end
+
+      def pop
+        # Not supported in built-in solver
+      end
+    end
+
+    #==========================================================================
+    # Refinement Type Checker using Z3
+    #==========================================================================
+
+    # Checks refinement types like: Integer where x > 0
+    class RefinementChecker
+      attr_reader :solver, :errors
+
+      def initialize(use_z3: true)
+        @solver = Z3Solver.create(use_z3: use_z3)
+        @errors = []
+      end
+
+      # Check if a refinement type constraint is satisfiable
+      # Example: check_refinement("x", "> 0", 5) checks if 5 > 0
+      def check_refinement(var_name, constraint, value)
+        @solver.reset
+        @solver.declare_int(var_name)
+
+        # Assert the value
+        @solver.assert_eq(var_name, value)
+
+        # Assert the refinement constraint
+        case constraint
+        when /^>\s*(\d+)$/
+          @solver.assert_gt(var_name, $1.to_i)
+        when /^>=\s*(\d+)$/
+          @solver.assert_ge(var_name, $1.to_i)
+        when /^<\s*(\d+)$/
+          @solver.assert_lt(var_name, $1.to_i)
+        when /^<=\s*(\d+)$/
+          @solver.assert_le(var_name, $1.to_i)
+        when /^==\s*(\d+)$/
+          @solver.assert_eq(var_name, $1.to_i)
+        when /^!=\s*(\d+)$/
+          @solver.assert_neq(var_name, $1.to_i)
+        else
+          @errors << "Unknown constraint format: #{constraint}"
+          return false
+        end
+
+        result = @solver.check_sat
+        result[:result] == :sat
+      end
+
+      # Check if two refinement types are compatible
+      def check_subtype_refinement(sub_constraint, sup_constraint, var_name: "x")
+        @solver.reset
+        @solver.declare_int(var_name)
+
+        # Assert: if sub_constraint then sup_constraint
+        # This is valid iff NOT(sub_constraint AND NOT(sup_constraint)) is unsat
+
+        sub_formula = parse_constraint(var_name, sub_constraint)
+        sup_formula = parse_constraint(var_name, sup_constraint)
+
+        # We want to prove: sub => sup
+        # Which is equivalent to: NOT(sub AND NOT(sup)) is valid
+        # Which is equivalent to: (sub AND NOT(sup)) is unsat
+
+        @solver.assert("(and #{sub_formula} (not #{sup_formula}))")
+        result = @solver.check_sat
+
+        result[:result] == :unsat
+      end
+
+      # Infer constraints from code
+      def infer_constraints(body_ir, var_bindings = {})
+        constraints = []
+
+        case body_ir
+        when IR::Conditional
+          # Analyze condition for refinements
+          cond_constraint = analyze_condition(body_ir.condition)
+          if cond_constraint
+            constraints << cond_constraint
+          end
+        when IR::Block
+          body_ir.statements.each do |stmt|
+            constraints.concat(infer_constraints(stmt, var_bindings))
+          end
+        end
+
+        constraints
+      end
+
+      private
+
+      def parse_constraint(var, constraint)
+        case constraint
+        when /^>\s*(\d+)$/ then "(> #{var} #{$1})"
+        when /^>=\s*(\d+)$/ then "(>= #{var} #{$1})"
+        when /^<\s*(\d+)$/ then "(< #{var} #{$1})"
+        when /^<=\s*(\d+)$/ then "(<= #{var} #{$1})"
+        when /^==\s*(\d+)$/ then "(= #{var} #{$1})"
+        when /^!=\s*(\d+)$/ then "(not (= #{var} #{$1}))"
+        else "true"
+        end
+      end
+
+      def analyze_condition(condition)
+        case condition
+        when IR::BinaryOp
+          if condition.left.is_a?(IR::VariableRef)
+            var = condition.left.name
+            if condition.right.is_a?(IR::Literal) && condition.right.literal_type == :integer
+              value = condition.right.value
+              return { var: var, op: condition.operator, value: value }
+            end
+          end
+        end
+        nil
+      end
+    end
+
+    #==========================================================================
     # DSL for building constraints
     #==========================================================================
 

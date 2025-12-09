@@ -71,9 +71,13 @@ RSpec.describe TRuby::LSPServer do
 
       expect(response["result"]["capabilities"]).to include(
         "textDocumentSync" => hash_including("openClose" => true),
-        "completionProvider" => hash_including("triggerCharacters" => [":", "<", "|", "&"]),
+        "completionProvider" => hash_including("triggerCharacters" => [":", "<", "|", "&", "."]),
         "hoverProvider" => true,
-        "definitionProvider" => true
+        "definitionProvider" => true,
+        "inlayHintProvider" => hash_including("resolveProvider" => false),
+        "callHierarchyProvider" => true,
+        "typeHierarchyProvider" => true,
+        "foldingRangeProvider" => true
       )
     end
 

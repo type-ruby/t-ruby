@@ -1,0 +1,123 @@
+# math.trb - T-Ruby WASM Example
+# This file demonstrates T-Ruby's WebAssembly compilation capabilities
+# Compile with: trc --wasm math.trb
+
+# Basic arithmetic function
+def add(a: Integer, b: Integer): Integer
+  a + b
+end
+
+# Subtraction
+def subtract(a: Integer, b: Integer): Integer
+  a - b
+end
+
+# Multiplication
+def multiply(a: Integer, b: Integer): Integer
+  a * b
+end
+
+# Division (integer)
+def divide(a: Integer, b: Integer): Integer
+  a / b
+end
+
+# Modulo
+def modulo(a: Integer, b: Integer): Integer
+  a % b
+end
+
+# Power calculation (simple iterative)
+def power(base: Integer, exp: Integer): Integer
+  result = 1
+  i = 0
+  while i < exp
+    result = result * base
+    i = i + 1
+  end
+  result
+end
+
+# Factorial (iterative)
+def factorial(n: Integer): Integer
+  result = 1
+  i = 1
+  while i <= n
+    result = result * i
+    i = i + 1
+  end
+  result
+end
+
+# Fibonacci (iterative)
+def fibonacci(n: Integer): Integer
+  if n <= 1
+    return n
+  end
+
+  a = 0
+  b = 1
+  i = 2
+  while i <= n
+    temp = a + b
+    a = b
+    b = temp
+    i = i + 1
+  end
+  b
+end
+
+# Greatest Common Divisor (Euclidean algorithm)
+def gcd(a: Integer, b: Integer): Integer
+  while b != 0
+    temp = b
+    b = a % b
+    a = temp
+  end
+  a
+end
+
+# Check if number is even
+def is_even(n: Integer): Boolean
+  n % 2 == 0
+end
+
+# Check if number is odd
+def is_odd(n: Integer): Boolean
+  n % 2 != 0
+end
+
+# Absolute value
+def abs_value(n: Integer): Integer
+  if n < 0
+    return 0 - n
+  end
+  n
+end
+
+# Maximum of two numbers
+def max(a: Integer, b: Integer): Integer
+  if a > b
+    return a
+  end
+  b
+end
+
+# Minimum of two numbers
+def min(a: Integer, b: Integer): Integer
+  if a < b
+    return a
+  end
+  b
+end
+
+# Clamp value between min and max
+def clamp(value: Integer, min_val: Integer, max_val: Integer): Integer
+  if value < min_val
+    return min_val
+  end
+  if value > max_val
+    return max_val
+  end
+  value
+end
