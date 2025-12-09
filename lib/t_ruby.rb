@@ -34,5 +34,9 @@ require_relative "t_ruby/package_manager"
 # Milestone 5: Bundler Integration
 require_relative "t_ruby/bundler_integration"
 
+# Milestone 6: Quality & Documentation
+require_relative "t_ruby/benchmark"
+require_relative "t_ruby/doc_generator"
+
 module TRuby
 end

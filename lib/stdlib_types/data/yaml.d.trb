@@ -1,0 +1,134 @@
+# T-Ruby Standard Library Type Definitions
+# Data: YAML (Psych) parsing and generation
+
+# YAML module (implemented by Psych)
+interface YAML
+  # Module methods (represented as interface for type definitions)
+end
+
+# YAML/Psych value types
+type YAMLPrimitive = String | Integer | Float | Boolean | nil | Symbol | Time | Date
+type YAMLValue = YAMLPrimitive | YAMLArray | YAMLHash | Object
+type YAMLArray = Array<YAMLValue>
+type YAMLHash = Hash<YAMLValue, YAMLValue>
+
+# Psych module
+interface Psych
+  # Version info
+  VERSION: String
+  LIBYAML_VERSION: String
+end
+
+# Safe load options (Ruby 3.1+)
+interface Psych::SafeLoadOptions
+  permitted_classes: Array<Class>
+  permitted_symbols: Array<Symbol>
+  aliases: Boolean
+  filename: String
+  fallback: Object
+  symbolize_names: Boolean
+  freeze: Boolean
+end
+
+# Dump options
+interface Psych::DumpOptions
+  indentation: Integer
+  line_width: Integer
+  canonical: Boolean
+  header: Boolean
+end
+
+# YAML stream handling
+interface Psych::Stream
+  start: Psych::Stream
+  finish: nil
+end
+
+# Parser
+interface Psych::Parser
+  parse: Psych::Nodes::Document
+  handler: Psych::Handler
+end
+
+# Emitter
+interface Psych::Emitter
+  start_stream: Psych::Emitter
+  end_stream: Psych::Emitter
+  start_document: Psych::Emitter
+  end_document: Psych::Emitter
+  start_mapping: Psych::Emitter
+  end_mapping: Psych::Emitter
+  start_sequence: Psych::Emitter
+  end_sequence: Psych::Emitter
+  scalar: Psych::Emitter
+  alias: Psych::Emitter
+  canonical: Boolean
+  canonical=: Boolean
+  indentation: Integer
+  indentation=: Integer
+  line_width: Integer
+  line_width=: Integer
+end
+
+# AST Nodes
+interface Psych::Nodes::Node
+  tag: String | nil
+  anchor: String | nil
+  implicit: Boolean
+  children: Array<Psych::Nodes::Node>
+  to_yaml: String
+  yaml: String
+end
+
+interface Psych::Nodes::Document
+  root: Psych::Nodes::Node | nil
+  version: Array<Integer> | nil
+  tag_directives: Array<Array<String>>
+  implicit: Boolean
+  implicit_end: Boolean
+end
+
+interface Psych::Nodes::Sequence
+  style: Integer
+end
+
+interface Psych::Nodes::Mapping
+  style: Integer
+end
+
+interface Psych::Nodes::Scalar
+  value: String
+  plain: Boolean
+  quoted: Boolean
+  style: Integer
+end
+
+interface Psych::Nodes::Alias
+  anchor: String
+end
+
+interface Psych::Nodes::Stream
+  documents: Array<Psych::Nodes::Document>
+end
+
+# Errors
+interface Psych::Exception
+  # Base error
+end
+
+interface Psych::BadAlias
+  # Unknown alias error
+end
+
+interface Psych::DisallowedClass
+  # Class not permitted in safe_load
+end
+
+interface Psych::SyntaxError
+  file: String | nil
+  line: Integer
+  column: Integer
+  offset: Integer
+  problem: String | nil
+  context: String | nil
+end

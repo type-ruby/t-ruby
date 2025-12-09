@@ -1,0 +1,361 @@
+# T-Ruby Gem Type Definitions
+# Sidekiq Background Job Framework
+# Version: 7.x compatible
+
+# =============================================================================
+# Sidekiq Core
+# =============================================================================
+
+interface Sidekiq
+  # Configuration
+  configure_server: void
+  configure_client: void
+  options: Hash<Symbol, Object>
+  default_job_options: Hash<String, Object>
+  default_job_options=: Hash<String, Object>
+
+  # Redis
+  redis: Object
+  redis_pool: ConnectionPool
+
+  # Logging
+  logger: Sidekiq::Logger
+  logger=: void
+
+  # Environment
+  server?: Boolean
+
+  # Version
+  VERSION: String
+end
+
+# =============================================================================
+# Sidekiq Job
+# =============================================================================
+
+interface Sidekiq::Job
+  # Job identifiers
+  jid: String
+  bid: String | nil  # Batch ID if using Sidekiq Pro
+
+  # Execution context
+  logger: Sidekiq::Logger
+
+  # Class methods (DSL)
+  sidekiq_options: void
+  sidekiq_retry_in: void
+  sidekiq_retries_exhausted: void
+
+  # Instance method to implement
+  perform: void
+
+  # Class methods for enqueueing
+  perform_async: String
+  perform_in: String
+  perform_at: String
+  set: Sidekiq::Job::Setter
+end
+
+# Job options setter
+interface Sidekiq::Job::Setter
+  set: Sidekiq::Job::Setter
+  perform_async: String
+  perform_in: String
+  perform_at: String
+
+  # Options
+  queue: Sidekiq::Job::Setter
+  retry: Sidekiq::Job::Setter
+  backtrace: Sidekiq::Job::Setter
+  pool: Sidekiq::Job::Setter
+  lock: Sidekiq::Job::Setter  # Sidekiq Pro
+end
+
+# Worker alias (deprecated but still used)
+interface Sidekiq::Worker
+  # Same as Sidekiq::Job
+  jid: String
+  logger: Sidekiq::Logger
+
+  sidekiq_options: void
+  perform: void
+
+  perform_async: String
+  perform_in: String
+  perform_at: String
+  set: Sidekiq::Job::Setter
+end
+
+# =============================================================================
+# Sidekiq Queue API
+# =============================================================================
+
+interface Sidekiq::Queue
+  name: String
+  size: Integer
+  latency: Float
+  paused?: Boolean
+
+  pause!: void
+  unpause!: void
+  clear: void
+
+  each: Sidekiq::Queue
+  find_job: Sidekiq::JobRecord | nil
+end
+
+interface Sidekiq::JobRecord
+  jid: String
+  item: Hash<String, Object>
+  value: String
+  queue: String
+  klass: String
+  args: Array<Object>
+  created_at: Time
+  enqueued_at: Time
+  at: Time | nil  # Scheduled time
+  retry_count: Integer
+
+  display_class: String
+  display_args: Array<Object>
+
+  delete: Boolean
+  reschedule: void
+  kill: void
+  retry: void
+end
+
+# Scheduled set (for jobs scheduled in the future)
+interface Sidekiq::ScheduledSet
+  size: Integer
+  scan: Array<Sidekiq::SortedEntry>
+  find_job: Sidekiq::SortedEntry | nil
+  clear: void
+  each: Sidekiq::ScheduledSet
+end
+
+# Retry set (for failed jobs awaiting retry)
+interface Sidekiq::RetrySet
+  size: Integer
+  scan: Array<Sidekiq::SortedEntry>
+  find_job: Sidekiq::SortedEntry | nil
+  clear: void
+  each: Sidekiq::RetrySet
+  retry_all: void
+  kill_all: void
+end
+
+# Dead set (for jobs that exhausted retries)
+interface Sidekiq::DeadSet
+  size: Integer
+  scan: Array<Sidekiq::SortedEntry>
+  find_job: Sidekiq::SortedEntry | nil
+  clear: void
+  each: Sidekiq::DeadSet
+  retry_all: void
+end
+
+# Sorted entry (job in scheduled/retry/dead sets)
+interface Sidekiq::SortedEntry
+  jid: String
+  item: Hash<String, Object>
+  value: String
+  score: Float
+  at: Time
+
+  klass: String
+  args: Array<Object>
+  queue: String
+  error_message: String | nil
+  error_class: String | nil
+  retry_count: Integer
+
+  display_class: String
+  display_args: Array<Object>
+
+  delete: Boolean
+  reschedule: void
+  add_to_queue: void
+  retry: void
+  kill: void
+end
+
+# Process set (running Sidekiq processes)
+interface Sidekiq::ProcessSet
+  size: Integer
+  each: Sidekiq::ProcessSet
+  []: Sidekiq::Process | nil
+  cleanup: Integer
+  leaders: Array<Sidekiq::Process>
+end
+
+interface Sidekiq::Process
+  identity: String
+  hostname: String
+  pid: Integer
+  tag: String
+  queues: Array<String>
+  labels: Array<String>
+  concurrency: Integer
+  busy: Integer
+  started_at: Time
+  weights: Hash<String, Integer>
+  embedded?: Boolean
+
+  stop!: void
+  quiet!: void
+  dump_threads: void
+
+  []: Object
+end
+
+# =============================================================================
+# Sidekiq Stats
+# =============================================================================
+
+interface Sidekiq::Stats
+  processed: Integer
+  failed: Integer
+  scheduled_size: Integer
+  retry_size: Integer
+  dead_size: Integer
+  enqueued: Integer
+  processes_size: Integer
+  workers_size: Integer
+  default_queue_latency: Float
+  queues: Hash<String, Integer>
+
+  reset: void
+end
+
+interface Sidekiq::Stats::History
+  processed: Hash<String, Integer>
+  failed: Hash<String, Integer>
+end
+
+# =============================================================================
+# Sidekiq Middleware
+# =============================================================================
+
+interface Sidekiq::Middleware::Chain
+  add: void
+  remove: void
+  insert_before: void
+  insert_after: void
+  prepend: void
+  exists?: Boolean
+  retrieve: Array<Object>
+  clear: void
+  each: Sidekiq::Middleware::Chain
+end
+
+interface Sidekiq::ServerMiddleware
+  call: Object
+end
+
+interface Sidekiq::ClientMiddleware
+  call: Boolean
+end
+
+# =============================================================================
+# Sidekiq Testing
+# =============================================================================
+
+interface Sidekiq::Testing
+  fake!: void
+  inline!: void
+  disable!: void
+  enabled?: Boolean
+  disabled?: Boolean
+  fake?: Boolean
+  inline?: Boolean
+  server_middleware: void
+end
+
+interface Sidekiq::Queues
+  []: Array<Hash<String, Object>>
+  push: void
+  jobs_by_queue: Hash<String, Array<Hash<String, Object>>>
+  jobs_by_class: Hash<String, Array<Hash<String, Object>>>
+  clear_all: void
+  clear_for: void
+end
+
+# =============================================================================
+# Sidekiq Logging
+# =============================================================================
+
+interface Sidekiq::Logger
+  debug: void
+  info: void
+  warn: void
+  error: void
+  fatal: void
+
+  debug?: Boolean
+  info?: Boolean
+  warn?: Boolean
+  error?: Boolean
+  fatal?: Boolean
+
+  level: Integer
+  level=: Integer
+
+  with_context: Object
+  log_context: Hash<Symbol, Object>
+end
+
+# =============================================================================
+# Sidekiq Pro/Enterprise (if available)
+# =============================================================================
+
+# Batch (Sidekiq Pro)
+interface Sidekiq::Batch
+  bid: String
+  description: String
+  description=: String
+  created_at: Time
+
+  jobs: void
+  on: void
+
+  invalidate_all: void
+  status: Sidekiq::Batch::Status
+end
+
+interface Sidekiq::Batch::Status
+  bid: String
+  total: Integer
+  pending: Integer
+  failures: Integer
+  created_at: Time
+  complete?: Boolean
+  child_count: Integer
+  failure_info: Array<Hash<String, Object>>
+  data: Hash<String, Object>
+  join: void
+  delete: void
+end
+
+# Rate Limiter (Sidekiq Enterprise)
+interface Sidekiq::Limiter
+  concurrent: Sidekiq::Limiter::ConcurrentLimiter
+  bucket: Sidekiq::Limiter::LeakyBucket
+  window: Sidekiq::Limiter::SlidingWindow
+
+  pause: void
+  unpause: void
+  paused?: Boolean
+end
+
+interface Sidekiq::Limiter::ConcurrentLimiter
+  limit: Integer
+  within_limit: Object
+end
+
+# Type aliases
+type JobId = String
+type BatchId = String
+type QueueName = String
+type JobArgs = Array<Object>
+type JobOptions = Hash<Symbol | String, Object>

@@ -1,0 +1,288 @@
+# T-Ruby Gem Type Definitions
+# Rails: ActionView
+
+# =============================================================================
+# ActionView Helpers
+# =============================================================================
+
+interface ActionView::Base
+  # Rendering
+  render: String
+  render_partial: String
+  render_collection: String
+
+  # Layout
+  content_for: String | nil
+  content_for?: Boolean
+  provide: void
+  yield: String
+
+  # Helpers access
+  controller: ActionController::Base
+  request: ActionDispatch::Request
+  response: ActionDispatch::Response
+  params: ActionController::Parameters
+  session: ActionDispatch::Session::AbstractStore
+  flash: ActionDispatch::Flash::FlashHash
+  cookies: ActionDispatch::Cookies::CookieJar
+end
+
+# URL Helpers
+interface ActionView::Helpers::UrlHelper
+  link_to: String
+  link_to_if: String
+  link_to_unless: String
+  link_to_unless_current: String
+  button_to: String
+  mail_to: String
+  url_for: String
+  current_page?: Boolean
+end
+
+# Form Helpers
+interface ActionView::Helpers::FormHelper
+  form_for: String
+  form_with: String
+  fields_for: String
+  fields: String
+  label: String
+  text_field: String
+  password_field: String
+  hidden_field: String
+  file_field: String
+  text_area: String
+  check_box: String
+  radio_button: String
+  color_field: String
+  search_field: String
+  telephone_field: String
+  phone_field: String
+  date_field: String
+  time_field: String
+  datetime_field: String
+  datetime_local_field: String
+  month_field: String
+  week_field: String
+  url_field: String
+  email_field: String
+  number_field: String
+  range_field: String
+end
+
+# Form Builder
+interface ActionView::Helpers::FormBuilder
+  object: Object
+  object_name: String
+  options: Hash<Symbol, Object>
+
+  label: String
+  text_field: String
+  password_field: String
+  hidden_field: String
+  file_field: String
+  text_area: String
+  check_box: String
+  radio_button: String
+  color_field: String
+  search_field: String
+  telephone_field: String
+  phone_field: String
+  date_field: String
+  time_field: String
+  datetime_field: String
+  datetime_local_field: String
+  month_field: String
+  week_field: String
+  url_field: String
+  email_field: String
+  number_field: String
+  range_field: String
+
+  select: String
+  collection_select: String
+  grouped_collection_select: String
+  time_zone_select: String
+  collection_check_boxes: String
+  collection_radio_buttons: String
+
+  submit: String
+  button: String
+
+  fields_for: String
+  fields: String
+end
+
+# Form Tag Helpers
+interface ActionView::Helpers::FormTagHelper
+  form_tag: String
+  select_tag: String
+  text_field_tag: String
+  label_tag: String
+  hidden_field_tag: String
+  file_field_tag: String
+  password_field_tag: String
+  text_area_tag: String
+  check_box_tag: String
+  radio_button_tag: String
+  submit_tag: String
+  button_tag: String
+  image_submit_tag: String
+  field_set_tag: String
+  color_field_tag: String
+  search_field_tag: String
+  telephone_field_tag: String
+  phone_field_tag: String
+  date_field_tag: String
+  time_field_tag: String
+  datetime_field_tag: String
+  datetime_local_field_tag: String
+  month_field_tag: String
+  week_field_tag: String
+  url_field_tag: String
+  email_field_tag: String
+  number_field_tag: String
+  range_field_tag: String
+end
+
+# Form Options Helpers
+interface ActionView::Helpers::FormOptionsHelper
+  select: String
+  collection_select: String
+  grouped_collection_select: String
+  time_zone_select: String
+  options_for_select: String
+  options_from_collection_for_select: String
+  grouped_options_for_select: String
+  option_groups_from_collection_for_select: String
+  time_zone_options_for_select: String
+  collection_check_boxes: String
+  collection_radio_buttons: String
+end
+
+# Text Helpers
+interface ActionView::Helpers::TextHelper
+  concat: String
+  safe_join: String
+  truncate: String
+  highlight: String
+  excerpt: String
+  pluralize: String
+  word_wrap: String
+  simple_format: String
+  cycle: String
+  current_cycle: String
+  reset_cycle: void
+end
+
+# Number Helpers
+interface ActionView::Helpers::NumberHelper
+  number_to_phone: String
+  number_to_currency: String
+  number_to_percentage: String
+  number_with_delimiter: String
+  number_with_precision: String
+  number_to_human_size: String
+  number_to_human: String
+end
+
+# Date Helpers
+interface ActionView::Helpers::DateHelper
+  date_select: String
+  time_select: String
+  datetime_select: String
+  select_datetime: String
+  select_date: String
+  select_time: String
+  select_second: String
+  select_minute: String
+  select_hour: String
+  select_day: String
+  select_month: String
+  select_year: String
+  time_tag: String
+  distance_of_time_in_words: String
+  distance_of_time_in_words_to_now: String
+  time_ago_in_words: String
+end
+
+# Asset Tag Helpers
+interface ActionView::Helpers::AssetTagHelper
+  javascript_include_tag: String
+  stylesheet_link_tag: String
+  image_tag: String
+  favicon_link_tag: String
+  preload_link_tag: String
+  video_tag: String
+  audio_tag: String
+end
+
+# Asset URL Helpers
+interface ActionView::Helpers::AssetUrlHelper
+  asset_path: String
+  asset_url: String
+  image_path: String
+  image_url: String
+  video_path: String
+  video_url: String
+  audio_path: String
+  audio_url: String
+  font_path: String
+  font_url: String
+  javascript_path: String
+  javascript_url: String
+  stylesheet_path: String
+  stylesheet_url: String
+end
+
+# Sanitize Helpers
+interface ActionView::Helpers::SanitizeHelper
+  sanitize: String
+  sanitize_css: String
+  strip_tags: String
+  strip_links: String
+end
+
+# Tag Helpers
+interface ActionView::Helpers::TagHelper
+  tag: String
+  content_tag: String
+  cdata_section: String
+  escape_once: String
+  class_names: String
+  token_list: String
+end
+
+# Capture Helpers
+interface ActionView::Helpers::CaptureHelper
+  capture: String
+  content_for: String | nil
+  content_for?: Boolean
+  provide: void
+end
+
+# Cache Helpers
+interface ActionView::Helpers::CacheHelper
+  cache: String
+  cache_if: String
+  cache_unless: String
+  cache_fragment_name: String
+end
+
+# CSRF Helpers
+interface ActionView::Helpers::CsrfHelper
+  csrf_meta_tags: String
+  csrf_meta_tag: String
+end
+
+# Debug Helpers
+interface ActionView::Helpers::DebugHelper
+  debug: String
+end
+
+# Translation Helpers
+interface ActionView::Helpers::TranslationHelper
+  translate: String
+  t: String
+  localize: String
+  l: String
+end

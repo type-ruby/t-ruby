@@ -1,0 +1,271 @@
+# T-Ruby Gem Type Definitions
+# Rails: ActionController
+
+# =============================================================================
+# ActionController Base
+# =============================================================================
+
+interface ActionController::Base
+  # Request/Response
+  request: ActionDispatch::Request
+  response: ActionDispatch::Response
+  params: ActionController::Parameters
+  session: ActionDispatch::Session::AbstractStore
+  cookies: ActionDispatch::Cookies::CookieJar
+  flash: ActionDispatch::Flash::FlashHash
+
+  # Rendering
+  render: void
+  render_to_string: String
+  redirect_to: void
+  head: void
+  send_file: void
+  send_data: void
+
+  # Filters/Callbacks
+  before_action: void
+  after_action: void
+  around_action: void
+  skip_before_action: void
+  skip_after_action: void
+  skip_around_action: void
+
+  # Helpers
+  helpers: Module
+  helper_method: void
+
+  # Layout
+  layout: void
+
+  # CSRF
+  protect_from_forgery: void
+  verify_authenticity_token: void
+  form_authenticity_token: String
+
+  # URL helpers
+  url_for: String
+
+  # Action info
+  action_name: String
+  controller_name: String
+  controller_path: String
+end
+
+# Strong Parameters
+interface ActionController::Parameters
+  # Access
+  []: Object
+  fetch: Object
+  values_at: Array<Object>
+  slice: ActionController::Parameters
+  except: ActionController::Parameters
+
+  # Permitting
+  require: ActionController::Parameters
+  permit: ActionController::Parameters
+  permit!: ActionController::Parameters
+  permitted?: Boolean
+
+  # Conversion
+  to_h: Hash<String, Object>
+  to_hash: Hash<String, Object>
+  to_unsafe_h: Hash<String, Object>
+  to_unsafe_hash: Hash<String, Object>
+
+  # Query
+  key?: Boolean
+  has_key?: Boolean
+  include?: Boolean
+  empty?: Boolean
+  blank?: Boolean
+  present?: Boolean
+
+  # Enumeration
+  each: ActionController::Parameters
+  each_pair: ActionController::Parameters
+  each_key: ActionController::Parameters
+  each_value: ActionController::Parameters
+  keys: Array<String>
+  values: Array<Object>
+
+  # Modification
+  merge: ActionController::Parameters
+  merge!: ActionController::Parameters
+  reverse_merge: ActionController::Parameters
+  reverse_merge!: ActionController::Parameters
+  delete: Object
+  extract!: ActionController::Parameters
+
+  # Deep operations
+  deep_transform_keys: ActionController::Parameters
+  deep_symbolize_keys: Hash<Symbol, Object>
+  deep_stringify_keys: Hash<String, Object>
+end
+
+# Request
+interface ActionDispatch::Request
+  # HTTP method
+  method: String
+  request_method: String
+  method_symbol: Symbol
+  get?: Boolean
+  post?: Boolean
+  put?: Boolean
+  patch?: Boolean
+  delete?: Boolean
+  head?: Boolean
+  options?: Boolean
+
+  # URL
+  url: String
+  original_url: String
+  fullpath: String
+  path: String
+  host: String
+  host_with_port: String
+  port: Integer
+  protocol: String
+  ssl?: Boolean
+
+  # Headers
+  headers: ActionDispatch::Http::Headers
+  content_type: String | nil
+  accept: String
+  authorization: String | nil
+
+  # Body
+  body: StringIO
+  raw_post: String
+
+  # Parameters
+  parameters: Hash<String, Object>
+  query_parameters: Hash<String, Object>
+  request_parameters: Hash<String, Object>
+  path_parameters: Hash<Symbol, Object>
+
+  # Format
+  format: Mime::Type
+  formats: Array<Mime::Type>
+  content_mime_type: Mime::Type | nil
+
+  # Client info
+  remote_ip: String
+  remote_addr: String
+  user_agent: String | nil
+
+  # Session/Cookies
+  session: ActionDispatch::Session::AbstractStore
+  session_options: Hash<Symbol, Object>
+  cookie_jar: ActionDispatch::Cookies::CookieJar
+
+  # Flash
+  flash: ActionDispatch::Flash::FlashHash
+
+  # UUID
+  uuid: String
+  request_id: String
+
+  # CSRF
+  form_authenticity_token: String
+
+  # XHR
+  xhr?: Boolean
+  xml_http_request?: Boolean
+end
+
+# Response
+interface ActionDispatch::Response
+  status: Integer
+  status=: Integer
+  headers: Hash<String, String>
+  body: String
+  body=: String
+  content_type: String
+  content_type=: String
+  charset: String
+  charset=: String
+
+  # Cookies
+  cookies: Hash<String, String>
+  set_cookie: void
+  delete_cookie: void
+
+  # Cache
+  cache_control: Hash<Symbol, Object>
+  etag: String | nil
+  etag=: String
+  last_modified: Time | nil
+  last_modified=: Time
+
+  # Status predicates
+  successful?: Boolean
+  redirect?: Boolean
+  client_error?: Boolean
+  server_error?: Boolean
+
+  # Streaming
+  stream: ActionDispatch::Response::Buffer
+
+  # Finalize
+  commit!: void
+  committed?: Boolean
+  close: void
+end
+
+# Routing
+interface ActionDispatch::Routing::RouteSet
+  url_helpers: Module
+  draw: void
+  recognize_path: Hash<Symbol, Object>
+  generate: String
+end
+
+# Flash
+interface ActionDispatch::Flash::FlashHash
+  []: String | nil
+  []=: String
+  notice: String | nil
+  notice=: String
+  alert: String | nil
+  alert=: String
+  now: ActionDispatch::Flash::FlashHash
+  keep: ActionDispatch::Flash::FlashHash
+  discard: ActionDispatch::Flash::FlashHash
+  clear: void
+  empty?: Boolean
+  to_hash: Hash<String, String>
+end
+
+# Session
+interface ActionDispatch::Session::AbstractStore
+  []: Object
+  []=: Object
+  fetch: Object
+  delete: Object
+  clear: void
+  destroy: void
+  keys: Array<String>
+  values: Array<Object>
+  empty?: Boolean
+  id: String
+  exists?: Boolean
+  enabled?: Boolean
+  loaded?: Boolean
+end
+
+# Cookies
+interface ActionDispatch::Cookies::CookieJar
+  []: String | nil
+  []=: String
+  delete: void
+  signed: ActionDispatch::Cookies::SignedKeyRotatingCookieJar
+  encrypted: ActionDispatch::Cookies::EncryptedKeyRotatingCookieJar
+  permanent: ActionDispatch::Cookies::PermanentCookieJar
+  each: ActionDispatch::Cookies::CookieJar
+  to_hash: Hash<String, String>
+end
+
+# Type aliases
+type ControllerAction = Symbol | String
+type RenderOptions = Hash<Symbol, Object>
+type RedirectOptions = Hash<Symbol, Object>

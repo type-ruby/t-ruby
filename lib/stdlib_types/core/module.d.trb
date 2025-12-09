@@ -1,0 +1,184 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Module and Class
+
+interface Module
+  # Module name
+  name: String | nil
+  to_s: String
+  inspect: String
+
+  # Ancestry
+  ancestors: Array<Module>
+  included_modules: Array<Module>
+  superclass: Class | nil
+
+  # Inheritance checks
+  <: Boolean | nil
+  <=: Boolean | nil
+  >: Boolean | nil
+  >=: Boolean | nil
+  <=>: Integer | nil
+  ==: Boolean
+  ===: Boolean
+
+  # Constants
+  constants: Array<Symbol>
+  const_defined?: Boolean
+  const_get: Object
+  const_set: Object
+  const_missing: Object
+  const_source_location: Array<String | Integer> | nil
+
+  # Class variables
+  class_variables: Array<Symbol>
+  class_variable_defined?: Boolean
+  class_variable_get: Object
+  class_variable_set: Object
+  remove_class_variable: Object
+
+  # Methods
+  instance_methods: Array<Symbol>
+  public_instance_methods: Array<Symbol>
+  protected_instance_methods: Array<Symbol>
+  private_instance_methods: Array<Symbol>
+  method_defined?: Boolean
+  public_method_defined?: Boolean
+  protected_method_defined?: Boolean
+  private_method_defined?: Boolean
+  instance_method: UnboundMethod<any>
+  public_instance_method: UnboundMethod<any>
+
+  # Method visibility
+  public: Module
+  protected: Module
+  private: Module
+  module_function: Module
+
+  # Definition callbacks
+  method_added: void
+  method_removed: void
+  method_undefined: void
+
+  # Inclusion/extension
+  include: Module
+  prepend: Module
+  extend: Object
+  included: void
+  prepended: void
+  extended: void
+
+  # Module attributes
+  attr: void
+  attr_reader: void
+  attr_writer: void
+  attr_accessor: void
+
+  # Aliasing
+  alias_method: Symbol
+  remove_method: Module
+  undef_method: Module
+
+  # Autoloading
+  autoload: void
+  autoload?: String | nil
+
+  # Refinements
+  refine: Module
+  using: Module
+
+  # Module evaluation
+  class_eval: Object
+  module_eval: Object
+  class_exec: Object
+  module_exec: Object
+
+  # Freezing
+  freeze: Module
+  frozen?: Boolean
+
+  # Deprecation (Ruby 3.0+)
+  deprecate_constant: Module
+
+  hash: Integer
+end
+
+interface Class
+  # Inherits Module
+
+  # Instance creation
+  new: Object
+  allocate: Object
+
+  # Inheritance
+  superclass: Class | nil
+  subclasses: Array<Class>
+
+  # Singleton class
+  singleton_class: Class
+  singleton_class?: Boolean
+
+  # Callbacks
+  inherited: void
+
+  # Conversion
+  to_s: String
+  inspect: String
+end
+
+interface Struct
+  # Struct definition
+  members: Array<Symbol>
+  length: Integer
+  size: Integer
+
+  # Element access
+  []: Object
+  []=: Object
+  values: Array<Object>
+  values_at: Array<Object>
+  each: Struct
+  each_pair: Struct
+  select: Array<Object>
+  filter: Array<Object>
+
+  # Predicates
+  eql?: Boolean
+  ==: Boolean
+
+  # Conversion
+  to_a: Array<Object>
+  to_h: Hash<Symbol, Object>
+  to_s: String
+  inspect: String
+  deconstruct: Array<Object>
+  deconstruct_keys: Hash<Symbol, Object>
+
+  hash: Integer
+end
+
+# Data class (Ruby 3.2+)
+interface Data
+  # Immutable value object
+  members: Array<Symbol>
+
+  # Access
+  []: Object
+  deconstruct: Array<Object>
+  deconstruct_keys: Hash<Symbol, Object>
+
+  # Copying with modifications
+  with: Data
+
+  # Predicates
+  eql?: Boolean
+  ==: Boolean
+  hash: Integer
+
+  # Conversion
+  to_h: Hash<Symbol, Object>
+  to_s: String
+  inspect: String
+end
+
+# Type aliases
+type ClassOrModule = Class | Module

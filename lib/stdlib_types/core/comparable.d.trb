@@ -1,0 +1,20 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Comparable module
+
+interface Comparable<T>
+  # Spaceship operator - must be implemented by including class
+  <=>: Integer | nil
+
+  # Comparison methods (derived from <=>)
+  <: Boolean
+  <=: Boolean
+  >: Boolean
+  >=: Boolean
+  ==: Boolean
+
+  # Between check
+  between?: Boolean
+
+  # Clamp to range
+  clamp: T
+end

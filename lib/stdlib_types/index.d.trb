@@ -1,5 +1,5 @@
 # T-Ruby Standard Library Type Definitions Index
-# Version: 0.1.0
+# Version: 0.2.0
 # Compatible with: Ruby 3.0+
 
 # This file serves as an index for all standard library type definitions.
@@ -16,6 +16,9 @@
 # Integer - Numeric operations and iteration
 # Location: core/integer.d.trb
 
+# Float, Rational, Complex, BigDecimal - Numeric types
+# Location: core/float.d.trb
+
 # Array<T> - Ordered collection with generic type parameter
 # Location: core/array.d.trb
 
@@ -27,6 +30,33 @@
 
 # Object - Base class for all Ruby objects
 # Location: core/object.d.trb
+
+# Enumerable<T> - Collection iteration module
+# Location: core/enumerable.d.trb
+
+# Comparable<T> - Comparison mixin
+# Location: core/comparable.d.trb
+
+# Range<T> - Sequence ranges
+# Location: core/range.d.trb
+
+# Regexp, MatchData - Regular expressions
+# Location: core/regexp.d.trb
+
+# Proc, Method, UnboundMethod, Binding - Callable objects
+# Location: core/proc.d.trb
+
+# Time, Date, DateTime - Date and time handling
+# Location: core/time.d.trb
+
+# Exception hierarchy - Error classes
+# Location: core/exception.d.trb
+
+# NilClass, TrueClass, FalseClass - Boolean and nil types
+# Location: core/nil_class.d.trb
+
+# Module, Class, Struct, Data - Metaprogramming types
+# Location: core/module.d.trb
 
 # =============================================================================
 # Built-in Type Aliases
@@ -78,6 +108,20 @@ type NilableBoolean = Boolean | nil
 
 # HTTP, HTTPRequest, HTTPResponse
 # Location: net/http.d.trb
+
+# =============================================================================
+# Data Format Types
+# =============================================================================
+# Serialization and data formats
+
+# JSON - JSON parsing and generation
+# Location: data/json.d.trb
+
+# YAML/Psych - YAML parsing and generation
+# Location: data/yaml.d.trb
+
+# CSV - CSV file handling
+# Location: data/csv.d.trb
 
 # =============================================================================
 # Usage Instructions

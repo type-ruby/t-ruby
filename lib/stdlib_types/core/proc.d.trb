@@ -1,0 +1,97 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Proc and Lambda types
+
+# Proc - callable block of code
+interface Proc<R>
+  # Call the proc
+  call: R
+  []: R
+  yield: R
+
+  # Proc info
+  arity: Integer
+  lambda?: Boolean
+  source_location: Array<String | Integer> | nil
+  binding: Binding
+  parameters: Array<Array<Symbol>>
+
+  # Currying
+  curry: Proc<R>
+
+  # Composition
+  >>: Proc<R>
+  <<: Proc<R>
+
+  # Conversion
+  to_proc: Proc<R>
+  to_s: String
+  inspect: String
+
+  # Ruby 3.x additions
+  ruby2_keywords: Proc<R>
+end
+
+# Method - bound method object
+interface Method<R>
+  # Call the method
+  call: R
+  []: R
+
+  # Method info
+  name: Symbol
+  original_name: Symbol
+  owner: Module
+  receiver: Object
+  arity: Integer
+  parameters: Array<Array<Symbol>>
+  source_location: Array<String | Integer> | nil
+  super_method: Method<R> | nil
+
+  # Currying
+  curry: Proc<R>
+
+  # Composition
+  >>: Proc<R>
+  <<: Proc<R>
+
+  # Conversion
+  to_proc: Proc<R>
+  unbind: UnboundMethod<R>
+  to_s: String
+  inspect: String
+end
+
+# UnboundMethod - method not yet bound to receiver
+interface UnboundMethod<R>
+  name: Symbol
+  original_name: Symbol
+  owner: Module
+  arity: Integer
+  parameters: Array<Array<Symbol>>
+  source_location: Array<String | Integer> | nil
+  super_method: UnboundMethod<R> | nil
+
+  bind: Method<R>
+  bind_call: R
+
+  to_s: String
+  inspect: String
+end
+
+# Binding - execution context
+interface Binding
+  local_variables: Array<Symbol>
+  local_variable_get: Object
+  local_variable_set: Object
+  local_variable_defined?: Boolean
+  eval: Object
+  receiver: Object
+  source_location: Array<String | Integer>
+  to_s: String
+  inspect: String
+end
+
+# Type aliases for common proc signatures
+type Block<R> = Proc<R>
+type Lambda<R> = Proc<R>
+type Callback<R> = Proc<R>
