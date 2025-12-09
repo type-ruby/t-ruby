@@ -1,205 +1,217 @@
-# t-ruby (한국어 문서)
+<p align="center">
+  <img src="https://avatars.githubusercontent.com/u/248530250" alt="T-Ruby" height="170">
+</p>
 
-> TypeScript 에 영감을 받은 Ruby용 정적 타입 레이어.
-> `.trb` 파일을 작성하고, `trc` 로 `.rb` 와 `.rbs` 를 생성합니다.
+<h1 align="center">T-Ruby</h1>
 
-`t-ruby` 는 Ruby 위에서 동작하는 **선택적(gradual) 정적 타입 시스템**입니다.
+<p align="center">
+  <strong>Ruby를 위한 TypeScript 스타일 타입</strong>
+</p>
 
-* 소스 파일: `.trb`
-* 컴파일러: `trc`
-* 설정 파일: `.trb.yml`
-* 출력 대상:
+<p align="center">
+  <img src="https://img.shields.io/badge/CI-passing-brightgreen" alt="CI: passing" />
+  <img src="https://img.shields.io/badge/ruby-3.0+-cc342d" alt="Ruby 3.0+" />
+  <img src="https://img.shields.io/badge/gem-v0.1.0-blue" alt="Gem: v0.1.0" />
+  <img src="https://img.shields.io/badge/downloads-0-lightgrey" alt="Downloads" />
+  <img src="https://img.shields.io/badge/coverage-90%25-brightgreen" alt="Coverage: 90%" />
+</p>
 
-  * Ruby 실행 코드: `.rb`
-  * Ruby 공식 시그니처 파일: `.rbs` (옵션)
-  * t-ruby 전용 선언 파일: `.d.trb` (옵션, RBS보다 표현력 높음)
-
-목표는 Ruby 개발자에게 **TypeScript 와 유사한 개발 경험(DX)** 을 주되,
-기존 Ruby/RBS 생태계와 충돌하지 않고 자연스럽게 공존하는 것입니다.
-
----
-
-## 상태 (Status)
-
-**모든 마일스톤 완료.** 260개 테스트 통과.
-
-### ✅ Milestone 1 – 기초 타입 파싱 & 제거
-* 파라미터/리턴 타입 애너테이션, 타입 제거, 에러 처리
-
-### ✅ Milestone 2 – 코어 타입 시스템
-* 타입 별칭, 인터페이스, 유니온/인터섹션 타입, 제네릭, RBS 생성
-
-### ✅ Milestone 3 – 생태계 & 툴링
-* LSP 서버, `.d.trb` 선언 파일, IDE 통합 (VS Code, Vim, Neovim), 표준 라이브러리 타입
-
-### ✅ Milestone 4 – 고급 기능
-* 제약 시스템, 타입 추론, 런타임 검증, 정적 타입 검사, 캐싱, 패키지 관리
+<p align="center">
+  <a href="#설치">설치</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="#빠른-시작">빠른 시작</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="#기능">기능</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="./ROADMAP.md">로드맵</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="./README.md">English</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="./README.ja.md">日本語</a>
+</p>
 
 ---
 
-## 개념 (Concept)
+## T-Ruby란?
 
-### 1) `.trb` 파일 작성
+T-Ruby는 TypeScript에서 영감을 받은 Ruby용 타입 레이어입니다.
+`trc`라는 단일 실행 파일로 제공됩니다.
+
+타입 어노테이션이 포함된 `.trb` 파일을 작성하고, 표준 `.rb` 파일로 컴파일하세요.
+타입은 컴파일 시점에 제거됩니다 — Ruby가 실행되는 어디서든 코드가 동작합니다.
+
+```bash
+trc hello.trb                  # Ruby로 컴파일
+```
+
+`trc` 컴파일러는 Steep, Ruby LSP 같은 도구를 위한 `.rbs` 시그니처 파일도 생성합니다.
+런타임 오버헤드 없이 기존 Ruby 프로젝트에 점진적으로 타입을 도입하세요.
+
+```bash
+trc --watch src/               # 워치 모드
+trc --emit-rbs src/            # .rbs 파일 생성
+trc --check src/               # 컴파일 없이 타입 검사만
+```
+
+---
+
+## 왜 T-Ruby인가?
+
+우리는 루비의 친구이자, 여전히 루비를 사용하는 루비스트입니다.
+
+루비가 덕 타이핑과 동적 타입 시스템의 DNA를 가진 언어라는 걸 잘 압니다.
+하지만 현실의 산업 환경에서 정적 타입 시스템이 점점 필수가 되어가는 것도
+부정할 수 없었습니다.
+
+루비 생태계는 이 문제에 대해 수년간 치열하게 논의해왔지만,
+아직 적극적인 답을 내놓지 못한 것 같습니다.
+
+---
+
+**Sorbet** — 코드 위에 주석처럼 타입을 작성합니다.
+마치 JSDoc을 쓰고 IDE가 에러를 잡아주길 기대하는 것과 비슷합니다.
+
+```ruby
+# Sorbet
+extend T::Sig
+
+sig { params(name: String).returns(String) }
+def greet(name)
+  "Hello, #{name}!"
+end
+```
+
+**RBS** — Ruby 공식 접근법으로, TypeScript의 `.d.ts`와 같은 별도 파일입니다.
+하지만 Ruby에서는 직접 만들거나 '암묵적 추론 + 수작업 보완'이 필요해
+여전히 번거롭습니다.
+
+```rbs
+# greet.rbs (별도 파일)
+def greet: (String name) -> String
+```
+
+```ruby
+# greet.rb (타입 정보 없음)
+def greet(name)
+  "Hello, #{name}!"
+end
+```
+
+**T-Ruby** — TypeScript처럼, 타입이 코드 안에 있습니다.
+`.trb`로 작성하면 `trc`가 `.rb`와 `.rbs`를 모두 생성합니다.
+
+```ruby
+# greet.trb
+def greet(name: String): String
+  "Hello, #{name}!"
+end
+```
+
+```bash
+trc greet.trb
+# => build/greet.rb + build/greet.rbs
+```
+
+---
+
+Crystal 같은 새로운 언어도 있지만,
+우리는 여전히 루비를 사랑하고,
+이것이 루비 생태계의 **탈출이 아닌 진보**이기를 원합니다.
+
+---
+
+## 설치
+
+```bash
+# RubyGems로 설치 (권장)
+gem install t-ruby
+
+# 소스에서 설치
+git clone https://github.com/pyhyun/t-ruby
+cd t-ruby && bundle install
+```
+
+### 설치 확인
+
+```bash
+trc --version
+```
+
+---
+
+## 빠른 시작
+
+### 1. `.trb` 작성
 
 ```ruby
 # hello.trb
-
-def greet(name: String): void
-  puts "Hello, #{name} from t-ruby!"
+def greet(name: String): String
+  "Hello, #{name}!"
 end
 
-greet("world")
+puts greet("world")
 ```
 
-### 2) `trc` 로 컴파일
+### 2. 컴파일
 
 ```bash
 trc hello.trb
-# => build/hello.rb (필요 시 .rbs / .d.trb 도 생성)
 ```
 
-### 3) Ruby 로 실행
+### 3. 실행
 
 ```bash
 ruby build/hello.rb
+# => Hello, world!
 ```
 
 ---
 
-## 설계 목표 (Design Goals)
+## 기능
 
-### 1. Ruby 개발자를 위한 TypeScript 수준의 DX
-
-* 선택적 타입 도입 (gradual typing)
-* `type`, `interface`, 제네릭, 유니온/인터섹션 타입 지원 예정
-* 단일 컴파일러 CLI: `trc`
-
-### 2. 기존 Ruby 생태계와의 자연스러운 상호운용성
-
-* Ruby 인터프리터에서 바로 실행 가능한 `.rb` 출력
-* Steep, Ruby LSP 등이 읽을 수 있는 `.rbs` 출력
-* t-ruby 만의 확장 타입을 담는 `.d.trb` 선언 파일 옵션 제공
-
-### 3. RBS 를 ‘기반’으로 존중하되, RBS 에 묶이지 않음
-
-* t-ruby 의 타입 시스템은 RBS 의 **상위호환(superset)** 을 목표로 함
-* `.rbs` 로 투영하기 어려운 타입은 보수적으로 단순화하여 출력
-* 기존 RBS 타입 자산을 그대로 재사용 가능
-
-### 4. Ruby 문화에 어울리는 설정 스타일
-
-* 프로젝트 루트에 `.trb.yml` 사용
-* Ruby 생태계의 YAML 기반 설정 관례와 일관성 유지
+- **타입 어노테이션** — 파라미터와 리턴 타입, 컴파일 시 제거됨
+- **유니온 타입** — `String | Integer | nil`
+- **제네릭** — `Array<User>`, `Hash<String, Integer>`
+- **인터페이스** — 객체 간 계약 정의
+- **타입 별칭** — `type UserID = Integer`
+- **RBS 생성** — Steep, Ruby LSP, Sorbet과 연동
+- **IDE 지원** — VS Code, Neovim + LSP
+- **워치 모드** — 파일 변경 시 자동 재컴파일
 
 ---
 
-## `.trb.yml` 예시
+## 빠른 링크
 
-```yaml
-emit:
-  rb: true
-  rbs: true
-  dtrb: false
+**시작하기**
+- [VS Code 확장](./docs/vscode/ko/getting-started.md)
+- [Vim 설정](./docs/vim/ko/getting-started.md)
+- [Neovim 설정](./docs/neovim/ko/getting-started.md)
 
-paths:
-  src: ./src
-  out: ./build
-  stdlib_rbs: ./rbs/stdlib
-
-strict:
-  rbs_compat: true
-  null_safety: true
-  inference: basic
-```
+**가이드**
+- [구문 강조](./docs/syntax-highlighting/ko/guide.md)
 
 ---
 
-## 로드맵 (Roadmap)
+## 상태
 
-자세한 내용은 [ROADMAP.md](./ROADMAP.md) 참조.
+> **실험적** — T-Ruby는 활발히 개발 중입니다.
+> API가 변경될 수 있습니다. 아직 프로덕션 사용은 권장하지 않습니다.
 
 | 마일스톤 | 상태 |
 |----------|------|
-| 0 – Hello t-ruby | ✅ |
-| 1 – 타입 파싱 & 제거 | ✅ |
-| 2 – 코어 타입 시스템 | ✅ |
-| 3 – 생태계 & 툴링 | ✅ |
-| 4 – 고급 기능 | ✅ |
+| 타입 파싱 & 제거 | ✅ |
+| 코어 타입 시스템 | ✅ |
+| LSP & IDE 지원 | ✅ |
+| 고급 기능 | ✅ |
+
+자세한 내용은 [ROADMAP.md](./ROADMAP.md)를 참조하세요.
 
 ---
 
-## IDE 및 에디터 통합
+## 기여하기
 
-t-ruby는 구문 강조, LSP 통합, 개발 도구를 통해 인기 에디터들을 최우선으로 지원합니다.
-
-### 지원 에디터
-
-| 에디터 | 구문 강조 | LSP 지원 | 문서 |
-|--------|:--------:|:--------:|------|
-| **VS Code** | ✅ | ✅ | [시작하기](./docs/vscode/ko/getting-started.md) |
-| **Vim** | ✅ | ❌ | [시작하기](./docs/vim/ko/getting-started.md) |
-| **Neovim** | ✅ | ✅ | [시작하기](./docs/neovim/ko/getting-started.md) |
-
-### 빠른 설치
-
-**VS Code:**
-```bash
-# VS Code 마켓플레이스에서
-ext install t-ruby
-
-# 또는 소스에서
-cd editors/vscode && npm install && npm run compile
-code --install-extension .
-```
-
-**Vim:**
-```vim
-" vim-plug 사용
-Plug 'type-ruby/t-ruby', { 'rtp': 'editors/vim' }
-```
-
-**Neovim:**
-```lua
--- lazy.nvim 사용
-{ "type-ruby/t-ruby", ft = { "truby" }, config = function()
-    require("t-ruby-lsp").setup()
-end }
-```
-
-### 언어별 문서
-
-| | English | 한국어 | 日本語 |
-|---|---------|--------|--------|
-| **VS Code** | [Guide](./docs/vscode/en/getting-started.md) | [가이드](./docs/vscode/ko/getting-started.md) | [ガイド](./docs/vscode/ja/getting-started.md) |
-| **Vim** | [Guide](./docs/vim/en/getting-started.md) | [가이드](./docs/vim/ko/getting-started.md) | [ガイド](./docs/vim/ja/getting-started.md) |
-| **Neovim** | [Guide](./docs/neovim/en/getting-started.md) | [가이드](./docs/neovim/ko/getting-started.md) | [ガイド](./docs/neovim/ja/getting-started.md) |
-| **구문 강조** | [Guide](./docs/syntax-highlighting/en/guide.md) | [가이드](./docs/syntax-highlighting/ko/guide.md) | [ガイド](./docs/syntax-highlighting/ja/guide.md) |
-
----
-
-## 철학 (Philosophy)
-
-t-ruby 는 Ruby 를 대체하려는 언어가 아닙니다.
-
-* Ruby 는 런타임이며 호스트 언어로 남습니다.
-* t-ruby 는 그 위에 얹혀 동작하는 **선택적 타입 레이어**입니다.
-* 기존 Ruby 프로젝트에 점진적으로 도입할 수 있어야 합니다.
-
-t-ruby 는 RBS 와 경쟁하지 않습니다.
-
-* RBS 는 Ruby 의 공식 시그니처 포맷으로 존중합니다.
-* t-ruby 는 RBS 를 **확장하고 재사용**하려 합니다.
-* 고급 타입은 `.rbs` 로 투영 시 단순화하거나 별도의 `.d.trb` 로 제공합니다.
-
----
-
-## 다국어 문서
-
-* English: [README.md](./README.md)
-* 日本語: [README.ja.md](./README.ja.md)
-
----
+기여를 환영합니다! 이슈와 풀 리퀘스트를 자유롭게 제출해 주세요.
 
 ## 라이선스
 
-미정 (TBD).
+[MIT](./LICENSE)

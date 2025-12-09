@@ -1,371 +1,218 @@
-# t-ruby
+<p align="center">
+  <img src="https://avatars.githubusercontent.com/u/248530250" alt="T-Ruby" height="170">
+</p>
 
-> Typed Ruby, inspired by TypeScript. Write `.trb`, compile to `.rb` and `.rbs`.
+<h1 align="center">T-Ruby</h1>
 
-[![Test Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)](./TESTING.md)
-[![RSpec Tests](https://img.shields.io/badge/tests-260%20passing-brightgreen)](./spec)
-[![Ruby 3.0+](https://img.shields.io/badge/ruby-3.0+-red.svg)](https://www.ruby-lang.org/)
+<p align="center">
+  <strong>TypeScript-style types for Ruby</strong>
+</p>
 
-`t-ruby` is an experimental typed layer for Ruby.
+<p align="center">
+  <img src="https://img.shields.io/badge/CI-passing-brightgreen" alt="CI: passing" />
+  <img src="https://img.shields.io/badge/ruby-3.0+-cc342d" alt="Ruby 3.0+" />
+  <img src="https://img.shields.io/badge/gem-v0.1.0-blue" alt="Gem: v0.1.0" />
+  <img src="https://img.shields.io/badge/downloads-0-lightgrey" alt="Downloads" />
+  <img src="https://img.shields.io/badge/coverage-90%25-brightgreen" alt="Coverage: 90%" />
+</p>
 
-* Source files: `.trb`
-* Compiler: `trc`
-* Config: `.trb.yml`
-* Emit targets:
-
-  * Ruby code: `.rb`
-  * Ruby signature files: `.rbs` (optional)
-  * t-ruby declaration files: `.d.trb` (optional, more expressive than `.rbs`)
-
-The goal of t-ruby is to bring a TypeScript-like developer experience to Ruby, while respecting the existing Ruby ecosystem and its conventions.
-
----
-
-## Status
-
-**All milestones completed.** 260 tests passing.
-
-### ✅ Milestone 1 – Basic Type Parsing & Erasure
-* Parameter/return type annotations, type erasure, error handling
-
-### ✅ Milestone 2 – Core Type System
-* Type aliases, interfaces, union/intersection types, generics, RBS generation
-
-### ✅ Milestone 3 – Ecosystem & Tooling
-* LSP server, `.d.trb` declaration files, IDE integration (VS Code, Vim, Neovim), stdlib types
-
-### ✅ Milestone 4 – Advanced Features
-* Constraint system, type inference, runtime validation, static type checking, caching, package management
-
-See [ROADMAP.md](./ROADMAP.md) for architecture details.
+<p align="center">
+  <a href="#install">Install</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="#quick-start">Quick Start</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="#features">Features</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="./ROADMAP.md">Roadmap</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="./README.ko.md">한국어</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="./README.ja.md">日本語</a>
+</p>
 
 ---
 
-## Concept
+## What is T-Ruby?
+
+T-Ruby is a typed layer for Ruby, inspired by TypeScript.
+It ships as a single executable called `trc`.
+
+Write `.trb` files with type annotations, compile to standard `.rb` files.
+Types are erased at compile time — your Ruby code runs everywhere Ruby runs.
+
+```bash
+trc hello.trb                  # Compile to Ruby
+```
+
+The `trc` compiler also generates `.rbs` signature files for tools like
+Steep and Ruby LSP. Gradually adopt types in existing Ruby projects
+with zero runtime overhead.
+
+```bash
+trc --watch src/               # Watch mode
+trc --emit-rbs src/            # Generate .rbs files
+trc --check src/               # Type check without compiling
+```
+
+---
+
+## Why T-Ruby?
+
+We are friends of Ruby — Rubyists who still use and love Ruby.
+
+We know Ruby has duck typing and dynamic types in its DNA.
+But we couldn't ignore that static type systems are becoming
+essential in real-world production environments.
+
+The Ruby ecosystem has debated this for years,
+yet hasn't quite found its answer.
+
+---
+
+**Sorbet** — Types are written like comments above your code.
+It feels like writing JSDoc and hoping the IDE catches errors.
+
+```ruby
+# Sorbet
+extend T::Sig
+
+sig { params(name: String).returns(String) }
+def greet(name)
+  "Hello, #{name}!"
+end
+```
+
+**RBS** — Ruby's official approach, separate files like TypeScript's `.d.ts`.
+But in Ruby, you have to write them manually or rely on
+"implicit inference + manual fixes" — still cumbersome.
+
+```rbs
+# greet.rbs (separate file)
+def greet: (String name) -> String
+```
+
+```ruby
+# greet.rb (no type info)
+def greet(name)
+  "Hello, #{name}!"
+end
+```
+
+**T-Ruby** — Like TypeScript, types live inside your code.
+Write `.trb`, and `trc` generates both `.rb` and `.rbs`.
+
+```ruby
+# greet.trb
+def greet(name: String): String
+  "Hello, #{name}!"
+end
+```
+
+```bash
+trc greet.trb
+# => build/greet.rb + build/greet.rbs
+```
+
+---
+
+There are new languages like Crystal that reimagine Ruby.
+But we still love Ruby, and we want this to be
+**progress within the Ruby ecosystem, not an escape from it.**
+
+---
+
+## Install
+
+```bash
+# with RubyGems (recommended)
+gem install t-ruby
+
+# from source
+git clone https://github.com/pyhyun/t-ruby
+cd t-ruby && bundle install
+```
+
+### Verify installation
+
+```bash
+trc --version
+```
+
+---
+
+## Quick start
 
 ### 1. Write `.trb`
 
 ```ruby
 # hello.trb
-
-def greet(name: String): void
-  puts "Hello, #{name} from t-ruby!"
+def greet(name: String): String
+  "Hello, #{name}!"
 end
 
-greet("world")
+puts greet("world")
 ```
 
-### 2. Compile with `trc`
+### 2. Compile
 
 ```bash
 trc hello.trb
 ```
 
-Outputs to `build/hello.rb` (and optionally `.rbs` or `.d.trb`).
-
-### 3. Run with Ruby
+### 3. Run
 
 ```bash
 ruby build/hello.rb
+# => Hello, world!
 ```
 
 ---
 
-## Design Goals
+## Features
 
-1. **TypeScript-like DX for Ruby developers**
-
-   * Optional types, gradual typing
-   * Familiar concepts: `type`, `interface`, generics, unions, intersections
-   * A single compiler CLI: `trc`
-
-2. **Interop with the existing Ruby ecosystem**
-
-   * Emit `.rb` that runs on standard Ruby implementations
-   * Emit `.rbs` for Steep, Ruby LSP, etc.
-   * Emit `.d.trb` for richer type declarations
-
-3. **RBS as a baseline, not a constraint**
-
-   * t-ruby’s type system is a superset of RBS
-   * Advanced types may be simplified when projected to `.rbs`
-   * Existing `.rbs` files should remain valid
-
-4. **Ruby-friendly configuration**
-
-   * Project config stored in `.trb.yml`
-   * YAML is used to match Ruby conventions
+- **Type annotations** — Parameter and return types, erased at compile time
+- **Union types** — `String | Integer | nil`
+- **Generics** — `Array<User>`, `Hash<String, Integer>`
+- **Interfaces** — Define contracts between objects
+- **Type aliases** — `type UserID = Integer`
+- **RBS generation** — Works with Steep, Ruby LSP, Sorbet
+- **IDE support** — VS Code, Neovim with LSP
+- **Watch mode** — Recompile on file changes
 
 ---
 
-## Architecture
+## Quick links
 
-### Compiler Pipeline
+**Getting Started**
+- [VS Code Extension](./docs/vscode/en/getting-started.md)
+- [Vim Setup](./docs/vim/en/getting-started.md)
+- [Neovim Setup](./docs/neovim/en/getting-started.md)
 
-```
-.trb source
-    ↓
-[Parser] → Parse type annotations, interfaces, type aliases
-    ↓
-[Error Handler] → Validate types, detect circular references
-    ↓
-[Type Erasure] → Remove annotations, produce valid Ruby
-    ↓
-[RBS Generator] → Generate .rbs signatures (optional)
-    ↓
-.rb + .rbs output
-```
-
-### Type System Components
-
-| Component | Purpose |
-|-----------|---------|
-| **Parser** | Parse type annotations |
-| **TypeAliasRegistry** | Manage type aliases |
-| **TypeChecker** | Static type checking |
-| **TypeInferencer** | Automatic type inference |
-| **RuntimeValidator** | Runtime check generation |
-| **ConstraintChecker** | Type constraints |
-| **TypeErasure** | Remove annotations |
-| **RBSGenerator** | Generate `.rbs` files |
-| **PackageManager** | Package distribution |
-
-### Parser Architecture
-
-The parser uses a **modular, recursive design**:
-
-1. **Main Parser** (`Parser`): Line-by-line tokenization
-   - Detects function definitions
-   - Extracts parameter and return type annotations
-   - Handles multi-line constructs (interfaces)
-
-2. **Type Parsers** (specialized classes):
-   - `UnionTypeParser`: Parses `A | B | C` syntax
-   - `GenericTypeParser`: Parses `Base<Params>` with bracket depth tracking
-   - `IntersectionTypeParser`: Parses `A & B & C` syntax
-
-3. **Registry System**:
-   - `TypeAliasRegistry`: Tracks type aliases with circular reference detection
-   - Validates custom types in type annotations
-
-### Error Detection & Validation
-
-The `ErrorHandler` validates:
-- ✅ Type existence (built-in vs. custom types)
-- ✅ Circular type alias references
-- ✅ Duplicate type alias definitions
-- ✅ Duplicate interface definitions
-- ✅ Duplicate types in unions/intersections
-- ✅ Function definition syntax
+**Guides**
+- [Syntax Highlighting](./docs/syntax-highlighting/en/guide.md)
 
 ---
 
-## Supported Type System
+## Status
 
-### Basic Types
-
-```ruby
-def process(name: String, count: Integer, active: Boolean): String
-end
-```
-
-### Type Aliases
-
-```ruby
-type UserId = Integer
-type Status = String
-
-def get_user(id: UserId): String
-end
-```
-
-### Union Types
-
-```ruby
-def convert(value: String | Integer): String
-end
-
-def maybe_null(): String | nil
-end
-```
-
-### Generic Types
-
-```ruby
-def first(items: Array<String>): String
-end
-
-def map_values(data: Map<String, Integer>): Array<String>
-end
-
-# Nested generics
-def nested(matrix: Array<Array<String>>): Integer
-end
-```
-
-### Intersection Types
-
-```ruby
-interface Readable
-  def read(): String
-end
-
-interface Writable
-  def write(data: String): void
-end
-
-def process(obj: Readable & Writable): void
-end
-```
-
-### Interface Definitions
-
-```ruby
-interface Repository
-  def find(id: Integer): User
-  def save(user: User): void
-  def delete(id: Integer): Boolean
-end
-```
-
----
-
-## `.trb.yml` Example
-
-```yaml
-emit:
-  rb: true
-  rbs: true
-  dtrb: false
-
-paths:
-  src: ./src
-  out: ./build
-  stdlib_rbs: ./rbs/stdlib
-
-strict:
-  rbs_compat: true
-  null_safety: true
-  inference: basic
-```
-
----
-
-## Testing
-
-t-ruby uses **RSpec** for comprehensive test coverage. All production code is tested with a focus on:
-
-- **Complete coverage**: 100% code coverage across all modules
-- **Multiple scenarios**: Tests cover happy paths, edge cases, and error conditions
-- **Test integrity**: All tests either pass legitimately or are documented for future resolution
-
-### Running Tests
-
-```bash
-bundle install
-bundle exec rspec
-# or
-ruby -Ilib -rrspec -e 'RSpec::Core::Runner.run(["spec"])'
-```
-
-### Test Structure
-
-- **Version**: Constants and versioning
-- **Config**: Configuration loading, parsing, and validation
-- **Compiler**: File compilation, path handling, and error cases
-- **CLI**: Command-line interface, arguments, and user feedback
-
-For detailed testing principles and guidelines, see [TESTING.md](./TESTING.md).
-
----
-
-## Roadmap
-
-See [ROADMAP.md](./ROADMAP.md) for details.
+> **Experimental** — T-Ruby is under active development.
+> APIs may change. Not recommended for production use yet.
 
 | Milestone | Status |
 |-----------|--------|
-| 0 – Hello t-ruby | ✅ |
-| 1 – Type Parsing & Erasure | ✅ |
-| 2 – Core Type System | ✅ |
-| 3 – Ecosystem & Tooling | ✅ |
-| 4 – Advanced Features | ✅ |
+| Type Parsing & Erasure | ✅ |
+| Core Type System | ✅ |
+| LSP & IDE Support | ✅ |
+| Advanced Features | ✅ |
+
+See [ROADMAP.md](./ROADMAP.md) for details.
 
 ---
 
-## IDE & Editor Integration
+## Contributing
 
-t-ruby provides first-class support for popular editors with syntax highlighting, LSP integration, and development tools.
-
-### Supported Editors
-
-| Editor | Syntax Highlighting | LSP Support | Documentation |
-|--------|:------------------:|:-----------:|---------------|
-| **VS Code** | ✅ | ✅ | [Getting Started](./docs/vscode/en/getting-started.md) |
-| **Vim** | ✅ | ❌ | [Getting Started](./docs/vim/en/getting-started.md) |
-| **Neovim** | ✅ | ✅ | [Getting Started](./docs/neovim/en/getting-started.md) |
-
-### Quick Install
-
-**VS Code:**
-```bash
-# From VS Code Marketplace
-ext install t-ruby
-
-# Or from source
-cd editors/vscode && npm install && npm run compile
-code --install-extension .
-```
-
-**Vim:**
-```vim
-" Using vim-plug
-Plug 'type-ruby/t-ruby', { 'rtp': 'editors/vim' }
-```
-
-**Neovim:**
-```lua
--- Using lazy.nvim
-{ "type-ruby/t-ruby", ft = { "truby" }, config = function()
-    require("t-ruby-lsp").setup()
-end }
-```
-
-### Documentation by Language
-
-| | English | 한국어 | 日本語 |
-|---|---------|--------|--------|
-| **VS Code** | [Guide](./docs/vscode/en/getting-started.md) | [가이드](./docs/vscode/ko/getting-started.md) | [ガイド](./docs/vscode/ja/getting-started.md) |
-| **Vim** | [Guide](./docs/vim/en/getting-started.md) | [가이드](./docs/vim/ko/getting-started.md) | [ガイド](./docs/vim/ja/getting-started.md) |
-| **Neovim** | [Guide](./docs/neovim/en/getting-started.md) | [가이드](./docs/neovim/ko/getting-started.md) | [ガイド](./docs/neovim/ja/getting-started.md) |
-| **Syntax Highlighting** | [Guide](./docs/syntax-highlighting/en/guide.md) | [가이드](./docs/syntax-highlighting/ko/guide.md) | [ガイド](./docs/syntax-highlighting/ja/guide.md) |
-
----
-
-## Philosophy
-
-t-ruby does not aim to replace Ruby.
-
-* Ruby remains the runtime and host language
-* t-ruby is an optional typed layer on top
-* Gradual adoption in existing Ruby projects is a priority
-
-`t-ruby` respects RBS:
-
-* RBS remains the official Ruby signature format
-* t-ruby extends RBS where useful
-* Advanced types are projected conservatively into `.rbs`
-
----
-
-## Multi-language Documentation
-
-* English (this file)
-* 日本語: [README.ja.md](./README.ja.md)
-* 한국어: [README.ko.md](./README.ko.md)
-
----
+Contributions are welcome! Please feel free to submit issues and pull requests.
 
 ## License
 
-TBD.
+[MIT](./LICENSE)
