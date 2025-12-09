@@ -66,10 +66,11 @@ trc --check src/               # 컴파일 없이 타입 검사만
 루비 생태계는 이 문제에 대해 수년간 치열하게 논의해왔지만,
 아직 적극적인 답을 내놓지 못한 것 같습니다.
 
----
+### 기존 방식
 
-**Sorbet** — 코드 위에 주석처럼 타입을 작성합니다.
-마치 JSDoc을 쓰고 IDE가 에러를 잡아주길 기대하는 것과 비슷합니다.
+**1) Sorbet**
+- 코드 위에 주석처럼 타입을 작성합니다.
+- 마치 JSDoc을 쓰고 IDE가 에러를 잡아주길 기대하는 것과 비슷합니다.
 
 ```ruby
 # Sorbet
@@ -81,9 +82,9 @@ def greet(name)
 end
 ```
 
-**RBS** — Ruby 공식 접근법으로, TypeScript의 `.d.ts`와 같은 별도 파일입니다.
-하지만 Ruby에서는 직접 만들거나 '암묵적 추론 + 수작업 보완'이 필요해
-여전히 번거롭습니다.
+**2) RBS**
+- Ruby 공식 접근법으로, `.rbs` 파일은 TypeScript의 `.d.ts`와 같은 타입정의용 별도 파일입니다.
+- 하지만 Ruby에서는 직접 만들거나 '암묵적 추론 + 수작업 보완'이 필요해 여전히 번거롭습니다.
 
 ```rbs
 # greet.rbs (별도 파일)
@@ -97,8 +98,9 @@ def greet(name)
 end
 ```
 
-**T-Ruby** — TypeScript처럼, 타입이 코드 안에 있습니다.
-`.trb`로 작성하면 `trc`가 `.rb`와 `.rbs`를 모두 생성합니다.
+### T-Ruby
+- TypeScript처럼, 타입이 코드 안에 있습니다.
+- `.trb`로 작성하면 `trc`가 `.rb`와 `.rbs`를 모두 생성합니다.
 
 ```ruby
 # greet.trb
@@ -109,12 +111,13 @@ end
 
 ```bash
 trc greet.trb
-# => build/greet.rb + build/greet.rbs
+# => build/greet.rb
+#  + build/greet.rbs
 ```
 
----
+### 그 외 ...
+**Crystal** 같은 새로운 언어도 있지만, 그것은 엄밀히 루비와 다른 언어입니다.
 
-Crystal 같은 새로운 언어도 있지만,
 우리는 여전히 루비를 사랑하고,
 이것이 루비 생태계의 **탈출이 아닌 진보**이기를 원합니다.
 

@@ -67,10 +67,11 @@ essential in real-world production environments.
 The Ruby ecosystem has debated this for years,
 yet hasn't quite found its answer.
 
----
+### Existing Approaches
 
-**Sorbet** — Types are written like comments above your code.
-It feels like writing JSDoc and hoping the IDE catches errors.
+**1) Sorbet**
+- Types are written like comments above your code.
+- It feels like writing JSDoc and hoping the IDE catches errors.
 
 ```ruby
 # Sorbet
@@ -82,9 +83,9 @@ def greet(name)
 end
 ```
 
-**RBS** — Ruby's official approach, separate files like TypeScript's `.d.ts`.
-But in Ruby, you have to write them manually or rely on
-"implicit inference + manual fixes" — still cumbersome.
+**2) RBS**
+- Ruby's official approach, where `.rbs` files are separate type definition files like TypeScript's `.d.ts`.
+- But in Ruby, you have to write them manually or rely on "implicit inference + manual fixes" — still cumbersome.
 
 ```rbs
 # greet.rbs (separate file)
@@ -98,8 +99,9 @@ def greet(name)
 end
 ```
 
-**T-Ruby** — Like TypeScript, types live inside your code.
-Write `.trb`, and `trc` generates both `.rb` and `.rbs`.
+### T-Ruby
+- Like TypeScript, types live inside your code.
+- Write `.trb`, and `trc` generates both `.rb` and `.rbs`.
 
 ```ruby
 # greet.trb
@@ -110,13 +112,14 @@ end
 
 ```bash
 trc greet.trb
-# => build/greet.rb + build/greet.rbs
+# => build/greet.rb
+#  + build/greet.rbs
 ```
 
----
+### Others...
+There are new languages like **Crystal**, but strictly speaking, it's a different language from Ruby.
 
-There are new languages like Crystal that reimagine Ruby.
-But we still love Ruby, and we want this to be
+We still love Ruby, and we want this to be
 **progress within the Ruby ecosystem, not an escape from it.**
 
 ---
