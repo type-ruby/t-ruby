@@ -1,0 +1,25 @@
+# Source files (compiled output in out/ is sufficient)
+src/
+*.ts
+!*.d.ts
+
+# TypeScript config
+tsconfig.json
+
+# Package lock (not needed at runtime)
+package-lock.json
+
+# Source maps (optional, can be included for debugging)
+out/**/*.map
+
+# Development files
+.vscode/
+.github/
+.git/
+
+# Test files
+**/*.test.ts
+**/test/
+
+# Build artifacts
+*.vsix

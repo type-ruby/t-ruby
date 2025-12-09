@@ -7,8 +7,17 @@ CLAUDE.md
 AGENT.md
 /.idea
 
+ignore/
+
 # Test and coverage
 /coverage
 /coverage.html
 .rspec_status
 *.lcov
+
+# VSCode extension build artifacts
+editors/vscode/out/
+editors/vscode/node_modules/
+editors/vscode/*.vsix
+
+.env*

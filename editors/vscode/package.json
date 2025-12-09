@@ -2,7 +2,7 @@
   "name": "t-ruby",
   "displayName": "T-Ruby",
   "description": "T-Ruby language support with type annotations for Ruby",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "publisher": "t-ruby",
   "engines": {
     "vscode": "^1.75.0"
@@ -18,16 +18,20 @@
     "typescript",
     "static typing"
   ],
-  "activationEvents": [
-    "onLanguage:t-ruby"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
       {
         "id": "t-ruby",
-        "aliases": ["T-Ruby", "t-ruby", "trb"],
-        "extensions": [".trb", ".d.trb"],
+        "aliases": [
+          "T-Ruby",
+          "t-ruby",
+          "trb"
+        ],
+        "extensions": [
+          ".trb",
+          ".d.trb"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -83,7 +87,9 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "lint": "eslint src --ext ts"
+    "lint": "eslint src --ext ts",
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/node": "^18.x",
@@ -100,5 +106,6 @@
     "type": "git",
     "url": "https://github.com/type-ruby/t-ruby"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "icon": "icon.png"
 }
