@@ -1,0 +1,70 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Regexp and MatchData classes
+
+interface Regexp
+  # Matching
+  match: MatchData | nil
+  match?: Boolean
+  =~: Integer | nil
+  ===: Boolean
+  ~: Integer | nil
+
+  # Pattern info
+  source: String
+  options: Integer
+  encoding: Encoding
+  named_captures: Hash<String, Array<Integer>>
+  names: Array<String>
+  casefold?: Boolean
+  fixed_encoding?: Boolean
+
+  # Comparison
+  ==: Boolean
+  eql?: Boolean
+  hash: Integer
+
+  # Conversion
+  to_s: String
+  inspect: String
+
+  # Class methods (represented as static)
+  # Regexp.escape, Regexp.quote, Regexp.union, etc.
+end
+
+# MatchData - result of regexp match
+interface MatchData
+  # Access matches
+  []: String | nil
+  values_at: Array<String | nil>
+  captures: Array<String | nil>
+  named_captures: Hash<String, String | nil>
+
+  # Match positions
+  begin: Integer | nil
+  end: Integer | nil
+  offset: Array<Integer | nil>
+  byteoffset: Array<Integer | nil>
+
+  # Match info
+  length: Integer
+  size: Integer
+  regexp: Regexp
+  string: String
+  names: Array<String>
+
+  # Before/after match
+  pre_match: String
+  post_match: String
+
+  # Deconstruction (Ruby 3.2+)
+  deconstruct: Array<String | nil>
+  deconstruct_keys: Hash<Symbol, String | nil>
+
+  # Conversion
+  to_a: Array<String | nil>
+  to_s: String
+  inspect: String
+end
+
+# Regexp option constants (as type alias)
+type RegexpOptions = Integer

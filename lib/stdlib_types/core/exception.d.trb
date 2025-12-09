@@ -1,0 +1,179 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Exception hierarchy
+
+# Base exception class
+interface Exception
+  # Message
+  message: String
+  to_s: String
+  inspect: String
+
+  # Backtrace
+  backtrace: Array<String> | nil
+  backtrace_locations: Array<Thread::Backtrace::Location> | nil
+  set_backtrace: Array<String> | nil
+  full_message: String
+
+  # Cause chain
+  cause: Exception | nil
+
+  # Comparison
+  ==: Boolean
+
+  # Detailed error info (Ruby 3.2+)
+  detailed_message: String
+end
+
+# StandardError - base for most user-catchable exceptions
+interface StandardError
+  # Inherits Exception
+  message: String
+  to_s: String
+  backtrace: Array<String> | nil
+  cause: Exception | nil
+end
+
+# Common exception classes
+interface RuntimeError
+  # Raised by raise when no class is specified
+end
+
+interface TypeError
+  # Type mismatch errors
+end
+
+interface ArgumentError
+  # Wrong number/type of arguments
+end
+
+interface NameError
+  name: Symbol | String
+  local_variables: Array<Symbol>
+  receiver: Object | nil
+end
+
+interface NoMethodError
+  args: Array<Object>
+  private_call?: Boolean
+end
+
+interface RangeError
+  # Numeric range errors
+end
+
+interface IndexError
+  # Index out of bounds
+end
+
+interface KeyError
+  key: Object
+  receiver: Object
+end
+
+interface StopIteration
+  result: Object
+end
+
+interface IOError
+  # I/O operation errors
+end
+
+interface EOFError
+  # End of file reached
+end
+
+interface SystemCallError
+  errno: Integer
+end
+
+interface Errno::ENOENT
+  # File not found
+end
+
+interface Errno::EACCES
+  # Permission denied
+end
+
+interface Errno::EEXIST
+  # File exists
+end
+
+interface LoadError
+  path: String
+end
+
+interface SyntaxError
+  # Syntax errors in code
+end
+
+interface NotImplementedError
+  # Feature not implemented
+end
+
+interface ZeroDivisionError
+  # Division by zero
+end
+
+interface FloatDomainError
+  # Math domain error
+end
+
+interface RegexpError
+  # Invalid regexp
+end
+
+interface EncodingError
+  # Encoding-related errors
+end
+
+interface Encoding::InvalidByteSequenceError
+  error_bytes: String
+  incomplete_input?: Boolean
+  source_encoding: Encoding
+  source_encoding_name: String
+  destination_encoding: Encoding
+  destination_encoding_name: String
+end
+
+interface Encoding::UndefinedConversionError
+  error_char: String
+  source_encoding: Encoding
+  source_encoding_name: String
+  destination_encoding: Encoding
+  destination_encoding_name: String
+end
+
+# Thread-related exceptions
+interface ThreadError
+  # Thread operation errors
+end
+
+interface FiberError
+  # Fiber operation errors
+end
+
+# Fatal errors (not catchable with rescue)
+interface SignalException
+  signo: Integer
+  signm: String
+end
+
+interface Interrupt
+  # Ctrl+C interrupt
+end
+
+interface SystemExit
+  status: Integer
+  success?: Boolean
+end
+
+interface SystemStackError
+  # Stack overflow
+end
+
+interface NoMemoryError
+  # Out of memory
+end
+
+# Type alias for rescue clause
+type ExceptionClass = Class

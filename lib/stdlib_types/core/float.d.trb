@@ -1,0 +1,226 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Float class
+
+interface Float
+  include Comparable<Float>
+
+  # Arithmetic
+  +: Float
+  -: Float
+  *: Float
+  /: Float
+  %: Float
+  **: Float
+  -@: Float
+  +@: Float
+  divmod: Array<Float>
+  fdiv: Float
+  quo: Float
+
+  # Comparison
+  <=>: Integer | nil
+  ==: Boolean
+  <: Boolean
+  <=: Boolean
+  >: Boolean
+  >=: Boolean
+  eql?: Boolean
+
+  # Rounding
+  round: Integer | Float
+  ceil: Integer | Float
+  floor: Integer | Float
+  truncate: Integer | Float
+
+  # Sign and magnitude
+  abs: Float
+  magnitude: Float
+  -@: Float
+
+  # Predicates
+  finite?: Boolean
+  infinite?: Integer | nil
+  nan?: Boolean
+  zero?: Boolean
+  positive?: Boolean
+  negative?: Boolean
+
+  # Special value checks
+  integer?: Boolean
+
+  # Type coercion
+  coerce: Array<Float>
+
+  # Conversion
+  to_i: Integer
+  to_int: Integer
+  to_f: Float
+  to_r: Rational
+  to_s: String
+  inspect: String
+  rationalize: Rational
+
+  # Packing
+  to_d: BigDecimal
+
+  # Object methods
+  hash: Integer
+  dup: Float
+  clone: Float
+
+  # Constants access (as methods)
+  # Float::INFINITY, Float::NAN, etc.
+end
+
+# Rational number
+interface Rational
+  include Comparable<Rational>
+
+  # Components
+  numerator: Integer
+  denominator: Integer
+
+  # Arithmetic
+  +: Rational | Float
+  -: Rational | Float
+  *: Rational | Float
+  /: Rational | Float
+  **: Rational | Float
+  -@: Rational
+  +@: Rational
+  fdiv: Float
+  quo: Rational
+
+  # Comparison
+  <=>: Integer | nil
+  ==: Boolean
+  <: Boolean
+  <=: Boolean
+  >: Boolean
+  >=: Boolean
+
+  # Sign
+  abs: Rational
+  negative?: Boolean
+  positive?: Boolean
+
+  # Rounding
+  round: Integer | Rational
+  ceil: Integer | Rational
+  floor: Integer | Rational
+  truncate: Integer | Rational
+
+  # Conversion
+  to_i: Integer
+  to_f: Float
+  to_r: Rational
+  to_s: String
+  inspect: String
+  rationalize: Rational
+
+  # Object methods
+  hash: Integer
+end
+
+# Complex number (from cmath library)
+interface Complex
+  include Comparable<Complex>
+
+  # Components
+  real: Numeric
+  imaginary: Numeric
+  imag: Numeric
+
+  # Arithmetic
+  +: Complex
+  -: Complex
+  *: Complex
+  /: Complex
+  **: Complex
+  -@: Complex
+  +@: Complex
+  fdiv: Complex
+
+  # Magnitude and angle
+  abs: Float
+  abs2: Float
+  magnitude: Float
+  arg: Float
+  angle: Float
+  phase: Float
+  polar: Array<Float>
+  rect: Array<Numeric>
+  rectangular: Array<Numeric>
+
+  # Complex conjugate
+  conjugate: Complex
+  conj: Complex
+
+  # Predicates
+  finite?: Boolean
+  infinite?: Integer | nil
+  real?: Boolean
+  zero?: Boolean
+
+  # Conversion
+  to_c: Complex
+  to_i: Integer
+  to_f: Float
+  to_r: Rational
+  to_s: String
+  inspect: String
+
+  # Object methods
+  ==: Boolean
+  hash: Integer
+end
+
+# BigDecimal for arbitrary precision (from bigdecimal library)
+interface BigDecimal
+  include Comparable<BigDecimal>
+
+  # Arithmetic
+  +: BigDecimal
+  -: BigDecimal
+  *: BigDecimal
+  /: BigDecimal
+  %: BigDecimal
+  divmod: Array<BigDecimal>
+  power: BigDecimal
+  sqrt: BigDecimal
+
+  # Rounding
+  round: BigDecimal
+  ceil: BigDecimal
+  floor: BigDecimal
+  truncate: BigDecimal
+  fix: BigDecimal
+  frac: BigDecimal
+
+  # Sign and predicates
+  abs: BigDecimal
+  sign: Integer
+  nan?: Boolean
+  infinite?: Boolean
+  finite?: Boolean
+  zero?: Boolean
+  nonzero?: BigDecimal | nil
+
+  # Conversion
+  to_i: Integer
+  to_f: Float
+  to_r: Rational
+  to_s: String
+  inspect: String
+
+  # Precision
+  precs: Array<Integer>
+  split: Array<Integer | String>
+  exponent: Integer
+
+  hash: Integer
+end
+
+# Type aliases
+type RealNumber = Integer | Float | Rational | BigDecimal
+type ComplexNumber = Complex

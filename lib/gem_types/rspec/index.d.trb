@@ -1,0 +1,401 @@
+# T-Ruby Gem Type Definitions
+# RSpec Testing Framework
+# Version: 3.x compatible
+
+# =============================================================================
+# RSpec Core
+# =============================================================================
+
+interface RSpec
+  configuration: RSpec::Core::Configuration
+  world: RSpec::Core::World
+  current_example: RSpec::Core::Example | nil
+end
+
+interface RSpec::Core::Configuration
+  # Output
+  color: Boolean
+  color=: Boolean
+  color_mode: Symbol
+  color_mode=: Symbol
+  formatter: void
+  add_formatter: void
+  default_formatter: String
+  output_stream: IO
+  output_stream=: IO
+
+  # Filtering
+  filter_run: void
+  filter_run_excluding: void
+  filter_run_when_matching: void
+  inclusion_filter: Hash<Symbol, Object>
+  exclusion_filter: Hash<Symbol, Object>
+
+  # Ordering
+  order: Symbol
+  order=: Symbol
+  seed: Integer
+  seed=: Integer
+
+  # Behavior
+  fail_fast: Boolean | Integer
+  fail_fast=: Boolean | Integer
+  failure_exit_code: Integer
+  failure_exit_code=: Integer
+  profile_examples: Integer | Boolean
+  profile_examples=: Integer | Boolean
+
+  # Hooks
+  before: void
+  after: void
+  around: void
+  prepend_before: void
+  append_after: void
+
+  # Metadata
+  define_derived_metadata: void
+
+  # Shared contexts/examples
+  shared_context_metadata_behavior: Symbol
+  shared_context_metadata_behavior=: Symbol
+
+  # Extensions
+  include: void
+  extend: void
+  prepend: void
+
+  # Files
+  files_to_run: Array<String>
+  pattern: String
+  pattern=: String
+  exclude_pattern: String
+  exclude_pattern=: String
+
+  # Expectations
+  expect_with: void
+  mock_with: void
+
+  # Output
+  deprecation_stream: IO
+  deprecation_stream=: IO
+  warnings: Boolean
+  warnings=: Boolean
+
+  # Misc
+  default_path: String
+  default_path=: String
+  drb: Boolean
+  drb=: Boolean
+  drb_port: Integer
+  drb_port=: Integer
+end
+
+interface RSpec::Core::World
+  example_groups: Array<RSpec::Core::ExampleGroup>
+  example_count: Integer
+  non_example_failure: Boolean
+  registered_example_groups: Array<RSpec::Core::ExampleGroup>
+  reset: void
+  all_examples: Array<RSpec::Core::Example>
+end
+
+interface RSpec::Core::Example
+  description: String
+  full_description: String
+  location: String
+  location_rerun_argument: String
+  file_path: String
+  id: String
+  metadata: Hash<Symbol, Object>
+  execution_result: RSpec::Core::Example::ExecutionResult
+  example_group: RSpec::Core::ExampleGroup
+  exception: Exception | nil
+  pending?: Boolean
+  skipped?: Boolean
+
+  run: Boolean
+  skip: void
+  set_exception: void
+  set_aggregate_failures_exception: void
+end
+
+interface RSpec::Core::Example::ExecutionResult
+  status: Symbol
+  started_at: Time | nil
+  finished_at: Time | nil
+  run_time: Float
+  exception: Exception | nil
+  pending_message: String | nil
+  pending_fixed?: Boolean
+  pending_exception: Exception | nil
+end
+
+interface RSpec::Core::ExampleGroup
+  description: String
+  metadata: Hash<Symbol, Object>
+  examples: Array<RSpec::Core::Example>
+  children: Array<RSpec::Core::ExampleGroup>
+  parent_groups: Array<RSpec::Core::ExampleGroup>
+  file_path: String
+  location: String
+
+  # DSL methods (class level)
+  describe: void
+  context: void
+  it: void
+  specify: void
+  example: void
+  pending: void
+  skip: void
+  xit: void
+  xspecify: void
+  xexample: void
+  focus: void
+  fit: void
+  fspecify: void
+  fexample: void
+
+  # Hooks
+  before: void
+  after: void
+  around: void
+  prepend_before: void
+  append_after: void
+
+  # Shared behavior
+  include_context: void
+  include_examples: void
+  it_behaves_like: void
+  it_should_behave_like: void
+
+  # Let and subject
+  let: void
+  let!: void
+  subject: void
+  subject!: void
+end
+
+# =============================================================================
+# RSpec Expectations
+# =============================================================================
+
+interface RSpec::Expectations
+  fail_with: void
+end
+
+interface RSpec::Expectations::ExpectationTarget
+  to: Boolean
+  not_to: Boolean
+  to_not: Boolean
+
+  # Block expectations
+  to: Boolean
+  not_to: Boolean
+end
+
+# =============================================================================
+# RSpec Matchers
+# =============================================================================
+
+interface RSpec::Matchers
+  # Equality
+  eq: RSpec::Matchers::BuiltIn::Eq
+  eql: RSpec::Matchers::BuiltIn::Eql
+  equal: RSpec::Matchers::BuiltIn::Equal
+  be: RSpec::Matchers::BuiltIn::Be
+
+  # Comparisons
+  be_between: RSpec::Matchers::BuiltIn::BeBetween
+  be_within: RSpec::Matchers::BuiltIn::BeWithin
+
+  # Truthiness
+  be_truthy: RSpec::Matchers::BuiltIn::BeTruthy
+  be_falsey: RSpec::Matchers::BuiltIn::BeFalsey
+  be_falsy: RSpec::Matchers::BuiltIn::BeFalsey
+  be_nil: RSpec::Matchers::BuiltIn::BeNil
+
+  # Type checking
+  be_a: RSpec::Matchers::BuiltIn::BeAKindOf
+  be_an: RSpec::Matchers::BuiltIn::BeAKindOf
+  be_a_kind_of: RSpec::Matchers::BuiltIn::BeAKindOf
+  be_an_instance_of: RSpec::Matchers::BuiltIn::BeAnInstanceOf
+  be_instance_of: RSpec::Matchers::BuiltIn::BeAnInstanceOf
+
+  # Collections
+  include: RSpec::Matchers::BuiltIn::Include
+  match_array: RSpec::Matchers::BuiltIn::MatchArray
+  contain_exactly: RSpec::Matchers::BuiltIn::ContainExactly
+  start_with: RSpec::Matchers::BuiltIn::StartWith
+  end_with: RSpec::Matchers::BuiltIn::EndWith
+  all: RSpec::Matchers::BuiltIn::All
+  have_key: RSpec::Matchers::BuiltIn::HaveKey
+  have_value: RSpec::Matchers::BuiltIn::HaveValue
+
+  # String matching
+  match: RSpec::Matchers::BuiltIn::Match
+
+  # Change
+  change: RSpec::Matchers::BuiltIn::Change
+
+  # Exceptions
+  raise_error: RSpec::Matchers::BuiltIn::RaiseError
+  raise_exception: RSpec::Matchers::BuiltIn::RaiseError
+
+  # Throwing
+  throw_symbol: RSpec::Matchers::BuiltIn::ThrowSymbol
+
+  # Yielding
+  yield_control: RSpec::Matchers::BuiltIn::YieldControl
+  yield_with_no_args: RSpec::Matchers::BuiltIn::YieldWithNoArgs
+  yield_with_args: RSpec::Matchers::BuiltIn::YieldWithArgs
+  yield_successive_args: RSpec::Matchers::BuiltIn::YieldSuccessiveArgs
+
+  # Output
+  output: RSpec::Matchers::BuiltIn::Output
+
+  # Satisfy
+  satisfy: RSpec::Matchers::BuiltIn::Satisfy
+
+  # Responding
+  respond_to: RSpec::Matchers::BuiltIn::RespondTo
+  have_attributes: RSpec::Matchers::BuiltIn::HaveAttributes
+
+  # Predicate matchers (dynamic)
+  be_empty: RSpec::Matchers::BuiltIn::BePredicate
+  be_valid: RSpec::Matchers::BuiltIn::BePredicate
+  have_errors: RSpec::Matchers::BuiltIn::Has
+
+  # Compound
+  and: RSpec::Matchers::BuiltIn::Compound::And
+  or: RSpec::Matchers::BuiltIn::Compound::Or
+
+  # Aliased matchers
+  a_kind_of: RSpec::Matchers::BuiltIn::BeAKindOf
+  an_instance_of: RSpec::Matchers::BuiltIn::BeAnInstanceOf
+  a_string_matching: RSpec::Matchers::BuiltIn::Match
+  a_string_starting_with: RSpec::Matchers::BuiltIn::StartWith
+  a_string_ending_with: RSpec::Matchers::BuiltIn::EndWith
+  a_string_including: RSpec::Matchers::BuiltIn::Include
+  a_collection_including: RSpec::Matchers::BuiltIn::Include
+  a_hash_including: RSpec::Matchers::BuiltIn::Include
+  an_object_having_attributes: RSpec::Matchers::BuiltIn::HaveAttributes
+  an_object_responding_to: RSpec::Matchers::BuiltIn::RespondTo
+  an_object_satisfying: RSpec::Matchers::BuiltIn::Satisfy
+end
+
+# Matcher base interface
+interface RSpec::Matchers::BuiltIn::BaseMatcher
+  matches?: Boolean
+  failure_message: String
+  failure_message_when_negated: String
+  description: String
+  supports_block_expectations?: Boolean
+  supports_value_expectations?: Boolean
+  expects_call_stack_jump?: Boolean
+end
+
+# Change matcher
+interface RSpec::Matchers::BuiltIn::Change
+  from: RSpec::Matchers::BuiltIn::Change
+  to: RSpec::Matchers::BuiltIn::Change
+  by: RSpec::Matchers::BuiltIn::Change
+  by_at_least: RSpec::Matchers::BuiltIn::Change
+  by_at_most: RSpec::Matchers::BuiltIn::Change
+end
+
+# BeWithin matcher
+interface RSpec::Matchers::BuiltIn::BeWithin
+  of: RSpec::Matchers::BuiltIn::BeWithin
+  percent_of: RSpec::Matchers::BuiltIn::BeWithin
+end
+
+# BeBetween matcher
+interface RSpec::Matchers::BuiltIn::BeBetween
+  inclusive: RSpec::Matchers::BuiltIn::BeBetween
+  exclusive: RSpec::Matchers::BuiltIn::BeBetween
+end
+
+# RaiseError matcher
+interface RSpec::Matchers::BuiltIn::RaiseError
+  with_message: RSpec::Matchers::BuiltIn::RaiseError
+end
+
+# Output matcher
+interface RSpec::Matchers::BuiltIn::Output
+  to_stdout: RSpec::Matchers::BuiltIn::Output
+  to_stderr: RSpec::Matchers::BuiltIn::Output
+  to_stdout_from_any_process: RSpec::Matchers::BuiltIn::Output
+  to_stderr_from_any_process: RSpec::Matchers::BuiltIn::Output
+end
+
+# =============================================================================
+# RSpec Mocks
+# =============================================================================
+
+interface RSpec::Mocks
+  configuration: RSpec::Mocks::Configuration
+  space: RSpec::Mocks::Space
+  allow_message: void
+  expect_message: void
+  setup: void
+  verify: void
+  teardown: void
+end
+
+interface RSpec::Mocks::Configuration
+  allow_message_expectations_on_nil: Boolean
+  allow_message_expectations_on_nil=: Boolean
+  verify_doubled_constant_names: Boolean
+  verify_doubled_constant_names=: Boolean
+  verify_partial_doubles: Boolean
+  verify_partial_doubles=: Boolean
+  temporarily_suppress_partial_double_verification: void
+end
+
+# Double
+interface RSpec::Mocks::Double
+  as_null_object: RSpec::Mocks::Double
+end
+
+# Message expectation
+interface RSpec::Mocks::MessageExpectation
+  with: RSpec::Mocks::MessageExpectation
+  and_return: RSpec::Mocks::MessageExpectation
+  and_raise: RSpec::Mocks::MessageExpectation
+  and_throw: RSpec::Mocks::MessageExpectation
+  and_yield: RSpec::Mocks::MessageExpectation
+  and_call_original: RSpec::Mocks::MessageExpectation
+  and_wrap_original: RSpec::Mocks::MessageExpectation
+
+  once: RSpec::Mocks::MessageExpectation
+  twice: RSpec::Mocks::MessageExpectation
+  thrice: RSpec::Mocks::MessageExpectation
+  exactly: RSpec::Mocks::MessageExpectation
+  at_least: RSpec::Mocks::MessageExpectation
+  at_most: RSpec::Mocks::MessageExpectation
+  times: RSpec::Mocks::MessageExpectation
+  time: RSpec::Mocks::MessageExpectation
+
+  never: RSpec::Mocks::MessageExpectation
+
+  ordered: RSpec::Mocks::MessageExpectation
+end
+
+# Allow target
+interface RSpec::Mocks::AllowanceTarget
+  to: RSpec::Mocks::MessageExpectation
+  not_to: void
+  to_not: void
+end
+
+# Expect target
+interface RSpec::Mocks::ExpectationTarget
+  to: RSpec::Mocks::MessageExpectation
+  not_to: void
+  to_not: void
+end
+
+# Type aliases for RSpec
+type ExampleMetadata = Hash<Symbol, Object>
+type SharedContext = Proc<void>
+type LetBlock<T> = Proc<T>

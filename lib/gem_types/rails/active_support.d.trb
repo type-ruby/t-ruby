@@ -1,0 +1,436 @@
+# T-Ruby Gem Type Definitions
+# Rails: ActiveSupport
+
+# =============================================================================
+# ActiveSupport Core Extensions
+# =============================================================================
+
+# String extensions
+interface ActiveSupport::StringExtensions
+  # Inflections
+  pluralize: String
+  singularize: String
+  camelize: String
+  titleize: String
+  underscore: String
+  dasherize: String
+  demodulize: String
+  deconstantize: String
+  parameterize: String
+  tableize: String
+  classify: String
+  constantize: Class | Module
+  safe_constantize: Class | Module | nil
+  humanize: String
+  upcase_first: String
+  foreign_key: String
+
+  # Truncation
+  truncate: String
+  truncate_bytes: String
+  truncate_words: String
+
+  # Access
+  at: String
+  from: String
+  to: String
+  first: String
+  last: String
+
+  # Predicates
+  blank?: Boolean
+  present?: Boolean
+  presence: String | nil
+
+  # Encoding
+  squish: String
+  squish!: String
+  remove: String
+  remove!: String
+
+  # HTML
+  html_safe: ActiveSupport::SafeBuffer
+  html_safe?: Boolean
+end
+
+# Array extensions
+interface ActiveSupport::ArrayExtensions
+  # Access
+  second: Object | nil
+  third: Object | nil
+  fourth: Object | nil
+  fifth: Object | nil
+  second_to_last: Object | nil
+  third_to_last: Object | nil
+  forty_two: Object | nil
+
+  # Grouping
+  in_groups: Array<Array<Object>>
+  in_groups_of: Array<Array<Object>>
+  split: Array<Array<Object>>
+
+  # Conversion
+  to_sentence: String
+  to_formatted_s: String
+  to_param: String
+  to_query: String
+
+  # Query
+  including: Array<Object>
+  excluding: Array<Object>
+  without: Array<Object>
+
+  # Extraction
+  extract!: Array<Object>
+  extract_options!: Hash<Symbol, Object>
+
+  # Predicates
+  blank?: Boolean
+  present?: Boolean
+  presence: Array<Object> | nil
+end
+
+# Hash extensions
+interface ActiveSupport::HashExtensions
+  # Access
+  deep_merge: Hash<Object, Object>
+  deep_merge!: Hash<Object, Object>
+  deep_transform_keys: Hash<Object, Object>
+  deep_transform_keys!: Hash<Object, Object>
+  deep_transform_values: Hash<Object, Object>
+  deep_transform_values!: Hash<Object, Object>
+  deep_stringify_keys: Hash<String, Object>
+  deep_stringify_keys!: Hash<String, Object>
+  deep_symbolize_keys: Hash<Symbol, Object>
+  deep_symbolize_keys!: Hash<Symbol, Object>
+
+  # Slicing
+  slice!: Hash<Object, Object>
+  extract!: Hash<Object, Object>
+  except!: Hash<Object, Object>
+
+  # Conversion
+  to_query: String
+  to_param: String
+  to_xml: String
+
+  # Defaults
+  reverse_merge: Hash<Object, Object>
+  reverse_merge!: Hash<Object, Object>
+  with_defaults: Hash<Object, Object>
+  with_defaults!: Hash<Object, Object>
+
+  # Indifferent access
+  with_indifferent_access: ActiveSupport::HashWithIndifferentAccess
+
+  # Predicates
+  blank?: Boolean
+  present?: Boolean
+  presence: Hash<Object, Object> | nil
+end
+
+# HashWithIndifferentAccess
+interface ActiveSupport::HashWithIndifferentAccess
+  []: Object
+  []=: Object
+  fetch: Object
+  key?: Boolean
+  has_key?: Boolean
+  include?: Boolean
+  member?: Boolean
+  delete: Object
+  values_at: Array<Object>
+  slice: ActiveSupport::HashWithIndifferentAccess
+  except: ActiveSupport::HashWithIndifferentAccess
+  merge: ActiveSupport::HashWithIndifferentAccess
+  to_hash: Hash<String, Object>
+  to_h: Hash<String, Object>
+  dup: ActiveSupport::HashWithIndifferentAccess
+  deep_dup: ActiveSupport::HashWithIndifferentAccess
+end
+
+# Object extensions
+interface ActiveSupport::ObjectExtensions
+  blank?: Boolean
+  present?: Boolean
+  presence: Object | nil
+
+  try: Object | nil
+  try!: Object
+
+  in?: Boolean
+
+  instance_values: Hash<String, Object>
+  instance_variable_names: Array<String>
+
+  deep_dup: Object
+
+  to_param: String | nil
+  to_query: String
+end
+
+# Numeric extensions
+interface ActiveSupport::NumericExtensions
+  # Byte calculations
+  byte: Integer
+  bytes: Integer
+  kilobyte: Integer
+  kilobytes: Integer
+  megabyte: Integer
+  megabytes: Integer
+  gigabyte: Integer
+  gigabytes: Integer
+  terabyte: Integer
+  terabytes: Integer
+  petabyte: Integer
+  petabytes: Integer
+  exabyte: Integer
+  exabytes: Integer
+end
+
+# Duration
+interface ActiveSupport::Duration
+  parts: Hash<Symbol, Numeric>
+  value: Numeric
+
+  # Arithmetic
+  +: ActiveSupport::Duration
+  -: ActiveSupport::Duration
+  *: ActiveSupport::Duration
+  /: ActiveSupport::Duration
+  -@: ActiveSupport::Duration
+
+  # Comparisons
+  <=>: Integer | nil
+  ==: Boolean
+  eql?: Boolean
+
+  # Time calculations
+  ago: Time
+  from_now: Time
+  since: Time
+  until: Time
+  after: Time
+  before: Time
+
+  # Parts access
+  in_seconds: Float
+  in_minutes: Float
+  in_hours: Float
+  in_days: Float
+  in_weeks: Float
+  in_months: Float
+  in_years: Float
+
+  # Conversion
+  to_i: Integer
+  to_f: Float
+  to_s: String
+  iso8601: String
+  inspect: String
+
+  # Build
+  build: ActiveSupport::Duration
+end
+
+# Time extensions
+interface ActiveSupport::TimeExtensions
+  # Navigation
+  beginning_of_day: Time
+  end_of_day: Time
+  beginning_of_week: Time
+  end_of_week: Time
+  beginning_of_month: Time
+  end_of_month: Time
+  beginning_of_quarter: Time
+  end_of_quarter: Time
+  beginning_of_year: Time
+  end_of_year: Time
+
+  # Calculations
+  advance: Time
+  change: Time
+  ago: Time
+  since: Time
+
+  # Predicates
+  today?: Boolean
+  tomorrow?: Boolean
+  yesterday?: Boolean
+  on_weekday?: Boolean
+  on_weekend?: Boolean
+  past?: Boolean
+  future?: Boolean
+
+  # Formatting
+  to_formatted_s: String
+  to_fs: String
+
+  # Conversion
+  to_time: Time
+  to_datetime: DateTime
+  to_date: Date
+  in_time_zone: ActiveSupport::TimeWithZone
+end
+
+# TimeWithZone
+interface ActiveSupport::TimeWithZone
+  time_zone: ActiveSupport::TimeZone
+  time: Time
+  utc: Time
+
+  # All Time methods plus:
+  in_time_zone: ActiveSupport::TimeWithZone
+  localtime: Time
+  getlocal: Time
+  utc?: Boolean
+
+  # Formatting
+  xmlschema: String
+  iso8601: String
+  rfc2822: String
+  rfc822: String
+  httpdate: String
+  to_formatted_s: String
+  to_fs: String
+  as_json: String
+
+  # Comparison
+  <=>: Integer | nil
+  eql?: Boolean
+  hash: Integer
+
+  # Predicates
+  past?: Boolean
+  future?: Boolean
+  today?: Boolean
+  tomorrow?: Boolean
+  yesterday?: Boolean
+
+  to_s: String
+  inspect: String
+end
+
+# TimeZone
+interface ActiveSupport::TimeZone
+  name: String
+  utc_offset: Integer
+
+  now: ActiveSupport::TimeWithZone
+  today: Date
+  tomorrow: Date
+  yesterday: Date
+
+  local: ActiveSupport::TimeWithZone
+  local_to_utc: Time
+  utc_to_local: Time
+
+  at: ActiveSupport::TimeWithZone
+  parse: ActiveSupport::TimeWithZone | nil
+  strptime: ActiveSupport::TimeWithZone
+  iso8601: ActiveSupport::TimeWithZone | nil
+
+  to_s: String
+  formatted_offset: String
+end
+
+# Callbacks
+interface ActiveSupport::Callbacks
+  run_callbacks: Object
+  set_callback: void
+  skip_callback: void
+  reset_callbacks: void
+  define_callbacks: void
+end
+
+# Concern
+interface ActiveSupport::Concern
+  included: void
+  class_methods: void
+  prepended: void
+end
+
+# Notifications
+interface ActiveSupport::Notifications
+  # Class methods
+end
+
+interface ActiveSupport::Notifications::Event
+  name: String
+  transaction_id: String
+  time: Time
+  end: Time
+  payload: Hash<Symbol, Object>
+  duration: Float
+  cpu_time: Float
+  idle_time: Float
+  allocations: Integer
+end
+
+# Configurable
+interface ActiveSupport::Configurable
+  config: ActiveSupport::OrderedOptions
+end
+
+interface ActiveSupport::OrderedOptions
+  []: Object
+  []=: Object
+  method_missing: Object
+end
+
+# SafeBuffer for HTML
+interface ActiveSupport::SafeBuffer
+  # Inherits String
+  safe_concat: ActiveSupport::SafeBuffer
+  html_safe?: Boolean
+  to_s: String
+end
+
+# Logger
+interface ActiveSupport::Logger
+  debug: void
+  info: void
+  warn: void
+  error: void
+  fatal: void
+  unknown: void
+
+  debug?: Boolean
+  info?: Boolean
+  warn?: Boolean
+  error?: Boolean
+  fatal?: Boolean
+
+  level: Integer
+  level=: Integer
+  progname: String | nil
+  progname=: String
+  formatter: Object
+  formatter=: Object
+
+  add: void
+  log: void
+  <<: void
+
+  silence: Object
+  tagged: Object
+end
+
+# Cache Store
+interface ActiveSupport::Cache::Store
+  read: Object | nil
+  write: Boolean
+  delete: Boolean
+  exist?: Boolean
+  fetch: Object
+  fetch_multi: Hash<String, Object>
+  read_multi: Hash<String, Object>
+  write_multi: Boolean
+  delete_multi: Integer
+  increment: Integer | nil
+  decrement: Integer | nil
+  clear: void
+  cleanup: void
+  mute: Object
+  silence!: void
+end

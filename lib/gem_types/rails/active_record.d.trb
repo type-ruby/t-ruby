@@ -1,0 +1,295 @@
+# T-Ruby Gem Type Definitions
+# Rails: ActiveRecord ORM
+
+# =============================================================================
+# ActiveRecord Base
+# =============================================================================
+
+interface ActiveRecord::Base
+  # Persistence
+  save: Boolean
+  save!: Boolean
+  update: Boolean
+  update!: Boolean
+  destroy: ActiveRecord::Base
+  destroy!: ActiveRecord::Base
+  delete: ActiveRecord::Base
+  reload: ActiveRecord::Base
+  touch: Boolean
+
+  # Predicates
+  new_record?: Boolean
+  persisted?: Boolean
+  destroyed?: Boolean
+  changed?: Boolean
+  valid?: Boolean
+  invalid?: Boolean
+  readonly?: Boolean
+
+  # Attributes
+  attributes: Hash<String, Object>
+  attribute_names: Array<String>
+  []: Object
+  []=: Object
+  read_attribute: Object
+  write_attribute: Object
+  has_attribute?: Boolean
+
+  # Changes tracking
+  changes: Hash<String, Array<Object>>
+  changed_attributes: Hash<String, Object>
+  previous_changes: Hash<String, Array<Object>>
+  saved_changes: Hash<String, Array<Object>>
+
+  # Errors
+  errors: ActiveModel::Errors
+
+  # Callbacks (common patterns)
+  before_save: void
+  after_save: void
+  before_create: void
+  after_create: void
+  before_update: void
+  after_update: void
+  before_destroy: void
+  after_destroy: void
+  before_validation: void
+  after_validation: void
+
+  # Serialization
+  to_json: String
+  as_json: Hash<String, Object>
+  to_param: String | nil
+  to_key: Array<Object> | nil
+
+  # Comparison
+  ==: Boolean
+  eql?: Boolean
+  hash: Integer
+
+  # Class methods (represented as instance for type system)
+  # In practice, these are called on the class itself
+end
+
+# Query interface
+interface ActiveRecord::Relation<T>
+  include Enumerable<T>
+
+  # Finders
+  find: T
+  find_by: T | nil
+  find_by!: T
+  find_or_create_by: T
+  find_or_create_by!: T
+  find_or_initialize_by: T
+  first: T | nil
+  first!: T
+  last: T | nil
+  last!: T
+  take: T | nil
+  take!: T
+  second: T | nil
+  third: T | nil
+  fourth: T | nil
+  fifth: T | nil
+  second_to_last: T | nil
+  third_to_last: T | nil
+
+  # Query building
+  where: ActiveRecord::Relation<T>
+  not: ActiveRecord::Relation<T>
+  or: ActiveRecord::Relation<T>
+  and: ActiveRecord::Relation<T>
+  rewhere: ActiveRecord::Relation<T>
+
+  # Ordering
+  order: ActiveRecord::Relation<T>
+  reorder: ActiveRecord::Relation<T>
+  reverse_order: ActiveRecord::Relation<T>
+
+  # Limiting
+  limit: ActiveRecord::Relation<T>
+  offset: ActiveRecord::Relation<T>
+
+  # Selecting
+  select: ActiveRecord::Relation<T>
+  distinct: ActiveRecord::Relation<T>
+  reselect: ActiveRecord::Relation<T>
+
+  # Grouping
+  group: ActiveRecord::Relation<T>
+  having: ActiveRecord::Relation<T>
+
+  # Joining
+  joins: ActiveRecord::Relation<T>
+  left_joins: ActiveRecord::Relation<T>
+  left_outer_joins: ActiveRecord::Relation<T>
+  includes: ActiveRecord::Relation<T>
+  preload: ActiveRecord::Relation<T>
+  eager_load: ActiveRecord::Relation<T>
+
+  # Scoping
+  merge: ActiveRecord::Relation<T>
+  except: ActiveRecord::Relation<T>
+  only: ActiveRecord::Relation<T>
+  unscope: ActiveRecord::Relation<T>
+
+  # Locking
+  lock: ActiveRecord::Relation<T>
+
+  # Batching
+  find_each: void
+  find_in_batches: void
+  in_batches: ActiveRecord::Batches::BatchEnumerator
+
+  # Aggregations
+  count: Integer | Hash<Object, Integer>
+  sum: Numeric
+  average: BigDecimal | nil
+  minimum: Object | nil
+  maximum: Object | nil
+  calculate: Object
+  pluck: Array<Object>
+  pick: Object | nil
+  ids: Array<Integer>
+
+  # Existence
+  exists?: Boolean
+  any?: Boolean
+  none?: Boolean
+  one?: Boolean
+  many?: Boolean
+  empty?: Boolean
+
+  # Creation
+  new: T
+  build: T
+  create: T
+  create!: T
+
+  # Modification
+  update_all: Integer
+  destroy_all: Array<T>
+  delete_all: Integer
+
+  # Conversion
+  to_a: Array<T>
+  to_sql: String
+  explain: String
+
+  # Enumerable
+  each: ActiveRecord::Relation<T>
+  map: Array<Object>
+  size: Integer
+  length: Integer
+end
+
+# Associations
+interface ActiveRecord::Associations::CollectionProxy<T>
+  include Enumerable<T>
+
+  # Access
+  []: T | nil
+  first: T | nil
+  last: T | nil
+
+  # Modification
+  <<: ActiveRecord::Associations::CollectionProxy<T>
+  push: ActiveRecord::Associations::CollectionProxy<T>
+  concat: ActiveRecord::Associations::CollectionProxy<T>
+  build: T
+  create: T
+  create!: T
+  delete: ActiveRecord::Associations::CollectionProxy<T>
+  delete_all: ActiveRecord::Associations::CollectionProxy<T>
+  destroy: ActiveRecord::Associations::CollectionProxy<T>
+  destroy_all: ActiveRecord::Associations::CollectionProxy<T>
+  clear: ActiveRecord::Associations::CollectionProxy<T>
+  replace: ActiveRecord::Associations::CollectionProxy<T>
+
+  # Query
+  where: ActiveRecord::Relation<T>
+  find: T
+  find_by: T | nil
+
+  # Size
+  size: Integer
+  length: Integer
+  count: Integer
+  empty?: Boolean
+  any?: Boolean
+
+  # IDs
+  ids: Array<Integer>
+
+  # Reload
+  reload: ActiveRecord::Associations::CollectionProxy<T>
+  reset: ActiveRecord::Associations::CollectionProxy<T>
+end
+
+# Errors
+interface ActiveModel::Errors
+  include Enumerable<ActiveModel::Error>
+
+  []: Array<String>
+  add: Array<String>
+  delete: Array<String>
+  clear: void
+  empty?: Boolean
+  any?: Boolean
+  size: Integer
+  count: Integer
+
+  full_messages: Array<String>
+  full_messages_for: Array<String>
+  messages: Hash<Symbol, Array<String>>
+  details: Hash<Symbol, Array<Hash<Symbol, Object>>>
+
+  added?: Boolean
+  of_kind?: Boolean
+
+  each: ActiveModel::Errors
+  to_a: Array<String>
+  to_hash: Hash<Symbol, Array<String>>
+  as_json: Hash<String, Object>
+end
+
+# Migration DSL
+interface ActiveRecord::Migration
+  create_table: void
+  drop_table: void
+  change_table: void
+  rename_table: void
+  add_column: void
+  remove_column: void
+  change_column: void
+  change_column_default: void
+  change_column_null: void
+  rename_column: void
+  add_index: void
+  remove_index: void
+  rename_index: void
+  add_reference: void
+  remove_reference: void
+  add_foreign_key: void
+  remove_foreign_key: void
+  add_timestamps: void
+  remove_timestamps: void
+
+  execute: void
+  reversible: void
+  revert: void
+
+  up: void
+  down: void
+  change: void
+
+  say: void
+  say_with_time: void
+  suppress_messages: void
+end
+
+# Type aliases
+type RecordId = Integer | String
+type Attributes = Hash<String | Symbol, Object>
+type Scope<T> = ActiveRecord::Relation<T>

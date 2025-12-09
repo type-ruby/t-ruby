@@ -1,0 +1,127 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Enumerable module
+
+interface Enumerable<T>
+  # Iteration methods
+  each: Enumerable<T>
+  each_with_index: Enumerable<T>
+  each_with_object: Enumerable<T>
+  each_entry: Enumerable<T>
+  each_cons: Enumerable<Array<T>>
+  each_slice: Enumerable<Array<T>>
+  reverse_each: Enumerable<T>
+  cycle: void
+
+  # Searching
+  find: T | nil
+  detect: T | nil
+  find_all: Array<T>
+  select: Array<T>
+  filter: Array<T>
+  reject: Array<T>
+  grep: Array<T>
+  grep_v: Array<T>
+  take: Array<T>
+  take_while: Array<T>
+  drop: Array<T>
+  drop_while: Array<T>
+  first: T | nil
+  last: T | nil
+
+  # Predicates
+  any?: Boolean
+  all?: Boolean
+  none?: Boolean
+  one?: Boolean
+  include?: Boolean
+  member?: Boolean
+
+  # Aggregation
+  count: Integer
+  sum: T
+  min: T | nil
+  max: T | nil
+  minmax: Array<T>
+  min_by: T | nil
+  max_by: T | nil
+  minmax_by: Array<T>
+
+  # Transformation
+  map: Array<T>
+  collect: Array<T>
+  flat_map: Array<T>
+  collect_concat: Array<T>
+  filter_map: Array<T>
+
+  # Reduction
+  reduce: T
+  inject: T
+  fold: T
+
+  # Grouping
+  group_by: Hash<T, Array<T>>
+  partition: Array<Array<T>>
+  chunk: Enumerable<Array<T>>
+  chunk_while: Enumerable<Array<T>>
+  slice_when: Enumerable<Array<T>>
+  slice_before: Enumerable<Array<T>>
+  slice_after: Enumerable<Array<T>>
+
+  # Sorting
+  sort: Array<T>
+  sort_by: Array<T>
+
+  # Set operations
+  uniq: Array<T>
+  tally: Hash<T, Integer>
+
+  # Conversion
+  to_a: Array<T>
+  to_h: Hash<T, T>
+  entries: Array<T>
+
+  # Lazy enumeration
+  lazy: Enumerator::Lazy<T>
+
+  # Zip
+  zip: Array<Array<T>>
+end
+
+# Lazy enumerator for deferred execution
+interface Enumerator::Lazy<T>
+  # Inherits Enumerable
+  include Enumerable<T>
+
+  # Force evaluation
+  force: Array<T>
+  eager: Enumerator<T>
+
+  # Chained lazy operations
+  map: Enumerator::Lazy<T>
+  select: Enumerator::Lazy<T>
+  reject: Enumerator::Lazy<T>
+  grep: Enumerator::Lazy<T>
+  take: Enumerator::Lazy<T>
+  take_while: Enumerator::Lazy<T>
+  drop: Enumerator::Lazy<T>
+  drop_while: Enumerator::Lazy<T>
+  flat_map: Enumerator::Lazy<T>
+  filter_map: Enumerator::Lazy<T>
+  uniq: Enumerator::Lazy<T>
+  with_index: Enumerator::Lazy<T>
+end
+
+# Base enumerator interface
+interface Enumerator<T>
+  include Enumerable<T>
+
+  next: T
+  peek: T
+  rewind: Enumerator<T>
+  size: Integer | nil
+  with_index: Enumerator<T>
+  with_object: Enumerator<T>
+
+  # ArithmeticSequence for numeric ranges
+  # e.g., (1..10).step(2)
+end

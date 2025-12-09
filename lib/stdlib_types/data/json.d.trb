@@ -1,0 +1,107 @@
+# T-Ruby Standard Library Type Definitions
+# Data: JSON parsing and generation
+
+# JSON module
+interface JSON
+  # Module methods (represented as interface for type definitions)
+end
+
+# JSON value types
+type JSONPrimitive = String | Integer | Float | Boolean | nil
+type JSONValue = JSONPrimitive | JSONArray | JSONObject
+type JSONArray = Array<JSONValue>
+type JSONObject = Hash<String, JSONValue>
+
+# JSON parse options
+interface JSON::ParserOptions
+  max_nesting: Integer | Boolean
+  allow_nan: Boolean
+  symbolize_names: Boolean
+  create_additions: Boolean
+  object_class: Class
+  array_class: Class
+end
+
+# JSON generate options
+interface JSON::GeneratorOptions
+  indent: String
+  space: String
+  space_before: String
+  object_nl: String
+  array_nl: String
+  allow_nan: Boolean
+  max_nesting: Integer | Boolean
+  ascii_only: Boolean
+end
+
+# JSON State for generation
+interface JSON::State
+  indent: String
+  space: String
+  space_before: String
+  object_nl: String
+  array_nl: String
+  max_nesting: Integer
+  allow_nan: Boolean
+  ascii_only: Boolean
+  depth: Integer
+
+  generate: String
+  to_h: Hash<Symbol, Object>
+end
+
+# JSON generator methods (mixin)
+interface JSON::Generator::GeneratorMethods::Object
+  to_json: String
+end
+
+interface JSON::Generator::GeneratorMethods::String
+  to_json: String
+  to_json_raw: String
+  to_json_raw_object: Hash<String, Object>
+end
+
+interface JSON::Generator::GeneratorMethods::Integer
+  to_json: String
+end
+
+interface JSON::Generator::GeneratorMethods::Float
+  to_json: String
+end
+
+interface JSON::Generator::GeneratorMethods::Array
+  to_json: String
+end
+
+interface JSON::Generator::GeneratorMethods::Hash
+  to_json: String
+end
+
+interface JSON::Generator::GeneratorMethods::TrueClass
+  to_json: String
+end
+
+interface JSON::Generator::GeneratorMethods::FalseClass
+  to_json: String
+end
+
+interface JSON::Generator::GeneratorMethods::NilClass
+  to_json: String
+end
+
+# Errors
+interface JSON::JSONError
+  # Base error for JSON
+end
+
+interface JSON::ParserError
+  # Parse errors
+end
+
+interface JSON::GeneratorError
+  # Generation errors
+end
+
+interface JSON::NestingError
+  # Nesting too deep
+end
