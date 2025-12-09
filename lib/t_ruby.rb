@@ -24,5 +24,11 @@ require_relative "t_ruby/type_checker"
 require_relative "t_ruby/cache"
 require_relative "t_ruby/package_manager"
 
+# Milestone 5: Future Enhancements
+require_relative "t_ruby/ir"
+require_relative "t_ruby/parser_combinator"
+require_relative "t_ruby/smt_solver"
+require_relative "t_ruby/bundler_integration"
+
 module TRuby
 end

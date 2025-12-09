@@ -2,7 +2,7 @@
 
 ## Status
 
-**All milestones completed.** 260 test examples, 0 failures.
+**All milestones completed.** 614 test examples, 0 failures.
 
 ---
 
@@ -51,32 +51,78 @@
 
 ---
 
+## ✅ Milestone 5: Future Enhancements (Completed)
+
+| Feature | File | Description |
+|---------|------|-------------|
+| Bundler/RubyGems Integration | `bundler_integration.rb` | Seamless integration with Ruby ecosystem |
+| IR (Intermediate Representation) | `ir.rb` | AST, type nodes, code generation, optimization passes |
+| Parser Combinator | `parser_combinator.rb` | Composable parsers for complex type grammars |
+| SMT Solver | `smt_solver.rb` | Constraint solving for advanced type inference |
+
+### Bundler Integration Features
+- Auto-discovery of type packages for installed gems
+- Type gem scaffold generation (`gem-types`)
+- Gemfile `:types` group support
+- Bundle manifest (`.trb-bundle.json`)
+- Migration from native T-Ruby packages
+
+### IR System Features
+- Full AST node hierarchy (Program, TypeAlias, Interface, MethodDef, etc.)
+- Type representation nodes (SimpleType, GenericType, UnionType, FunctionType, etc.)
+- Visitor pattern for AST traversal
+- Code generators (Ruby, RBS)
+- Optimization passes (Dead Code Elimination, Constant Folding, Unused Declaration Removal)
+
+### Parser Combinator Features
+- Primitive parsers (Literal, Regex, Satisfy, EndOfInput)
+- Combinators (Sequence, Alternative, Many, Optional, SepBy, Between)
+- DSL for building parsers (identifier, integer, quoted_string, lexeme)
+- TypeParser for complex type expressions
+- DeclarationParser for T-Ruby declarations
+- Rich error reporting with context
+
+### SMT Solver Features
+- Logical formulas (And, Or, Not, Implies, Iff)
+- Type constraints (Subtype, TypeEqual, HasProperty)
+- SAT solver using DPLL algorithm
+- Type constraint solver with unification
+- Type hierarchy with subtype checking
+- Type inference engine for methods
+
+---
+
 ## Architecture
 
 ```
-.trb → Parser → Validator → Type Erasure → .rb + .rbs
-                    ↓
-              Type Checker
-                    ↓
-              Diagnostics
+.trb → Parser Combinator → IR Builder → Optimizer → Code Generator → .rb + .rbs
+                               ↓
+                         Type Checker
+                               ↓
+                         SMT Solver
+                               ↓
+                         Diagnostics
 ```
 
 ### Components
 
 | Component | Purpose |
 |-----------|---------|
-| Parser | Type annotation extraction |
-| TypeChecker | Static analysis |
-| TypeInferencer | Automatic type detection |
-| RuntimeValidator | Runtime check generation |
-| ConstraintChecker | Type constraints |
-| PackageManager | Distribution |
+| ParserCombinator | Composable type grammar parsing |
+| IR::Builder | AST construction from parsed input |
+| IR::Optimizer | Multi-pass optimization |
+| IR::CodeGenerator | Ruby code output |
+| IR::RBSGenerator | RBS type definition output |
+| SMT::ConstraintSolver | Type constraint resolution |
+| SMT::TypeInferenceEngine | Automatic type detection |
+| BundlerIntegration | Ruby ecosystem integration |
 
 ---
 
-## Future
+## Future Possibilities
 
-- Parser combinator for complex grammars
-- IR for optimization
-- SMT solver for constraint solving
-- Bundler/RubyGems integration
+- Language server protocol v2 with semantic tokens
+- Incremental compilation
+- Cross-file type checking
+- External SMT solver integration (Z3)
+- WebAssembly compilation target
