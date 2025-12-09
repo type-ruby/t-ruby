@@ -56,6 +56,59 @@ module TRuby
       HINT = 4
     end
 
+    # Semantic Token Types (LSP 3.16+)
+    module SemanticTokenTypes
+      NAMESPACE = 0
+      TYPE = 1
+      CLASS = 2
+      ENUM = 3
+      INTERFACE = 4
+      STRUCT = 5
+      TYPE_PARAMETER = 6
+      PARAMETER = 7
+      VARIABLE = 8
+      PROPERTY = 9
+      ENUM_MEMBER = 10
+      EVENT = 11
+      FUNCTION = 12
+      METHOD = 13
+      MACRO = 14
+      KEYWORD = 15
+      MODIFIER = 16
+      COMMENT = 17
+      STRING = 18
+      NUMBER = 19
+      REGEXP = 20
+      OPERATOR = 21
+    end
+
+    # Semantic Token Modifiers (bit flags)
+    module SemanticTokenModifiers
+      DECLARATION = 0x01
+      DEFINITION = 0x02
+      READONLY = 0x04
+      STATIC = 0x08
+      DEPRECATED = 0x10
+      ABSTRACT = 0x20
+      ASYNC = 0x40
+      MODIFICATION = 0x80
+      DOCUMENTATION = 0x100
+      DEFAULT_LIBRARY = 0x200
+    end
+
+    # Token type names for capability registration
+    SEMANTIC_TOKEN_TYPES = %w[
+      namespace type class enum interface struct typeParameter
+      parameter variable property enumMember event function method
+      macro keyword modifier comment string number regexp operator
+    ].freeze
+
+    # Token modifier names
+    SEMANTIC_TOKEN_MODIFIERS = %w[
+      declaration definition readonly static deprecated
+      abstract async modification documentation defaultLibrary
+    ].freeze
+
     # Built-in types for completion
     BUILT_IN_TYPES = %w[String Integer Boolean Array Hash Symbol void nil].freeze
 
@@ -179,6 +232,8 @@ module TRuby
         handle_hover(params)
       when "textDocument/definition"
         handle_definition(params)
+      when "textDocument/semanticTokens/full"
+        handle_semantic_tokens_full(params)
       else
         { error: { code: ErrorCodes::METHOD_NOT_FOUND, message: "Method not found: #{method}" } }
       end
@@ -207,6 +262,14 @@ module TRuby
           "diagnosticProvider" => {
             "interFileDependencies" => false,
             "workspaceDiagnostics" => false
+          },
+          "semanticTokensProvider" => {
+            "legend" => {
+              "tokenTypes" => SEMANTIC_TOKEN_TYPES,
+              "tokenModifiers" => SEMANTIC_TOKEN_MODIFIERS
+            },
+            "full" => true,
+            "range" => false
           }
         },
         "serverInfo" => {
@@ -698,6 +761,213 @@ module TRuby
       end
 
       nil
+    end
+
+    # === Semantic Tokens ===
+
+    def handle_semantic_tokens_full(params)
+      uri = params["textDocument"]["uri"]
+      document = @documents[uri]
+      return { "data" => [] } unless document
+
+      text = document[:text]
+      tokens = generate_semantic_tokens(text)
+
+      { "data" => tokens }
+    end
+
+    def generate_semantic_tokens(text)
+      tokens = []
+      lines = text.split("\n")
+
+      # Parse the document to get IR
+      parser = Parser.new(text, use_combinator: true)
+      parse_result = parser.parse
+      ir_program = parser.ir_program
+
+      # Collect all tokens from parsing
+      raw_tokens = []
+
+      # Process type aliases
+      (parse_result[:type_aliases] || []).each do |alias_info|
+        lines.each_with_index do |line, line_idx|
+          if match = line.match(/^\s*type\s+(#{Regexp.escape(alias_info[:name])})\s*=/)
+            # 'type' keyword
+            type_pos = line.index("type")
+            raw_tokens << [line_idx, type_pos, 4, SemanticTokenTypes::KEYWORD, SemanticTokenModifiers::DECLARATION]
+
+            # Type name
+            name_pos = match.begin(1)
+            raw_tokens << [line_idx, name_pos, alias_info[:name].length, SemanticTokenTypes::TYPE, SemanticTokenModifiers::DEFINITION]
+
+            # Type definition (after =)
+            add_type_tokens(raw_tokens, line, line_idx, alias_info[:definition])
+          end
+        end
+      end
+
+      # Process interfaces
+      (parse_result[:interfaces] || []).each do |interface_info|
+        lines.each_with_index do |line, line_idx|
+          if match = line.match(/^\s*interface\s+(#{Regexp.escape(interface_info[:name])})/)
+            # 'interface' keyword
+            interface_pos = line.index("interface")
+            raw_tokens << [line_idx, interface_pos, 9, SemanticTokenTypes::KEYWORD, SemanticTokenModifiers::DECLARATION]
+
+            # Interface name
+            name_pos = match.begin(1)
+            raw_tokens << [line_idx, name_pos, interface_info[:name].length, SemanticTokenTypes::INTERFACE, SemanticTokenModifiers::DEFINITION]
+          end
+
+          # Interface members
+          interface_info[:members]&.each do |member|
+            if match = line.match(/^\s*(#{Regexp.escape(member[:name])})\s*:\s*/)
+              prop_pos = match.begin(1)
+              raw_tokens << [line_idx, prop_pos, member[:name].length, SemanticTokenTypes::PROPERTY, 0]
+
+              # Member type
+              add_type_tokens(raw_tokens, line, line_idx, member[:type])
+            end
+          end
+        end
+      end
+
+      # Process functions
+      (parse_result[:functions] || []).each do |func|
+        lines.each_with_index do |line, line_idx|
+          if match = line.match(/^\s*def\s+(#{Regexp.escape(func[:name])})\s*\(/)
+            # 'def' keyword
+            def_pos = line.index("def")
+            raw_tokens << [line_idx, def_pos, 3, SemanticTokenTypes::KEYWORD, 0]
+
+            # Function name
+            name_pos = match.begin(1)
+            raw_tokens << [line_idx, name_pos, func[:name].length, SemanticTokenTypes::FUNCTION, SemanticTokenModifiers::DEFINITION]
+
+            # Parameters
+            func[:params]&.each do |param|
+              if param_match = line.match(/\b(#{Regexp.escape(param[:name])})\s*(?::\s*)?/)
+                param_pos = param_match.begin(1)
+                raw_tokens << [line_idx, param_pos, param[:name].length, SemanticTokenTypes::PARAMETER, 0]
+
+                # Parameter type if present
+                if param[:type]
+                  add_type_tokens(raw_tokens, line, line_idx, param[:type])
+                end
+              end
+            end
+
+            # Return type
+            if func[:return_type]
+              add_type_tokens(raw_tokens, line, line_idx, func[:return_type])
+            end
+          end
+        end
+      end
+
+      # Process 'end' keywords
+      lines.each_with_index do |line, line_idx|
+        if match = line.match(/^\s*(end)\s*$/)
+          end_pos = match.begin(1)
+          raw_tokens << [line_idx, end_pos, 3, SemanticTokenTypes::KEYWORD, 0]
+        end
+      end
+
+      # Sort tokens by line, then by character position
+      raw_tokens.sort_by! { |t| [t[0], t[1]] }
+
+      # Convert to delta encoding
+      encode_tokens(raw_tokens)
+    end
+
+    def add_type_tokens(raw_tokens, line, line_idx, type_str)
+      return unless type_str
+
+      # Find position of the type in the line
+      pos = line.index(type_str)
+      return unless pos
+
+      # Handle built-in types
+      if BUILT_IN_TYPES.include?(type_str)
+        raw_tokens << [line_idx, pos, type_str.length, SemanticTokenTypes::TYPE, SemanticTokenModifiers::DEFAULT_LIBRARY]
+        return
+      end
+
+      # Handle generic types like Array<String>
+      if type_str.include?("<")
+        if match = type_str.match(/^(\w+)<(.+)>$/)
+          base = match[1]
+          base_pos = line.index(base, pos)
+          if base_pos
+            modifier = BUILT_IN_TYPES.include?(base) ? SemanticTokenModifiers::DEFAULT_LIBRARY : 0
+            raw_tokens << [line_idx, base_pos, base.length, SemanticTokenTypes::TYPE, modifier]
+          end
+          # Recursively process type arguments
+          # (simplified - just mark them as types)
+          args = match[2]
+          args.split(/[,\s]+/).each do |arg|
+            arg = arg.strip.gsub(/[<>]/, '')
+            next if arg.empty?
+            arg_pos = line.index(arg, pos)
+            if arg_pos
+              modifier = BUILT_IN_TYPES.include?(arg) ? SemanticTokenModifiers::DEFAULT_LIBRARY : 0
+              raw_tokens << [line_idx, arg_pos, arg.length, SemanticTokenTypes::TYPE, modifier]
+            end
+          end
+        end
+        return
+      end
+
+      # Handle union types
+      if type_str.include?("|")
+        type_str.split("|").map(&:strip).each do |t|
+          t_pos = line.index(t, pos)
+          if t_pos
+            modifier = BUILT_IN_TYPES.include?(t) ? SemanticTokenModifiers::DEFAULT_LIBRARY : 0
+            raw_tokens << [line_idx, t_pos, t.length, SemanticTokenTypes::TYPE, modifier]
+          end
+        end
+        return
+      end
+
+      # Handle intersection types
+      if type_str.include?("&")
+        type_str.split("&").map(&:strip).each do |t|
+          t_pos = line.index(t, pos)
+          if t_pos
+            modifier = BUILT_IN_TYPES.include?(t) ? SemanticTokenModifiers::DEFAULT_LIBRARY : 0
+            raw_tokens << [line_idx, t_pos, t.length, SemanticTokenTypes::TYPE, modifier]
+          end
+        end
+        return
+      end
+
+      # Simple type
+      raw_tokens << [line_idx, pos, type_str.length, SemanticTokenTypes::TYPE, 0]
+    end
+
+    def encode_tokens(raw_tokens)
+      encoded = []
+      prev_line = 0
+      prev_char = 0
+
+      raw_tokens.each do |token|
+        line, char, length, token_type, modifiers = token
+
+        delta_line = line - prev_line
+        delta_char = delta_line == 0 ? char - prev_char : char
+
+        encoded << delta_line
+        encoded << delta_char
+        encoded << length
+        encoded << token_type
+        encoded << modifiers
+
+        prev_line = line
+        prev_char = char
+      end
+
+      encoded
     end
 
     # === Response Helpers ===

@@ -3,14 +3,15 @@
 module TRuby
   # Represents a type checking error
   class TypeCheckError
-    attr_reader :message, :location, :expected, :actual, :suggestion
+    attr_reader :message, :location, :expected, :actual, :suggestion, :severity
 
-    def initialize(message:, location: nil, expected: nil, actual: nil, suggestion: nil)
+    def initialize(message:, location: nil, expected: nil, actual: nil, suggestion: nil, severity: :error)
       @message = message
       @location = location
       @expected = expected
       @actual = actual
       @suggestion = suggestion
+      @severity = severity
     end
 
     def to_s
@@ -20,6 +21,17 @@ module TRuby
       parts << "  Suggestion: #{@suggestion}" if @suggestion
       parts << "  at #{@location}" if @location
       parts.join("\n")
+    end
+
+    def to_diagnostic
+      {
+        severity: @severity,
+        message: @message,
+        location: @location,
+        expected: @expected,
+        actual: @actual,
+        suggestion: @suggestion
+      }
     end
   end
 
@@ -155,11 +167,11 @@ module TRuby
     end
   end
 
-  # Main type checker
+  # Main type checker with SMT solver integration
   class TypeChecker
-    attr_reader :errors, :warnings, :hierarchy, :inferencer
+    attr_reader :errors, :warnings, :hierarchy, :inferencer, :smt_solver, :use_smt
 
-    def initialize
+    def initialize(use_smt: true)
       @errors = []
       @warnings = []
       @hierarchy = TypeHierarchy.new
@@ -168,6 +180,125 @@ module TRuby
       @type_aliases = {}
       @current_scope = TypeScope.new
       @flow_context = FlowContext.new
+      @use_smt = use_smt
+      @smt_solver = SMT::ConstraintSolver.new if use_smt
+      @smt_inference_engine = SMT::TypeInferenceEngine.new if use_smt
+    end
+
+    # Check an IR program using SMT-based type checking
+    def check_program(ir_program)
+      return check_program_legacy(ir_program) unless @use_smt
+
+      @errors = []
+      @warnings = []
+
+      ir_program.declarations.each do |decl|
+        case decl
+        when IR::TypeAlias
+          register_alias(decl.name, decl.definition)
+        when IR::Interface
+          check_interface(decl)
+        when IR::MethodDef
+          check_method_with_smt(decl)
+        end
+      end
+
+      {
+        success: @errors.empty?,
+        errors: @errors,
+        warnings: @warnings
+      }
+    end
+
+    # Check a method definition using SMT solver
+    def check_method_with_smt(method_ir)
+      result = @smt_inference_engine.infer_method(method_ir)
+
+      if result[:success]
+        # Store inferred types
+        @function_signatures[method_ir.name] = {
+          params: method_ir.params.map do |p|
+            {
+              name: p.name,
+              type: result[:params][p.name] || infer_param_type(p)
+            }
+          end,
+          return_type: result[:return_type]
+        }
+      else
+        # Add errors from SMT solver
+        result[:errors]&.each do |error|
+          add_error(
+            message: "Type inference error in #{method_ir.name}: #{error}",
+            location: method_ir.location
+          )
+        end
+      end
+
+      result
+    end
+
+    # Check interface implementation
+    def check_interface(interface_ir)
+      interface_ir.members.each do |member|
+        # Validate member type signature
+        if member.type_signature
+          validate_type(member.type_signature)
+        end
+      end
+    end
+
+    # Validate a type node is well-formed
+    def validate_type(type_node)
+      case type_node
+      when IR::SimpleType
+        # Check if type exists
+        unless known_type?(type_node.name)
+          add_warning("Unknown type: #{type_node.name}")
+        end
+      when IR::GenericType
+        # Check base type and type args
+        unless known_type?(type_node.base)
+          add_warning("Unknown generic type: #{type_node.base}")
+        end
+        type_node.type_args.each { |t| validate_type(t) }
+      when IR::UnionType
+        type_node.types.each { |t| validate_type(t) }
+      when IR::IntersectionType
+        type_node.types.each { |t| validate_type(t) }
+      when IR::NullableType
+        validate_type(type_node.inner_type)
+      when IR::FunctionType
+        type_node.param_types.each { |t| validate_type(t) }
+        validate_type(type_node.return_type)
+      end
+    end
+
+    # SMT-based subtype checking
+    def subtype_with_smt?(subtype, supertype)
+      return true if subtype == supertype
+
+      if @use_smt
+        sub = to_smt_type(subtype)
+        sup = to_smt_type(supertype)
+        @smt_solver.subtype?(sub, sup)
+      else
+        @hierarchy.subtype_of?(subtype.to_s, supertype.to_s)
+      end
+    end
+
+    # Convert to SMT type
+    def to_smt_type(type)
+      case type
+      when String
+        SMT::ConcreteType.new(type)
+      when IR::SimpleType
+        SMT::ConcreteType.new(type.name)
+      when SMT::ConcreteType, SMT::TypeVar
+        type
+      else
+        SMT::ConcreteType.new(type.to_s)
+      end
     end
 
     # Register a function signature
@@ -430,12 +561,76 @@ module TRuby
       @type_aliases.clear
       @current_scope = TypeScope.new
       @flow_context = FlowContext.new
+      @smt_solver = SMT::ConstraintSolver.new if @use_smt
+      @smt_inference_engine = SMT::TypeInferenceEngine.new if @use_smt
     end
 
     # Get all diagnostics
     def diagnostics
-      @errors.map { |e| { type: :error, message: e.to_s } } +
+      @errors.map { |e| e.respond_to?(:to_diagnostic) ? e.to_diagnostic : { type: :error, message: e.to_s } } +
         @warnings.map { |w| { type: :warning, message: w } }
+    end
+
+    # Check if a type name is known
+    def known_type?(type_name)
+      return true if %w[String Integer Float Boolean Array Hash Symbol void nil Object Numeric Enumerable].include?(type_name)
+      return true if @type_aliases.key?(type_name)
+      false
+    end
+
+    # Infer parameter type from annotation
+    def infer_param_type(param)
+      if param.type_annotation
+        case param.type_annotation
+        when IR::SimpleType
+          param.type_annotation.name
+        else
+          param.type_annotation.to_s
+        end
+      else
+        "Object"
+      end
+    end
+
+    # Legacy program check (without SMT)
+    def check_program_legacy(ir_program)
+      @errors = []
+      @warnings = []
+
+      ir_program.declarations.each do |decl|
+        case decl
+        when IR::TypeAlias
+          register_alias(decl.name, decl.definition)
+        when IR::Interface
+          check_interface(decl)
+        when IR::MethodDef
+          check_function_legacy(decl)
+        end
+      end
+
+      {
+        success: @errors.empty?,
+        errors: @errors,
+        warnings: @warnings
+      }
+    end
+
+    # Check function without SMT (legacy)
+    def check_function_legacy(method_ir)
+      @current_scope = TypeScope.new
+
+      # Register parameters
+      method_ir.params.each do |param|
+        param_type = infer_param_type(param)
+        @current_scope.define(param.name, param_type)
+      end
+
+      # Register function signature
+      register_function(
+        method_ir.name,
+        params: method_ir.params.map { |p| { name: p.name, type: infer_param_type(p) } },
+        return_type: method_ir.return_type&.to_s || "Object"
+      )
     end
 
     private
@@ -535,6 +730,41 @@ module TRuby
       end
 
       type
+    end
+  end
+
+  # Legacy TypeChecker without SMT (backward compatible)
+  class LegacyTypeChecker < TypeChecker
+    def initialize
+      super(use_smt: false)
+    end
+  end
+
+  # SMT-enhanced type checker with constraint solving
+  class SMTTypeChecker < TypeChecker
+    include SMT::DSL
+
+    def initialize
+      super(use_smt: true)
+    end
+
+    # Add constraint-based type check
+    def check_with_constraints(ir_program, &block)
+      # Allow users to add custom constraints
+      block.call(@smt_solver) if block_given?
+
+      # Run standard type checking
+      check_program(ir_program)
+    end
+
+    # Solve current constraints and return solution
+    def solve_constraints
+      @smt_solver.solve
+    end
+
+    # Get inferred type for a variable
+    def inferred_type(var_name)
+      @smt_solver.infer(SMT::TypeVar.new(var_name))
     end
   end
 end

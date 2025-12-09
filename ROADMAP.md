@@ -2,7 +2,7 @@
 
 ## Status
 
-**Milestone 5 completed.** 614 test examples, 0 failures. Milestone 6 in progress.
+**Milestone 6 Phase 1 & 2 completed.** 285 test examples, 0 failures.
 
 ---
 
@@ -121,22 +121,22 @@
 
 ## 🔄 Milestone 6: Integration & Production Readiness
 
-### Phase 1: Core Integration
+### ✅ Phase 1: Core Integration (Completed)
 
-| Task | Description | Priority |
-|------|-------------|----------|
-| Parser Combinator Integration | Replace `parser.rb` with `parser_combinator.rb` | High |
-| IR-based Compiler | Refactor `compiler.rb` to use IR system | High |
-| SMT-based Type Checking | Integrate SMT Solver into `type_checker.rb` | High |
+| Task | Description | Status |
+|------|-------------|--------|
+| Parser Combinator Integration | Replace `parser.rb` with `parser_combinator.rb` | ✅ Done |
+| IR-based Compiler | Refactor `compiler.rb` to use IR system | ✅ Done |
+| SMT-based Type Checking | Integrate SMT Solver into `type_checker.rb` | ✅ Done |
 
-### Phase 2: New Features
+### ✅ Phase 2: New Features (Completed)
 
-| Task | Description |
-|------|-------------|
-| LSP v2 + Semantic Tokens | Type-based syntax highlighting in editors |
-| Incremental Compilation | Only recompile changed files (cache-based) |
-| Cross-file Type Checking | Type verification across multiple files |
-| Watch Mode Enhancement | Faster watch mode using new IR/Parser |
+| Task | Description | Status |
+|------|-------------|--------|
+| LSP v2 + Semantic Tokens | Type-based syntax highlighting in editors | ✅ Done |
+| Incremental Compilation | Only recompile changed files (cache-based) | ✅ Done |
+| Cross-file Type Checking | Type verification across multiple files | ✅ Done |
+| Watch Mode Enhancement | Faster watch mode using new IR/Parser | ✅ Done |
 
 ### Phase 3: Ecosystem Expansion
 
