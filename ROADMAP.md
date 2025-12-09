@@ -2,7 +2,7 @@
 
 ## Status
 
-**All milestones completed.** 614 test examples, 0 failures.
+**Milestone 5 completed.** 614 test examples, 0 failures. Milestone 6 in progress.
 
 ---
 
@@ -119,10 +119,47 @@
 
 ---
 
+## 🔄 Milestone 6: Integration & Production Readiness
+
+### Phase 1: Core Integration
+
+| Task | Description | Priority |
+|------|-------------|----------|
+| Parser Combinator Integration | Replace `parser.rb` with `parser_combinator.rb` | High |
+| IR-based Compiler | Refactor `compiler.rb` to use IR system | High |
+| SMT-based Type Checking | Integrate SMT Solver into `type_checker.rb` | High |
+
+### Phase 2: New Features
+
+| Task | Description |
+|------|-------------|
+| LSP v2 + Semantic Tokens | Type-based syntax highlighting in editors |
+| Incremental Compilation | Only recompile changed files (cache-based) |
+| Cross-file Type Checking | Type verification across multiple files |
+| Watch Mode Enhancement | Faster watch mode using new IR/Parser |
+
+### Phase 3: Ecosystem Expansion
+
+| Task | Description |
+|------|-------------|
+| Stdlib Types Extension | More Ruby standard library type definitions |
+| Popular Gem Type Packages | Rails, RSpec, Sidekiq type definitions |
+| RubyGems.org Integration | Publish type packages to gem registry |
+
+### Phase 4: Quality & Documentation
+
+| Task | Description |
+|------|-------------|
+| Benchmarks | Performance measurement and optimization |
+| API Documentation | Comprehensive docs and usage guides |
+| E2E Tests | Integration tests with real projects |
+
+---
+
 ## Future Possibilities
 
-- Language server protocol v2 with semantic tokens
-- Incremental compilation
-- Cross-file type checking
 - External SMT solver integration (Z3)
 - WebAssembly compilation target
+- Language server protocol v3
+- Type-safe metaprogramming support
+- Gradual typing migration tools
