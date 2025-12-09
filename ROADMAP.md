@@ -157,10 +157,20 @@
 
 ---
 
-## Future Possibilities
+## 🔮 Milestone 7: Next Generation
 
-- External SMT solver integration (Z3)
-- WebAssembly compilation target
-- Language server protocol v3
-- Type-safe metaprogramming support
-- Gradual typing migration tools
+| Feature | Description |
+|---------|-------------|
+| JetBrains IDE Plugin | IntelliJ IDEA, RubyMine 플러그인 (LSP 기반) |
+| External SMT Solver (Z3) | Z3 통합으로 고급 타입 추론 강화 |
+| WebAssembly Target | `.wasm` 컴파일 타겟 지원 |
+| LSP v3 | Language Server Protocol 3.x 지원 |
+| Type-safe Metaprogramming | 메타프로그래밍 타입 안전성 |
+| Gradual Typing Migration | 기존 Ruby 코드 점진적 마이그레이션 도구 |
+
+### JetBrains IDE Plugin
+- IntelliJ Platform Plugin SDK 기반
+- LSP4IJ로 `trc --lsp` 연결
+- 문법 하이라이팅, 자동완성, 진단, 네비게이션
+- 지원 IDE: IntelliJ IDEA, RubyMine, 기타 JetBrains IDE
+- 문서: 영어, 한국어, 일본어
