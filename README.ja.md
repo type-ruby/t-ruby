@@ -1,205 +1,217 @@
-# t-ruby (日本語ドキュメント)
+<p align="center">
+  <img src="https://avatars.githubusercontent.com/u/248530250" alt="T-Ruby" height="170">
+</p>
 
-> TypeScript にインスパイアされた Ruby 用の静的型レイヤー。
-> `.trb` を書き、`trc` で `.rb` と `.rbs` を生成します。
+<h1 align="center">T-Ruby</h1>
 
-`t-ruby` は Ruby の上に構築される **オプショナル（段階的）静的型システム** です。
+<p align="center">
+  <strong>Ruby のための TypeScript スタイルの型</strong>
+</p>
 
-* ソースファイル: `.trb`
-* コンパイラ: `trc`
-* 設定ファイル: `.trb.yml`
-* 出力形式:
+<p align="center">
+  <img src="https://img.shields.io/badge/CI-passing-brightgreen" alt="CI: passing" />
+  <img src="https://img.shields.io/badge/ruby-3.0+-cc342d" alt="Ruby 3.0+" />
+  <img src="https://img.shields.io/badge/gem-v0.1.0-blue" alt="Gem: v0.1.0" />
+  <img src="https://img.shields.io/badge/downloads-0-lightgrey" alt="Downloads" />
+  <img src="https://img.shields.io/badge/coverage-90%25-brightgreen" alt="Coverage: 90%" />
+</p>
 
-  * Ruby 実行コード: `.rb`
-  * Ruby 公式シグネチャファイル: `.rbs`（オプション）
-  * t-ruby 専用宣言ファイル: `.d.trb`（オプション、RBS より高い表現力）
-
-目的は、Ruby エコシステムを尊重しながら、
-Ruby 開発者に **TypeScript に近い快適な開発体験（DX）** を提供することです。
-
----
-
-## ステータス（Status）
-
-**全マイルストーン完了。** 260テスト通過。
-
-### ✅ Milestone 1 – 基本型パース & 削除
-* パラメータ/戻り値型アノテーション、型削除、エラー処理
-
-### ✅ Milestone 2 – コア型システム
-* 型エイリアス、インターフェース、ユニオン/インターセクション型、ジェネリクス、RBS生成
-
-### ✅ Milestone 3 – エコシステム & ツール
-* LSPサーバー、`.d.trb`宣言ファイル、IDE統合（VS Code、Vim、Neovim）、標準ライブラリ型
-
-### ✅ Milestone 4 – 高度な機能
-* 制約システム、型推論、ランタイム検証、静的型チェック、キャッシング、パッケージ管理
+<p align="center">
+  <a href="#インストール">インストール</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="#クイックスタート">クイックスタート</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="#機能">機能</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="./ROADMAP.md">ロードマップ</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="./README.md">English</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="./README.ko.md">한국어</a>
+</p>
 
 ---
 
-## コンセプト（Concept）
+## T-Ruby とは？
 
-### 1) `.trb` ファイルを書く
+T-Ruby は TypeScript にインスパイアされた Ruby 用の型レイヤーです。
+`trc` という単一の実行ファイルとして提供されます。
+
+型アノテーション付きの `.trb` ファイルを書き、標準の `.rb` ファイルにコンパイルします。
+型はコンパイル時に削除されます — Ruby が動く場所ならどこでもコードが動作します。
+
+```bash
+trc hello.trb                  # Ruby にコンパイル
+```
+
+`trc` コンパイラは Steep や Ruby LSP などのツール用に `.rbs` シグネチャファイルも生成します。
+ランタイムオーバーヘッドなしで、既存の Ruby プロジェクトに段階的に型を導入できます。
+
+```bash
+trc --watch src/               # ウォッチモード
+trc --emit-rbs src/            # .rbs ファイル生成
+trc --check src/               # コンパイルなしで型チェックのみ
+```
+
+---
+
+## なぜ T-Ruby なのか？
+
+私たちは Ruby の友であり、今も Ruby を使い続ける Rubyist です。
+
+Ruby がダックタイピングと動的型システムの DNA を持つ言語であることはよく分かっています。
+しかし、現実の産業環境で静的型システムが必須になりつつあることも
+否定できませんでした。
+
+Ruby エコシステムはこの問題について長年議論してきましたが、
+まだ明確な答えを出せていないように思います。
+
+---
+
+**Sorbet** — コードの上にコメントのように型を書きます。
+まるで JSDoc を書いて IDE がエラーを拾ってくれることを期待するようなものです。
+
+```ruby
+# Sorbet
+extend T::Sig
+
+sig { params(name: String).returns(String) }
+def greet(name)
+  "Hello, #{name}!"
+end
+```
+
+**RBS** — Ruby 公式のアプローチで、TypeScript の `.d.ts` のような別ファイルです。
+しかし Ruby では手動で書くか、「暗黙の推論 + 手動修正」に頼る必要があり、
+依然として面倒です。
+
+```rbs
+# greet.rbs（別ファイル）
+def greet: (String name) -> String
+```
+
+```ruby
+# greet.rb（型情報なし）
+def greet(name)
+  "Hello, #{name}!"
+end
+```
+
+**T-Ruby** — TypeScript のように、型がコードの中にあります。
+`.trb` で書けば、`trc` が `.rb` と `.rbs` の両方を生成します。
+
+```ruby
+# greet.trb
+def greet(name: String): String
+  "Hello, #{name}!"
+end
+```
+
+```bash
+trc greet.trb
+# => build/greet.rb + build/greet.rbs
+```
+
+---
+
+Crystal のように Ruby を再構築した新しい言語もありますが、
+私たちは今も Ruby を愛しており、
+これが Ruby エコシステムからの**脱出ではなく、進歩**であることを願っています。
+
+---
+
+## インストール
+
+```bash
+# RubyGems でインストール（推奨）
+gem install t-ruby
+
+# ソースからインストール
+git clone https://github.com/pyhyun/t-ruby
+cd t-ruby && bundle install
+```
+
+### インストール確認
+
+```bash
+trc --version
+```
+
+---
+
+## クイックスタート
+
+### 1. `.trb` を書く
 
 ```ruby
 # hello.trb
-
-def greet(name: String): void
-  puts "Hello, #{name} from t-ruby!"
+def greet(name: String): String
+  "Hello, #{name}!"
 end
 
-greet("world")
+puts greet("world")
 ```
 
-### 2) `trc` でコンパイル
+### 2. コンパイル
 
 ```bash
 trc hello.trb
-# => build/hello.rb （必要に応じて .rbs / .d.trb も生成）
 ```
 
-### 3) Ruby で実行
+### 3. 実行
 
 ```bash
 ruby build/hello.rb
+# => Hello, world!
 ```
 
 ---
 
-## デザイン目標（Design Goals）
+## 機能
 
-### 1. Ruby 開発者のための TypeScript ライクな DX
-
-* オプショナル型（gradual typing）
-* `type`、`interface`、ジェネリクス、ユニオン/インターセクション型など
-* 単一のコンパイラ CLI: `trc`
-
-### 2. 既存の Ruby エコシステムとの高い互換性
-
-* 標準 Ruby でそのまま動く `.rb` 出力
-* Steep や Ruby LSP が読める `.rbs` 出力
-* t-ruby 専用の強力な型を格納する `.d.trb` もオプション提供
-
-### 3. RBS を基盤として尊重しつつ、RBS に縛られない
-
-* t-ruby の型システムは RBS の **上位互換（superset）** を目指す
-* `.rbs` へ投影しづらい高度な型は、保守的に単純化して出力
-* 既存の `.rbs` タイプ資産をそのまま利用可能
-
-### 4. Ruby 文化に合う設定スタイル
-
-* プロジェクト設定は `.trb.yml`
-* Ruby の YAML ベース設定文化（例: `.rubocop.yml`, `database.yml`）と一致
+- **型アノテーション** — パラメータと戻り値の型、コンパイル時に削除
+- **ユニオン型** — `String | Integer | nil`
+- **ジェネリクス** — `Array<User>`, `Hash<String, Integer>`
+- **インターフェース** — オブジェクト間の契約を定義
+- **型エイリアス** — `type UserID = Integer`
+- **RBS 生成** — Steep、Ruby LSP、Sorbet と連携
+- **IDE サポート** — VS Code、Neovim + LSP
+- **ウォッチモード** — ファイル変更時に自動再コンパイル
 
 ---
 
-## `.trb.yml` の例
+## クイックリンク
 
-```yaml
-emit:
-  rb: true
-  rbs: true
-  dtrb: false
+**はじめに**
+- [VS Code 拡張](./docs/vscode/ja/getting-started.md)
+- [Vim セットアップ](./docs/vim/ja/getting-started.md)
+- [Neovim セットアップ](./docs/neovim/ja/getting-started.md)
 
-paths:
-  src: ./src
-  out: ./build
-  stdlib_rbs: ./rbs/stdlib
-
-strict:
-  rbs_compat: true
-  null_safety: true
-  inference: basic
-```
+**ガイド**
+- [シンタックスハイライト](./docs/syntax-highlighting/ja/guide.md)
 
 ---
 
-## ロードマップ（Roadmap）
+## ステータス
 
-詳細は [ROADMAP.md](./ROADMAP.md) を参照。
+> **実験的** — T-Ruby は活発に開発中です。
+> API が変更される可能性があります。本番環境での使用はまだ推奨しません。
 
-| マイルストーン | 状態 |
-|----------------|------|
-| 0 – Hello t-ruby | ✅ |
-| 1 – 型パース & 削除 | ✅ |
-| 2 – コア型システム | ✅ |
-| 3 – エコシステム & ツール | ✅ |
-| 4 – 高度な機能 | ✅ |
+| マイルストーン | ステータス |
+|---------------|----------|
+| 型パース & 削除 | ✅ |
+| コア型システム | ✅ |
+| LSP & IDE サポート | ✅ |
+| 高度な機能 | ✅ |
 
----
-
-## IDE・エディタ統合
-
-t-rubyは、シンタックスハイライト、LSP統合、開発ツールを備え、人気のエディタをファーストクラスでサポートします。
-
-### サポートエディタ
-
-| エディタ | シンタックスハイライト | LSPサポート | ドキュメント |
-|----------|:--------------------:|:-----------:|-------------|
-| **VS Code** | ✅ | ✅ | [はじめに](./docs/vscode/ja/getting-started.md) |
-| **Vim** | ✅ | ❌ | [はじめに](./docs/vim/ja/getting-started.md) |
-| **Neovim** | ✅ | ✅ | [はじめに](./docs/neovim/ja/getting-started.md) |
-
-### クイックインストール
-
-**VS Code:**
-```bash
-# VS Codeマーケットプレイスから
-ext install t-ruby
-
-# またはソースから
-cd editors/vscode && npm install && npm run compile
-code --install-extension .
-```
-
-**Vim:**
-```vim
-" vim-plugを使用
-Plug 'type-ruby/t-ruby', { 'rtp': 'editors/vim' }
-```
-
-**Neovim:**
-```lua
--- lazy.nvimを使用
-{ "type-ruby/t-ruby", ft = { "truby" }, config = function()
-    require("t-ruby-lsp").setup()
-end }
-```
-
-### 言語別ドキュメント
-
-| | English | 한국어 | 日本語 |
-|---|---------|--------|--------|
-| **VS Code** | [Guide](./docs/vscode/en/getting-started.md) | [가이드](./docs/vscode/ko/getting-started.md) | [ガイド](./docs/vscode/ja/getting-started.md) |
-| **Vim** | [Guide](./docs/vim/en/getting-started.md) | [가이드](./docs/vim/ko/getting-started.md) | [ガイド](./docs/vim/ja/getting-started.md) |
-| **Neovim** | [Guide](./docs/neovim/en/getting-started.md) | [가이드](./docs/neovim/ko/getting-started.md) | [ガイド](./docs/neovim/ja/getting-started.md) |
-| **シンタックスハイライト** | [Guide](./docs/syntax-highlighting/en/guide.md) | [가이드](./docs/syntax-highlighting/ko/guide.md) | [ガイド](./docs/syntax-highlighting/ja/guide.md) |
+詳細は [ROADMAP.md](./ROADMAP.md) を参照してください。
 
 ---
 
-## 哲学（Philosophy）
+## コントリビュート
 
-t-ruby は Ruby を置き換える言語ではありません。
-
-* Ruby はランタイムおよびホスト言語のまま
-* t-ruby はその上に載る **オプショナルな型レイヤー**
-* 既存 Ruby プロジェクトに段階的に導入可能であることが重要
-
-また、t-ruby は RBS と競合するものでもありません。
-
-* RBS は Ruby の公式シグネチャ形式として尊重
-* t-ruby は RBS を **拡張・再利用** する方向でアプローチ
-* 高度な型は `.rbs` では単純化投影し、完全表現は `.d.trb` で提供
-
----
-
-## 多言語ドキュメント
-
-* English: [README.md](./README.md)
-* 한국어: [README.ko.md](./README.ko.md)
-
----
+コントリビューションを歓迎します！Issue や Pull Request をお気軽にお送りください。
 
 ## ライセンス
 
-未定（TBD）。
+[MIT](./LICENSE)
