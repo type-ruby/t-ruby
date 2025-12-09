@@ -1,0 +1,171 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Time and Date classes
+
+interface Time
+  include Comparable<Time>
+
+  # Components
+  year: Integer
+  month: Integer
+  mon: Integer
+  day: Integer
+  mday: Integer
+  hour: Integer
+  min: Integer
+  sec: Integer
+  usec: Integer
+  nsec: Integer
+  subsec: Rational | Integer
+
+  # Day of week/year
+  wday: Integer
+  yday: Integer
+
+  # Predicates
+  sunday?: Boolean
+  monday?: Boolean
+  tuesday?: Boolean
+  wednesday?: Boolean
+  thursday?: Boolean
+  friday?: Boolean
+  saturday?: Boolean
+  dst?: Boolean
+  isdst: Boolean
+
+  # Timezone
+  zone: String | nil
+  utc_offset: Integer
+  gmt_offset: Integer
+  gmtoff: Integer
+  utc?: Boolean
+  gmt?: Boolean
+
+  # Arithmetic
+  +: Time
+  -: Time | Float
+
+  # Conversion
+  to_i: Integer
+  to_f: Float
+  to_r: Rational
+  to_s: String
+  to_a: Array<Integer>
+  inspect: String
+  asctime: String
+  ctime: String
+
+  # Formatting
+  strftime: String
+
+  # UTC conversion
+  getutc: Time
+  getgm: Time
+  getlocal: Time
+  utc: Time
+  gmtime: Time
+  localtime: Time
+
+  # Rounding
+  round: Time
+  floor: Time
+  ceil: Time
+
+  # Comparison
+  <=>: Integer | nil
+  eql?: Boolean
+  hash: Integer
+end
+
+# Date class (from date library)
+interface Date
+  include Comparable<Date>
+
+  # Components
+  year: Integer
+  month: Integer
+  mon: Integer
+  day: Integer
+  mday: Integer
+  yday: Integer
+  wday: Integer
+  cweek: Integer
+  cwyear: Integer
+  cwday: Integer
+
+  # Julian day
+  jd: Integer
+  mjd: Integer
+  ajd: Rational
+
+  # Predicates
+  sunday?: Boolean
+  monday?: Boolean
+  tuesday?: Boolean
+  wednesday?: Boolean
+  thursday?: Boolean
+  friday?: Boolean
+  saturday?: Boolean
+  leap?: Boolean
+  gregorian?: Boolean
+  julian?: Boolean
+
+  # Arithmetic
+  +: Date
+  -: Date | Integer
+  >>: Date
+  <<: Date
+  next: Date
+  succ: Date
+  prev_day: Date
+  next_day: Date
+  prev_month: Date
+  next_month: Date
+  prev_year: Date
+  next_year: Date
+
+  # Formatting
+  strftime: String
+  iso8601: String
+  to_s: String
+  inspect: String
+
+  # Conversion
+  to_date: Date
+  to_datetime: DateTime
+  to_time: Time
+
+  # Comparison
+  <=>: Integer | nil
+  ===: Boolean
+  eql?: Boolean
+  hash: Integer
+end
+
+# DateTime class
+interface DateTime
+  # Inherits from Date
+  include Comparable<DateTime>
+
+  # Additional time components
+  hour: Integer
+  min: Integer
+  minute: Integer
+  sec: Integer
+  second: Integer
+  sec_fraction: Rational
+  second_fraction: Rational
+  offset: Rational
+  zone: String
+
+  # Conversion
+  to_date: Date
+  to_datetime: DateTime
+  to_time: Time
+  to_s: String
+  iso8601: String
+  strftime: String
+end
+
+# Type aliases
+type Timestamp = Integer
+type Duration = Float | Integer

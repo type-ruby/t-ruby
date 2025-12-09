@@ -437,6 +437,294 @@ module TRuby
     end
   end
 
+  # Cross-file Type Checker
+  class CrossFileTypeChecker
+    attr_reader :errors, :warnings, :file_types
+
+    def initialize(type_checker: nil)
+      @type_checker = type_checker || TypeChecker.new
+      @file_types = {}  # file_path => { types: [], functions: [], interfaces: [] }
+      @global_registry = {}  # name => { file: path, kind: :type/:func/:interface, definition: ... }
+      @errors = []
+      @warnings = []
+    end
+
+    # Register types from a file
+    def register_file(file_path, ir_program)
+      types = []
+      functions = []
+      interfaces = []
+
+      ir_program.declarations.each do |decl|
+        case decl
+        when IR::TypeAlias
+          types << { name: decl.name, definition: decl.definition }
+          register_global(decl.name, file_path, :type, decl)
+        when IR::Interface
+          interfaces << { name: decl.name, members: decl.members }
+          register_global(decl.name, file_path, :interface, decl)
+        when IR::MethodDef
+          functions << { name: decl.name, params: decl.params, return_type: decl.return_type }
+          register_global(decl.name, file_path, :function, decl)
+        end
+      end
+
+      @file_types[file_path] = { types: types, functions: functions, interfaces: interfaces }
+    end
+
+    # Check cross-file type consistency
+    def check_all
+      @errors = []
+      @warnings = []
+
+      # Check for duplicate definitions
+      check_duplicate_definitions
+
+      # Check for unresolved type references
+      check_unresolved_references
+
+      # Check interface implementations
+      check_interface_implementations
+
+      {
+        success: @errors.empty?,
+        errors: @errors,
+        warnings: @warnings
+      }
+    end
+
+    # Check a specific file against global types
+    def check_file(file_path, ir_program)
+      file_errors = []
+
+      ir_program.declarations.each do |decl|
+        case decl
+        when IR::MethodDef
+          # Check parameter types
+          decl.params.each do |param|
+            if param.type_annotation
+              unless type_exists?(param.type_annotation)
+                file_errors << {
+                  file: file_path,
+                  message: "Unknown type '#{type_name(param.type_annotation)}' in parameter '#{param.name}'"
+                }
+              end
+            end
+          end
+
+          # Check return type
+          if decl.return_type
+            unless type_exists?(decl.return_type)
+              file_errors << {
+                file: file_path,
+                message: "Unknown return type '#{type_name(decl.return_type)}' in function '#{decl.name}'"
+              }
+            end
+          end
+        end
+      end
+
+      file_errors
+    end
+
+    # Get all registered types
+    def all_types
+      @global_registry.keys
+    end
+
+    # Find where a type is defined
+    def find_definition(name)
+      @global_registry[name]
+    end
+
+    # Clear all registrations
+    def clear
+      @file_types.clear
+      @global_registry.clear
+      @errors.clear
+      @warnings.clear
+    end
+
+    private
+
+    def register_global(name, file_path, kind, definition)
+      if @global_registry[name] && @global_registry[name][:file] != file_path
+        # Duplicate definition from different file
+        @warnings << {
+          message: "#{kind.to_s.capitalize} '#{name}' defined in multiple files",
+          files: [@global_registry[name][:file], file_path]
+        }
+      end
+
+      @global_registry[name] = { file: file_path, kind: kind, definition: definition }
+    end
+
+    def check_duplicate_definitions
+      @global_registry.group_by { |_, v| v[:file] }.each do |file, entries|
+        # Check for duplicates within file
+        names = entries.map(&:first)
+        duplicates = names.select { |n| names.count(n) > 1 }.uniq
+
+        duplicates.each do |name|
+          @errors << {
+            file: file,
+            message: "Duplicate definition of '#{name}'"
+          }
+        end
+      end
+    end
+
+    def check_unresolved_references
+      @file_types.each do |file_path, info|
+        # Check type alias definitions for unresolved types
+        info[:types].each do |type_info|
+          referenced_types = extract_type_references(type_info[:definition])
+          referenced_types.each do |ref|
+            unless type_exists_by_name?(ref)
+              @errors << {
+                file: file_path,
+                message: "Unresolved type reference '#{ref}' in type alias '#{type_info[:name]}'"
+              }
+            end
+          end
+        end
+      end
+    end
+
+    def check_interface_implementations
+      # For future: check that classes implement all interface methods
+    end
+
+    def type_exists?(type_node)
+      case type_node
+      when IR::SimpleType
+        type_exists_by_name?(type_node.name)
+      when IR::GenericType
+        type_exists_by_name?(type_node.base)
+      when IR::UnionType
+        type_node.types.all? { |t| type_exists?(t) }
+      when IR::IntersectionType
+        type_node.types.all? { |t| type_exists?(t) }
+      when IR::NullableType
+        type_exists?(type_node.inner_type)
+      else
+        true  # Assume valid for unknown types
+      end
+    end
+
+    def type_exists_by_name?(name)
+      return true if %w[String Integer Float Boolean Array Hash Symbol void nil Object Numeric Enumerable].include?(name)
+      return true if @global_registry[name]
+      false
+    end
+
+    def type_name(type_node)
+      case type_node
+      when IR::SimpleType
+        type_node.name
+      when IR::GenericType
+        "#{type_node.base}<...>"
+      else
+        type_node.to_s
+      end
+    end
+
+    def extract_type_references(definition)
+      return [] unless definition
+
+      case definition
+      when IR::SimpleType
+        [definition.name]
+      when IR::GenericType
+        [definition.base] + definition.type_args.flat_map { |t| extract_type_references(t) }
+      when IR::UnionType
+        definition.types.flat_map { |t| extract_type_references(t) }
+      when IR::IntersectionType
+        definition.types.flat_map { |t| extract_type_references(t) }
+      when IR::NullableType
+        extract_type_references(definition.inner_type)
+      else
+        []
+      end
+    end
+  end
+
+  # Enhanced Incremental Compiler with IR and Cross-file support
+  class EnhancedIncrementalCompiler < IncrementalCompiler
+    attr_reader :cross_file_checker, :ir_cache
+
+    def initialize(compiler, cache: nil, enable_cross_file: true)
+      super(compiler, cache: cache)
+      @ir_cache = {}  # file_path => IR::Program
+      @cross_file_checker = CrossFileTypeChecker.new if enable_cross_file
+    end
+
+    # Compile with IR caching
+    def compile_with_ir(file_path)
+      return @compiled_files[file_path] unless needs_compile?(file_path)
+
+      # Get IR from compiler
+      ir_program = @compiler.compile_to_ir(file_path)
+      @ir_cache[file_path] = ir_program
+
+      # Register with cross-file checker
+      @cross_file_checker&.register_file(file_path, ir_program)
+
+      # Compile from IR
+      result = @compiler.compile(file_path)
+      @file_hashes[file_path] = file_hash(file_path)
+      @compiled_files[file_path] = result
+
+      result
+    end
+
+    # Compile all with cross-file checking
+    def compile_all_with_checking(file_paths)
+      results = {}
+      errors = []
+
+      # First pass: compile and register all files
+      file_paths.each do |file_path|
+        begin
+          results[file_path] = compile_with_ir(file_path)
+        rescue => e
+          errors << { file: file_path, error: e.message }
+        end
+      end
+
+      # Second pass: cross-file type checking
+      if @cross_file_checker
+        check_result = @cross_file_checker.check_all
+        errors.concat(check_result[:errors])
+      end
+
+      {
+        results: results,
+        errors: errors,
+        success: errors.empty?
+      }
+    end
+
+    # Get cached IR for a file
+    def get_ir(file_path)
+      @ir_cache[file_path]
+    end
+
+    # Clear all caches
+    def clear
+      super
+      @ir_cache.clear
+      @cross_file_checker&.clear
+    end
+
+    private
+
+    def file_hash(file_path)
+      return nil unless File.exist?(file_path)
+      Digest::SHA256.hexdigest(File.read(file_path))
+    end
+  end
+
   # Compilation profiler
   class CompilationProfiler
     def initialize

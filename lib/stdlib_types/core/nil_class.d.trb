@@ -1,0 +1,84 @@
+# T-Ruby Standard Library Type Definitions
+# Core: NilClass, TrueClass, FalseClass
+
+interface NilClass
+  # Conversion - all return empty/zero values
+  to_a: Array<any>
+  to_h: Hash<any, any>
+  to_s: String
+  to_i: Integer
+  to_f: Float
+  to_r: Rational
+  to_c: Complex
+  inspect: String
+
+  # Pattern matching
+  deconstruct: Array<any>
+  deconstruct_keys: Hash<Symbol, any>
+
+  # Predicates
+  nil?: Boolean  # Always true
+
+  # Boolean operators
+  &: Boolean     # Always false
+  |: Boolean     # Returns other operand
+  ^: Boolean     # Returns other operand
+
+  # Comparison
+  ==: Boolean
+  ===: Boolean
+  hash: Integer
+
+  # Object identity
+  dup: nil
+  clone: nil
+end
+
+interface TrueClass
+  # Boolean operators
+  &: Boolean     # Returns other operand (as bool)
+  |: Boolean     # Always true
+  ^: Boolean     # Negates other operand
+  !: Boolean     # Always false
+
+  # Conversion
+  to_s: String
+  inspect: String
+
+  # Comparison
+  ==: Boolean
+  ===: Boolean
+  hash: Integer
+
+  # Object identity
+  dup: true
+  clone: true
+end
+
+interface FalseClass
+  # Boolean operators
+  &: Boolean     # Always false
+  |: Boolean     # Returns other operand (as bool)
+  ^: Boolean     # Returns other operand (as bool)
+  !: Boolean     # Always true
+
+  # Conversion
+  to_s: String
+  inspect: String
+
+  # Comparison
+  ==: Boolean
+  ===: Boolean
+  hash: Integer
+
+  # Object identity
+  dup: false
+  clone: false
+end
+
+# Type aliases
+type Nil = nil
+type True = true
+type False = false
+type Falsy = false | nil
+type Truthy = any  # Everything except false and nil

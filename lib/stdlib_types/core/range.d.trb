@@ -1,0 +1,48 @@
+# T-Ruby Standard Library Type Definitions
+# Core: Range class
+
+interface Range<T>
+  include Enumerable<T>
+
+  # Boundaries
+  begin: T | nil
+  end: T | nil
+  first: T | Array<T>
+  last: T | Array<T>
+  min: T | nil
+  max: T | nil
+  minmax: Array<T>
+
+  # Range type
+  exclude_end?: Boolean
+
+  # Membership
+  include?: Boolean
+  member?: Boolean
+  ===: Boolean
+  cover?: Boolean
+
+  # Size
+  size: Integer | nil
+  count: Integer
+
+  # Iteration
+  each: Range<T>
+  step: Enumerator<T>
+  %: Enumerator<T>
+
+  # Conversion
+  to_a: Array<T>
+  to_s: String
+  inspect: String
+
+  # Ruby 2.7+ endless and beginless ranges
+  # (1..)  - endless
+  # (..10) - beginless
+  # (..)   - boundless (rare use case)
+end
+
+# Type aliases for common range types
+type IntegerRange = Range<Integer>
+type StringRange = Range<String>
+type FloatRange = Range<Float>

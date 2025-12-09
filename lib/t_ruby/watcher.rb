@@ -17,20 +17,47 @@ module TRuby
       gray: "\e[90m"
     }.freeze
 
-    def initialize(paths: ["."], config: nil)
+    attr_reader :incremental_compiler, :stats
+
+    def initialize(paths: ["."], config: nil, incremental: true, cross_file_check: true, parallel: true)
       @paths = paths.map { |p| File.expand_path(p) }
       @config = config || Config.new
       @compiler = Compiler.new(@config)
       @error_count = 0
       @file_count = 0
       @use_colors = $stdout.tty?
+
+      # Enhanced features
+      @incremental = incremental
+      @cross_file_check = cross_file_check
+      @parallel = parallel
+
+      # Initialize incremental compiler
+      if @incremental
+        @incremental_compiler = EnhancedIncrementalCompiler.new(
+          @compiler,
+          enable_cross_file: @cross_file_check
+        )
+      end
+
+      # Parallel processor
+      @parallel_processor = ParallelProcessor.new if @parallel
+
+      # Statistics
+      @stats = {
+        total_compilations: 0,
+        incremental_hits: 0,
+        total_time: 0.0
+      }
     end
 
     def watch
       print_start_message
 
       # Initial compilation
+      start_time = Time.now
       compile_all
+      @stats[:total_time] += Time.now - start_time
 
       # Start watching
       listener = Listen.to(*watch_directories, only: /\.trb$/) do |modified, added, removed|
@@ -46,6 +73,7 @@ module TRuby
         sleep
       rescue Interrupt
         puts "\n#{colorize(:dim, timestamp)} #{colorize(:cyan, "Stopping watch mode...")}"
+        print_stats if @incremental
         listener.stop
       end
     end
@@ -72,11 +100,15 @@ module TRuby
       if removed.any?
         removed.each do |file|
           puts "#{colorize(:gray, timestamp)} #{colorize(:yellow, "File removed:")} #{relative_path(file)}"
+          # Clear from incremental compiler cache
+          @incremental_compiler&.file_hashes&.delete(file)
         end
       end
 
       if changed_files.any?
-        compile_files(changed_files)
+        start_time = Time.now
+        compile_files_incremental(changed_files)
+        @stats[:total_time] += Time.now - start_time
       else
         print_watching_message
       end
@@ -90,28 +122,86 @@ module TRuby
       trb_files = find_trb_files
       @file_count = trb_files.size
 
-      trb_files.each do |file|
-        result = compile_file(file)
-        errors.concat(result[:errors]) if result[:errors].any?
+      if @incremental && @cross_file_check
+        # Use enhanced incremental compiler with cross-file checking
+        result = @incremental_compiler.compile_all_with_checking(trb_files)
+        errors = result[:errors].map { |e| format_error(e[:file], e[:error] || e[:message]) }
+        @error_count = errors.size
+        @stats[:total_compilations] += trb_files.size
+      elsif @parallel && trb_files.size > 1
+        # Parallel compilation
+        results = @parallel_processor.process_files(trb_files) do |file|
+          compile_file(file)
+        end
+        results.each do |result|
+          errors.concat(result[:errors]) if result[:errors]&.any?
+        end
+      else
+        # Sequential compilation
+        trb_files.each do |file|
+          result = compile_file(file)
+          errors.concat(result[:errors]) if result[:errors].any?
+        end
       end
 
       print_errors(errors)
       print_summary
     end
 
-    def compile_files(files)
+    def compile_files_incremental(files)
       @error_count = 0
-      @file_count = files.size
       errors = []
+      compiled_count = 0
 
-      files.each do |file|
-        result = compile_file(file)
-        errors.concat(result[:errors]) if result[:errors].any?
+      if @incremental
+        files.each do |file|
+          if @incremental_compiler.needs_compile?(file)
+            @stats[:total_compilations] += 1
+            result = compile_file_with_ir(file)
+            errors.concat(result[:errors]) if result[:errors].any?
+            compiled_count += 1
+          else
+            @stats[:incremental_hits] += 1
+            puts "#{colorize(:gray, timestamp)} #{colorize(:dim, "Skipping unchanged:")} #{relative_path(file)}"
+          end
+        end
+
+        # Run cross-file check if enabled
+        if @cross_file_check && @incremental_compiler.cross_file_checker
+          check_result = @incremental_compiler.cross_file_checker.check_all
+          check_result[:errors].each do |e|
+            errors << format_error(e[:file], e[:message])
+          end
+        end
+      else
+        files.each do |file|
+          result = compile_file(file)
+          errors.concat(result[:errors]) if result[:errors].any?
+          compiled_count += 1
+        end
       end
 
+      @file_count = compiled_count
       print_errors(errors)
       print_summary
       print_watching_message
+    end
+
+    def compile_file_with_ir(file)
+      result = { file: file, errors: [], success: false }
+
+      begin
+        @incremental_compiler.compile_with_ir(file)
+        result[:success] = true
+      rescue ArgumentError => e
+        @error_count += 1
+        result[:errors] << format_error(file, e.message)
+      rescue StandardError => e
+        @error_count += 1
+        result[:errors] << format_error(file, e.message)
+      end
+
+      result
     end
 
     def compile_file(file)
@@ -120,6 +210,7 @@ module TRuby
       begin
         @compiler.compile(file)
         result[:success] = true
+        @stats[:total_compilations] += 1
       rescue ArgumentError => e
         @error_count += 1
         result[:errors] << format_error(file, e.message)
@@ -195,6 +286,20 @@ module TRuby
 
     def print_watching_message
       # Just print a blank line for readability
+    end
+
+    def print_stats
+      puts
+      puts "#{colorize(:gray, timestamp)} #{colorize(:bold, "Watch Mode Statistics:")}"
+      puts "  Total compilations: #{@stats[:total_compilations]}"
+      puts "  Incremental cache hits: #{@stats[:incremental_hits]}"
+      hit_rate = if @stats[:total_compilations] + @stats[:incremental_hits] > 0
+        (@stats[:incremental_hits].to_f / (@stats[:total_compilations] + @stats[:incremental_hits]) * 100).round(1)
+      else
+        0
+      end
+      puts "  Cache hit rate: #{hit_rate}%"
+      puts "  Total compile time: #{@stats[:total_time].round(2)}s"
     end
 
     def timestamp

@@ -283,14 +283,223 @@ module TRuby
     end
   end
 
+  # Remote registry client (RubyGems.org style API)
+  class RemoteRegistry
+    DEFAULT_REGISTRY_URL = "https://rubygems.org/api/v1"
+    TYPE_REGISTRY_URL = "https://types.ruby-lang.org/api/v1" # Hypothetical type registry
+
+    attr_reader :registry_url, :cache_dir
+
+    def initialize(registry_url: nil, cache_dir: nil)
+      @registry_url = registry_url || TYPE_REGISTRY_URL
+      @cache_dir = cache_dir || File.join(Dir.home, ".trb-cache")
+      @http_cache = {}
+      FileUtils.mkdir_p(@cache_dir)
+    end
+
+    # Search for type packages
+    def search(query, page: 1, per_page: 30)
+      uri = URI("#{@registry_url}/search.json")
+      uri.query = URI.encode_www_form(query: query, page: page, per_page: per_page)
+
+      response = fetch_json(uri)
+      return [] unless response
+
+      response.map do |pkg|
+        {
+          name: pkg["name"],
+          version: pkg["version"],
+          downloads: pkg["downloads"],
+          summary: pkg["info"] || pkg["summary"]
+        }
+      end
+    rescue StandardError => e
+      warn "Registry search failed: #{e.message}"
+      []
+    end
+
+    # Get package info
+    def info(name)
+      uri = URI("#{@registry_url}/gems/#{name}.json")
+      response = fetch_json(uri)
+      return nil unless response
+
+      {
+        name: response["name"],
+        version: response["version"],
+        authors: response["authors"],
+        summary: response["info"],
+        homepage: response["homepage_uri"],
+        source_code: response["source_code_uri"],
+        documentation: response["documentation_uri"],
+        licenses: response["licenses"],
+        dependencies: parse_dependencies(response["dependencies"])
+      }
+    rescue StandardError => e
+      warn "Failed to fetch package info: #{e.message}"
+      nil
+    end
+
+    # Get all versions of a package
+    def versions(name)
+      uri = URI("#{@registry_url}/versions/#{name}.json")
+      response = fetch_json(uri)
+      return [] unless response
+
+      response.map do |v|
+        {
+          number: v["number"],
+          created_at: v["created_at"],
+          prerelease: v["prerelease"],
+          sha: v["sha"]
+        }
+      end
+    rescue StandardError => e
+      warn "Failed to fetch versions: #{e.message}"
+      []
+    end
+
+    # Download package
+    def download(name, version, target_dir = nil)
+      target = target_dir || File.join(@cache_dir, name, version)
+      FileUtils.mkdir_p(target)
+
+      # Download from registry
+      uri = URI("#{@registry_url}/gems/#{name}-#{version}.gem")
+
+      gem_path = File.join(target, "#{name}-#{version}.gem")
+      download_file(uri, gem_path)
+
+      # Extract type definitions
+      extract_types(gem_path, target)
+
+      target
+    rescue StandardError => e
+      warn "Download failed: #{e.message}"
+      nil
+    end
+
+    # Push package to registry
+    def push(gem_path, api_key:)
+      uri = URI("#{@registry_url}/gems")
+
+      request = Net::HTTP::Post.new(uri)
+      request["Authorization"] = api_key
+      request["Content-Type"] = "application/octet-stream"
+      request.body = File.binread(gem_path)
+
+      response = send_request(uri, request)
+
+      case response
+      when Net::HTTPSuccess
+        { success: true, message: response.body }
+      else
+        { success: false, message: response.body }
+      end
+    rescue StandardError => e
+      { success: false, message: e.message }
+    end
+
+    # Yank (unpublish) a version
+    def yank(name, version, api_key:)
+      uri = URI("#{@registry_url}/gems/yank")
+
+      request = Net::HTTP::Delete.new(uri)
+      request["Authorization"] = api_key
+      request.set_form_data(gem_name: name, version: version)
+
+      response = send_request(uri, request)
+
+      case response
+      when Net::HTTPSuccess
+        { success: true }
+      else
+        { success: false, message: response.body }
+      end
+    rescue StandardError => e
+      { success: false, message: e.message }
+    end
+
+    # Get API key info
+    def api_key_info(api_key)
+      uri = URI("#{@registry_url}/api_key.json")
+
+      request = Net::HTTP::Get.new(uri)
+      request["Authorization"] = api_key
+
+      response = send_request(uri, request)
+
+      case response
+      when Net::HTTPSuccess
+        JSON.parse(response.body)
+      else
+        nil
+      end
+    rescue StandardError
+      nil
+    end
+
+    private
+
+    def fetch_json(uri)
+      cached = @http_cache[uri.to_s]
+      if cached && Time.now - cached[:time] < 300 # 5 min cache
+        return cached[:data]
+      end
+
+      response = Net::HTTP.get_response(uri)
+      return nil unless response.is_a?(Net::HTTPSuccess)
+
+      data = JSON.parse(response.body)
+      @http_cache[uri.to_s] = { data: data, time: Time.now }
+      data
+    rescue JSON::ParserError
+      nil
+    end
+
+    def download_file(uri, path)
+      Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
+        request = Net::HTTP::Get.new(uri)
+        http.request(request) do |response|
+          File.open(path, "wb") do |file|
+            response.read_body { |chunk| file.write(chunk) }
+          end
+        end
+      end
+    end
+
+    def send_request(uri, request)
+      Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
+        http.request(request)
+      end
+    end
+
+    def parse_dependencies(deps)
+      return {} unless deps
+
+      result = {}
+      (deps["runtime"] || []).each do |dep|
+        result[dep["name"]] = dep["requirements"]
+      end
+      result
+    end
+
+    def extract_types(gem_path, target_dir)
+      # In a real implementation, would extract .d.trb files from gem
+      # For now, just create marker
+      File.write(File.join(target_dir, ".extracted"), Time.now.iso8601)
+    end
+  end
+
   # Package registry (local or remote)
   class PackageRegistry
-    attr_reader :packages, :local_path
+    attr_reader :packages, :local_path, :remote
 
     def initialize(local_path: nil, remote_url: nil)
       @local_path = local_path || ".trb-packages"
       @remote_url = remote_url
       @packages = {}
+      @remote = RemoteRegistry.new(registry_url: remote_url) if remote_url
       FileUtils.mkdir_p(@local_path) if @local_path
     end
 

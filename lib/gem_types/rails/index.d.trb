@@ -1,0 +1,64 @@
+# T-Ruby Gem Type Definitions
+# Rails Framework Type Definitions
+# Version: 7.x compatible
+
+# =============================================================================
+# Rails Core Types
+# =============================================================================
+
+# Application configuration
+interface Rails
+  application: Rails::Application
+  configuration: Rails::Application::Configuration
+  env: ActiveSupport::StringInquirer
+  root: Pathname
+  logger: ActiveSupport::Logger
+  cache: ActiveSupport::Cache::Store
+  public_path: Pathname
+  version: String
+  groups: Array<Symbol>
+end
+
+interface Rails::Application
+  config: Rails::Application::Configuration
+  routes: ActionDispatch::Routing::RouteSet
+  secrets: ActiveSupport::OrderedOptions
+  credentials: Rails::Application::EncryptedConfiguration
+  initialized?: Boolean
+  initialize!: Rails::Application
+  eager_load!: void
+  reload_routes!: void
+end
+
+interface Rails::Application::Configuration
+  # Core settings
+  root: Pathname
+  eager_load: Boolean
+  cache_classes: Boolean
+  consider_all_requests_local: Boolean
+  log_level: Symbol
+  time_zone: String
+  encoding: String
+
+  # Database
+  active_record: ActiveRecord::Railtie::Configuration
+
+  # Action packs
+  action_controller: ActionController::Railtie::Configuration
+  action_view: ActionView::Railtie::Configuration
+  action_mailer: ActionMailer::Railtie::Configuration
+  action_cable: ActionCable::Server::Configuration
+  active_job: ActiveJob::Railtie::Configuration
+  active_storage: ActiveStorage::Engine::Configuration
+
+  # Middleware
+  middleware: Rails::Configuration::MiddlewareStackProxy
+
+  # Assets
+  assets: Sprockets::Railtie::Configuration
+  public_file_server: ActiveSupport::OrderedOptions
+end
+
+# Type aliases for Rails
+type RailsEnv = "development" | "test" | "production"
+type HTTPMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS"

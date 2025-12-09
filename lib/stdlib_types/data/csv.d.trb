@@ -1,0 +1,178 @@
+# T-Ruby Standard Library Type Definitions
+# Data: CSV parsing and generation
+
+interface CSV
+  # Reading
+  foreach: void
+  parse: Array<CSV::Row> | CSV::Table
+  read: Array<CSV::Row> | CSV::Table
+  readlines: Array<CSV::Row> | CSV::Table
+  open: CSV | Object
+
+  # Generation
+  generate: String
+  generate_line: String
+
+  # Instance methods
+  <<: CSV
+  add_row: CSV
+  puts: CSV
+  gets: CSV::Row | nil
+  shift: CSV::Row | nil
+  readline: CSV::Row | nil
+  read: Array<CSV::Row>
+  readlines: Array<CSV::Row>
+  each: CSV
+  rewind: Integer
+  close: nil
+  closed?: Boolean
+  eof?: Boolean
+  eof: Boolean
+  flock: Integer
+  flush: CSV
+  fsync: Integer
+  ioctl: Integer
+  isatty: Boolean
+  path: String | nil
+  pos: Integer
+  pos=: Integer
+  seek: Integer
+  stat: File::Stat
+  sync: Boolean
+  sync=: Boolean
+  tell: Integer
+  truncate: Integer
+
+  # Headers
+  headers: Array<String> | true | nil
+  header_row?: Boolean
+  return_headers?: Boolean
+  write_headers?: Boolean
+
+  # Configuration
+  col_sep: String
+  row_sep: String
+  quote_char: String
+  field_size_limit: Integer | nil
+  skip_blanks: Boolean
+  skip_lines: Regexp | nil
+  liberal_parsing: Boolean
+  strip: Boolean
+  encoding: Encoding
+
+  # Line info
+  lineno: Integer
+  line: String | nil
+end
+
+# CSV Row
+interface CSV::Row
+  # Access
+  []: String | nil
+  []=: String
+  fetch: String
+  fields: Array<String | nil>
+  values_at: Array<String | nil>
+
+  # Headers
+  headers: Array<String>
+  header?: Boolean
+  field_row?: Boolean
+
+  # Iteration
+  each: CSV::Row
+  each_pair: CSV::Row
+
+  # Modification
+  <<: CSV::Row
+  push: CSV::Row
+  delete: Array<String | nil>
+  delete_if: CSV::Row
+
+  # Query
+  include?: Boolean
+  field?: Boolean
+  index: Integer | nil
+  empty?: Boolean
+  length: Integer
+  size: Integer
+
+  # Conversion
+  to_a: Array<Array<String | nil>>
+  to_h: Hash<String, String | nil>
+  to_hash: Hash<String, String | nil>
+  to_csv: String
+  to_s: String
+  inspect: String
+
+  # Comparison
+  ==: Boolean
+end
+
+# CSV Table
+interface CSV::Table
+  # Access
+  []: CSV::Row | Array<String | nil>
+  []=: CSV::Row | Array<String | nil>
+  values_at: Array<CSV::Row>
+
+  # Headers
+  headers: Array<String>
+
+  # Mode
+  by_col: CSV::Table
+  by_col!: CSV::Table
+  by_row: CSV::Table
+  by_row!: CSV::Table
+  by_col_or_row: CSV::Table
+  by_col_or_row!: CSV::Table
+
+  # Iteration
+  each: CSV::Table
+
+  # Modification
+  <<: CSV::Table
+  push: CSV::Table
+  delete: Array<String | nil> | CSV::Row
+  delete_if: CSV::Table
+
+  # Query
+  include?: Boolean
+  empty?: Boolean
+  length: Integer
+  size: Integer
+
+  # Conversion
+  to_a: Array<Array<String | nil>>
+  to_csv: String
+  to_s: String
+  inspect: String
+
+  # Comparison
+  ==: Boolean
+end
+
+# CSV Options
+interface CSV::Options
+  col_sep: String
+  row_sep: String
+  quote_char: String
+  field_size_limit: Integer | nil
+  converters: Symbol | Array<Symbol> | Proc<String>
+  unconverted_fields: Boolean
+  headers: Boolean | Symbol | Array<String> | String
+  return_headers: Boolean
+  write_headers: Boolean
+  header_converters: Symbol | Array<Symbol> | Proc<String>
+  skip_blanks: Boolean
+  skip_lines: Regexp
+  liberal_parsing: Boolean
+  strip: Boolean | String
+  encoding: String | Encoding
+  force_quotes: Boolean
+  quote_empty: Boolean
+end
+
+# Type aliases
+type CSVRow = Array<String | nil>
+type CSVData = Array<CSVRow>
