@@ -30,9 +30,9 @@ module TRuby
 
     def check_interface_errors
       @lines.each_with_index do |line, idx|
-        next unless line.match?(/^\s*interface\s+\w+/)
+        next unless line.match?(/^\s*interface\s+[\w:]+/)
 
-        match = line.match(/^\s*interface\s+(\w+)/)
+        match = line.match(/^\s*interface\s+([\w:]+)/)
         next unless match
 
         interface_name = match[1]

@@ -200,7 +200,7 @@ module TRuby
 
     def parse_interface(start_index)
       line = @lines[start_index]
-      match = line.match(/^\s*interface\s+(\w+)/)
+      match = line.match(/^\s*interface\s+([\w:]+)/)
       return [nil, start_index] unless match
 
       interface_name = match[1]
@@ -211,8 +211,8 @@ module TRuby
         current_line = @lines[i]
         break if current_line.match?(/^\s*end\s*$/)
 
-        if current_line.match?(/^\s*\w+\s*:\s*/)
-          member_match = current_line.match(/^\s*(\w+)\s*:\s*(.+?)\s*$/)
+        if current_line.match?(/^\s*[\w!?]+\s*:\s*/)
+          member_match = current_line.match(/^\s*([\w!?]+)\s*:\s*(.+?)\s*$/)
           if member_match
             member = {
               name: member_match[1],
