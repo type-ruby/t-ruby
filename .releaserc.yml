@@ -1,0 +1,104 @@
+# semantic-release configuration
+# https://semantic-release.gitbook.io/
+
+branches:
+  - main
+  - name: develop
+    prerelease: beta
+
+plugins:
+  # Analyze commits to determine version bump
+  - - "@semantic-release/commit-analyzer"
+    - preset: conventionalcommits
+      releaseRules:
+        - type: feat
+          release: minor
+        - type: fix
+          release: patch
+        - type: perf
+          release: patch
+        - type: revert
+          release: patch
+        - type: docs
+          release: false
+        - type: style
+          release: false
+        - type: refactor
+          release: false
+        - type: test
+          release: false
+        - type: build
+          release: false
+        - type: ci
+          release: false
+        - type: chore
+          release: false
+
+  # Generate release notes from commits
+  - - "@semantic-release/release-notes-generator"
+    - preset: conventionalcommits
+      presetConfig:
+        types:
+          - type: feat
+            section: "Features"
+          - type: fix
+            section: "Bug Fixes"
+          - type: perf
+            section: "Performance"
+          - type: revert
+            section: "Reverts"
+          - type: docs
+            section: "Documentation"
+            hidden: true
+          - type: style
+            section: "Styles"
+            hidden: true
+          - type: refactor
+            section: "Code Refactoring"
+            hidden: true
+          - type: test
+            section: "Tests"
+            hidden: true
+          - type: build
+            section: "Build System"
+            hidden: true
+          - type: ci
+            section: "CI/CD"
+            hidden: true
+
+  # Generate/update CHANGELOG.md
+  - - "@semantic-release/changelog"
+    - changelogFile: CHANGELOG.md
+      changelogTitle: "# Changelog\n\nAll notable changes to T-Ruby will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)."
+
+  # Update version in various files
+  - - "@semantic-release/exec"
+    - prepareCmd: |
+        # Update Ruby version
+        sed -i 's/VERSION = ".*"/VERSION = "${nextRelease.version}"/' lib/t_ruby/version.rb
+
+        # Update editors/VERSION
+        echo "${nextRelease.version}" > editors/VERSION
+
+        # Sync editor versions
+        ./scripts/sync-editor-versions.sh
+
+  # Commit the changes
+  - - "@semantic-release/git"
+    - assets:
+        - CHANGELOG.md
+        - lib/t_ruby/version.rb
+        - editors/VERSION
+        - editors/vscode/package.json
+        - editors/jetbrains/build.gradle.kts
+      message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+
+  # Create GitHub release
+  - - "@semantic-release/github"
+    - assets:
+        - path: "*.gem"
+          label: "Ruby Gem"
+        - path: "editors/vscode/*.vsix"
+          label: "VS Code Extension"
+        - path: "editors/jetbrains/build/distributions/*.zip"
+          label: "JetBrains Plugin"

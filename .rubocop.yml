@@ -1,0 +1,106 @@
+# T-Ruby RuboCop Configuration
+# https://docs.rubocop.org/rubocop/
+
+AllCops:
+  TargetRubyVersion: 3.0
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'bin/**/*'
+    - 'build/**/*'
+    - 'vendor/**/*'
+    - 'wasm/**/*'
+    - 'docs/**/*'
+    - 'editors/**/*'
+    - 'examples/**/*'
+
+# Layout
+Layout/LineLength:
+  Max: 120
+  AllowedPatterns:
+    - '^\s*#'  # Allow long comments
+    - 'https?://'  # Allow URLs
+
+Layout/EmptyLinesAroundModuleBody:
+  Enabled: false
+
+Layout/EmptyLinesAroundClassBody:
+  Enabled: false
+
+# Metrics
+Metrics/MethodLength:
+  Max: 30
+  CountAsOne:
+    - array
+    - hash
+    - heredoc
+
+Metrics/ClassLength:
+  Max: 300
+
+Metrics/ModuleLength:
+  Max: 300
+
+Metrics/AbcSize:
+  Max: 40
+
+Metrics/CyclomaticComplexity:
+  Max: 15
+
+Metrics/PerceivedComplexity:
+  Max: 15
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - '*.gemspec'
+
+Metrics/ParameterLists:
+  Max: 8
+
+# Naming
+Naming/MethodParameterName:
+  AllowedNames:
+    - e
+    - i
+    - k
+    - v
+    - x
+    - y
+    - io
+
+# Style
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  EnforcedStyle: always
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Style/GuardClause:
+  MinBodyLength: 5
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Style/HashSyntax:
+  EnforcedShorthandSyntax: either
+
+# Lint
+Lint/MissingSuper:
+  Enabled: false
