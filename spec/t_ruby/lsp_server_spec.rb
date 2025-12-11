@@ -476,6 +476,50 @@ RSpec.describe TRuby::LSPServer do
       expect(response_text).to include("publishDiagnostics")
       expect(response_text).to include('"diagnostics":[]')
     end
+
+    it "responds to pull-based diagnostic requests" do
+      send_notification("textDocument/didOpen", {
+        "textDocument" => {
+          "uri" => "file:///test.trb",
+          "version" => 1,
+          "text" => "def test(name: UnknownType): String\nend"
+        }
+      })
+
+      response = send_request("textDocument/diagnostic", {
+        "textDocument" => { "uri" => "file:///test.trb" }
+      })
+
+      expect(response["result"]["kind"]).to eq("full")
+      expect(response["result"]["items"]).to be_an(Array)
+      expect(response["result"]["items"].length).to be > 0
+    end
+
+    it "returns empty diagnostics for valid code via pull request" do
+      send_notification("textDocument/didOpen", {
+        "textDocument" => {
+          "uri" => "file:///valid.trb",
+          "version" => 1,
+          "text" => "def greet(name: String): String\n  name\nend"
+        }
+      })
+
+      response = send_request("textDocument/diagnostic", {
+        "textDocument" => { "uri" => "file:///valid.trb" }
+      })
+
+      expect(response["result"]["kind"]).to eq("full")
+      expect(response["result"]["items"]).to eq([])
+    end
+
+    it "returns empty diagnostics for unknown document" do
+      response = send_request("textDocument/diagnostic", {
+        "textDocument" => { "uri" => "file:///unknown.trb" }
+      })
+
+      expect(response["result"]["kind"]).to eq("full")
+      expect(response["result"]["items"]).to eq([])
+    end
   end
 
   describe "error handling" do

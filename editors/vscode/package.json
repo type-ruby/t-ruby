@@ -2,7 +2,7 @@
   "name": "t-ruby",
   "displayName": "T-Ruby",
   "description": "T-Ruby language support with type annotations for Ruby",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "publisher": "t-ruby",
   "engines": {
     "vscode": "^1.75.0"

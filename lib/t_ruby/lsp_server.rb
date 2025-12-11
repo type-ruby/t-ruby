@@ -234,6 +234,8 @@ module TRuby
         handle_definition(params)
       when "textDocument/semanticTokens/full"
         handle_semantic_tokens_full(params)
+      when "textDocument/diagnostic"
+        handle_diagnostic(params)
       else
         { error: { code: ErrorCodes::METHOD_NOT_FOUND, message: "Method not found: #{method}" } }
       end
@@ -341,6 +343,21 @@ module TRuby
     end
 
     # === Diagnostics ===
+
+    # Handle pull-based diagnostics (LSP 3.17+)
+    def handle_diagnostic(params)
+      uri = params.dig("textDocument", "uri")
+      return { "kind" => "full", "items" => [] } unless uri
+
+      doc = @documents[uri]
+      return { "kind" => "full", "items" => [] } unless doc
+
+      text = doc[:text]
+      return { "kind" => "full", "items" => [] } unless text
+
+      diagnostics = analyze_document(text)
+      { "kind" => "full", "items" => diagnostics }
+    end
 
     def publish_diagnostics(uri, text)
       diagnostics = analyze_document(text)
