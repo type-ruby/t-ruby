@@ -38,5 +38,10 @@ require_relative "t_ruby/bundler_integration"
 require_relative "t_ruby/benchmark"
 require_relative "t_ruby/doc_generator"
 
+# Milestone -7: Documentation Verification
+require_relative "t_ruby/docs_example_extractor"
+require_relative "t_ruby/docs_example_verifier"
+require_relative "t_ruby/docs_badge_generator"
+
 module TRuby
 end

@@ -20,7 +20,11 @@ dependencies {
         plugin("com.redhat.devtools.lsp4ij:0.19.0")
         pluginVerifier()
         zipSigner()
+        testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
     }
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 intellijPlatform {
@@ -105,5 +109,9 @@ kotlin {
 tasks {
     buildSearchableOptions {
         enabled = false
+    }
+
+    test {
+        useJUnitPlatform()
     }
 }

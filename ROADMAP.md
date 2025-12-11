@@ -133,47 +133,47 @@
 | Monorepo Setup (moon) | `.moon/workspace.yml`, `.moon/toolchain.yml` | ✅ Done |
 | Project moon.yml Files | 각 프로젝트별 태스크 정의 | ✅ Done |
 
-### ⏳ Phase 2: CI/CD Pipeline
+### ✅ Phase 2: CI/CD Pipeline (Completed)
 
 | Task | Description | Status |
 |------|-------------|--------|
-| CI Workflow | `.github/workflows/ci.yml` (Ruby matrix test) | ⏳ Planned |
-| RuboCop CI | CI에 린트 검사 추가 | ⏳ Planned |
-| Codecov Integration | 테스트 커버리지 리포트 | ⏳ Planned |
-| VSCode Test CI | 플러그인 테스트 자동화 | ⏳ Planned |
-| JetBrains Test CI | 플러그인 테스트 자동화 | ⏳ Planned |
-| Docs Verify CI | 문서 예제 검증 자동화 | ⏳ Planned |
-| Release Workflow | `.github/workflows/release.yml` (동시 배포) | ⏳ Planned |
+| CI Workflow | `.github/workflows/ci.yml` (Ruby matrix test) | ✅ Done |
+| RuboCop CI | CI에 린트 검사 추가 (`.rubocop.yml`) | ✅ Done |
+| Codecov Integration | 테스트 커버리지 리포트 | ✅ Done |
+| VSCode Test CI | 플러그인 빌드/린트 자동화 | ✅ Done |
+| JetBrains Test CI | 플러그인 빌드/검증 자동화 | ✅ Done |
+| Docs Verify CI | 문서 예제 검증 자동화 (Phase 4 이후 활성화) | ✅ Done |
+| Release Workflow | `.github/workflows/release.yml` (동시 배포) | ✅ Done |
 
-### ⏳ Phase 3: Editor Plugin Integration
-
-| Task | Description | Status |
-|------|-------------|--------|
-| VERSION File | `editors/VERSION` (v0.2.0) Single Source of Truth | ⏳ Planned |
-| Version Sync Script | `scripts/sync-editor-versions.sh` | ⏳ Planned |
-| VSCode Test Setup | `@vscode/test-electron` + Mocha | ⏳ Planned |
-| VSCode Tests | `editors/vscode/src/test/` 테스트 작성 | ⏳ Planned |
-| JetBrains Test Setup | JUnit 5 + IntelliJ Platform Test | ⏳ Planned |
-| JetBrains Tests | `editors/jetbrains/src/test/` 테스트 작성 | ⏳ Planned |
-| Editor CONTRIBUTING.md | 플러그인 기여 가이드 | ⏳ Planned |
-
-### ⏳ Phase 4: Documentation Verification
+### ✅ Phase 3: Editor Plugin Integration (Completed)
 
 | Task | Description | Status |
 |------|-------------|--------|
-| DocsExampleExtractor | 마크다운에서 코드 블록 추출 | ⏳ Planned |
-| DocsExampleVerifier | 컴파일/타입체크 검증 | ⏳ Planned |
-| DocsBadgeGenerator | 커버리지 뱃지 생성 | ⏳ Planned |
-| Rake Task | `rake docs:verify`, `rake docs:badge` | ⏳ Planned |
-| DocsBadge Component | Docusaurus 뱃지 컴포넌트 | ⏳ Planned |
+| VERSION File | `editors/VERSION` (v0.2.0) Single Source of Truth | ✅ Done |
+| Version Sync Script | `scripts/sync-editor-versions.sh` | ✅ Done |
+| VSCode Test Setup | `@vscode/test-electron` + Mocha | ✅ Done |
+| VSCode Tests | `editors/vscode/src/test/` 테스트 작성 | ✅ Done |
+| JetBrains Test Setup | JUnit 5 + IntelliJ Platform Test | ✅ Done |
+| JetBrains Tests | `editors/jetbrains/src/test/` 테스트 작성 | ✅ Done |
+| Editor CONTRIBUTING.md | 플러그인 기여 가이드 | ✅ Done |
 
-### ⏳ Phase 5: Release Automation
+### ✅ Phase 4: Documentation Verification (Completed)
 
 | Task | Description | Status |
 |------|-------------|--------|
-| COMMIT_CONVENTION.md | Conventional Commits 가이드 | ⏳ Planned |
-| .releaserc.yml | semantic-release 설정 | ⏳ Planned |
-| CHANGELOG Automation | 자동 생성 및 GitHub Release | ⏳ Planned |
+| DocsExampleExtractor | 마크다운에서 코드 블록 추출 | ✅ Done |
+| DocsExampleVerifier | 컴파일/타입체크 검증 | ✅ Done |
+| DocsBadgeGenerator | 커버리지 뱃지 생성 | ✅ Done |
+| Rake Task | `rake docs:verify`, `rake docs:badge`, `rake docs:list` | ✅ Done |
+| DocsBadge Component | Docusaurus 뱃지 컴포넌트 (별도 docs 사이트에서 사용) | ✅ Done |
+
+### ✅ Phase 5: Release Automation (Completed)
+
+| Task | Description | Status |
+|------|-------------|--------|
+| COMMIT_CONVENTION.md | Conventional Commits 가이드 | ✅ Done |
+| .releaserc.yml | semantic-release 설정 | ✅ Done |
+| CHANGELOG Automation | 자동 생성 및 GitHub Release | ✅ Done |
 
 ---
 

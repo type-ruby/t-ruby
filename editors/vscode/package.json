@@ -92,15 +92,21 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
     "package": "vsce package",
     "publish": "vsce publish"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.6",
     "@types/node": "^18.x",
     "@types/vscode": "^1.75.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "@vscode/test-electron": "^2.3.9",
     "eslint": "^8.45.0",
+    "glob": "^10.3.10",
+    "mocha": "^10.3.0",
     "typescript": "^5.2.0"
   },
   "dependencies": {
