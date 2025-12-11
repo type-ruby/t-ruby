@@ -17,6 +17,10 @@
 </p>
 
 <p align="center">
+  <a href="https://type-ruby.github.io"><strong>🌐 Official Website</strong></a>
+</p>
+
+<p align="center">
   <a href="#install">Install</a>
   &nbsp;&nbsp;•&nbsp;&nbsp;
   <a href="#quick-start">Quick Start</a>
