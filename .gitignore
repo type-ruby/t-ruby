@@ -21,3 +21,6 @@ editors/vscode/node_modules/
 editors/vscode/*.vsix
 
 .env*
+
+ignore/
+*.gem

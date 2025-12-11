@@ -165,7 +165,7 @@ commit_version_bump() {
 
     log_info "Committing version bump..."
 
-    git add lib/t_ruby/version.rb README.md README.ko.md README.ja.md
+    git add .
 
     git commit -m "chore: bump version to v$version"
 

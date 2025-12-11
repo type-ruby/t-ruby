@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    t_ruby (0.0.1)
+    t-ruby (0.0.2)
       listen (~> 3.8)
 
 GEM
@@ -82,7 +82,7 @@ DEPENDENCIES
   rubocop
   simplecov (~> 0.22.0)
   simplecov-cobertura (~> 2.1.0)
-  t_ruby!
+  t-ruby!
 
 BUNDLED WITH
    2.7.2
