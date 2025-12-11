@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/CI-passing-brightgreen" alt="CI: passing" />
   <img src="https://img.shields.io/badge/ruby-3.0+-cc342d" alt="Ruby 3.0+" />
-  <img src="https://img.shields.io/badge/gem-v0.1.0-blue" alt="Gem: v0.1.0" />
+  <img src="https://img.shields.io/badge/gem-v0.0.2-blue" alt="Gem: v0.0.2" />
   <img src="https://img.shields.io/badge/downloads-0-lightgrey" alt="Downloads" />
   <img src="https://img.shields.io/badge/coverage-90%25-brightgreen" alt="Coverage: 90%" />
 </p>
