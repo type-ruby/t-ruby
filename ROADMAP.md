@@ -2,7 +2,7 @@
 
 ## Status
 
-**Milestone 6 All Phases (1-4) completed.** All tests passing.
+**Milestone 6 completed. Milestone -7 (Technical Debt) in progress.** All tests passing.
 
 ---
 
@@ -119,6 +119,64 @@
 
 ---
 
+## 🔄 Milestone -7: Technical Debt & System Foundation
+
+> 기술 부채 해소 및 지속 가능한 개발 시스템 구축
+
+### ⏳ Phase 1: Foundation Setup
+
+| Task | Description | Status |
+|------|-------------|--------|
+| TDD Workflow Rules | `.claude/rules/tdd-workflow.md` TDD 지침 정의 | ⏳ Planned |
+| Code Review Checklist | `.claude/rules/code-review-checklist.md` | ⏳ Planned |
+| Documentation-Driven Rules | `.claude/rules/documentation-driven.md` | ⏳ Planned |
+| Monorepo Setup (moon) | `.moon/workspace.yml`, `.moon/toolchain.yml` | ⏳ Planned |
+| Project moon.yml Files | 각 프로젝트별 태스크 정의 | ⏳ Planned |
+
+### ⏳ Phase 2: CI/CD Pipeline
+
+| Task | Description | Status |
+|------|-------------|--------|
+| CI Workflow | `.github/workflows/ci.yml` (Ruby matrix test) | ⏳ Planned |
+| RuboCop CI | CI에 린트 검사 추가 | ⏳ Planned |
+| Codecov Integration | 테스트 커버리지 리포트 | ⏳ Planned |
+| VSCode Test CI | 플러그인 테스트 자동화 | ⏳ Planned |
+| JetBrains Test CI | 플러그인 테스트 자동화 | ⏳ Planned |
+| Docs Verify CI | 문서 예제 검증 자동화 | ⏳ Planned |
+| Release Workflow | `.github/workflows/release.yml` (동시 배포) | ⏳ Planned |
+
+### ⏳ Phase 3: Editor Plugin Integration
+
+| Task | Description | Status |
+|------|-------------|--------|
+| VERSION File | `editors/VERSION` (v0.2.0) Single Source of Truth | ⏳ Planned |
+| Version Sync Script | `scripts/sync-editor-versions.sh` | ⏳ Planned |
+| VSCode Test Setup | `@vscode/test-electron` + Mocha | ⏳ Planned |
+| VSCode Tests | `editors/vscode/src/test/` 테스트 작성 | ⏳ Planned |
+| JetBrains Test Setup | JUnit 5 + IntelliJ Platform Test | ⏳ Planned |
+| JetBrains Tests | `editors/jetbrains/src/test/` 테스트 작성 | ⏳ Planned |
+| Editor CONTRIBUTING.md | 플러그인 기여 가이드 | ⏳ Planned |
+
+### ⏳ Phase 4: Documentation Verification
+
+| Task | Description | Status |
+|------|-------------|--------|
+| DocsExampleExtractor | 마크다운에서 코드 블록 추출 | ⏳ Planned |
+| DocsExampleVerifier | 컴파일/타입체크 검증 | ⏳ Planned |
+| DocsBadgeGenerator | 커버리지 뱃지 생성 | ⏳ Planned |
+| Rake Task | `rake docs:verify`, `rake docs:badge` | ⏳ Planned |
+| DocsBadge Component | Docusaurus 뱃지 컴포넌트 | ⏳ Planned |
+
+### ⏳ Phase 5: Release Automation
+
+| Task | Description | Status |
+|------|-------------|--------|
+| COMMIT_CONVENTION.md | Conventional Commits 가이드 | ⏳ Planned |
+| .releaserc.yml | semantic-release 설정 | ⏳ Planned |
+| CHANGELOG Automation | 자동 생성 및 GitHub Release | ⏳ Planned |
+
+---
+
 ## 🔄 Milestone 6: Integration & Production Readiness
 
 ### ✅ Phase 1: Core Integration (Completed)
@@ -167,6 +225,7 @@
 | LSP v3 | Language Server Protocol 3.x 지원 | ⏳ Planned |
 | Type-safe Metaprogramming | 메타프로그래밍 타입 안전성 | ⏳ Planned |
 | Gradual Typing Migration | 기존 Ruby 코드 점진적 마이그레이션 도구 | ⏳ Planned |
+| Performance Benchmarks Docs | 벤치마크 결과 문서화 및 공식 문서 반영 | ⏳ Planned |
 
 ### ✅ JetBrains IDE Plugin (Completed)
 - IntelliJ Platform Plugin SDK 기반
