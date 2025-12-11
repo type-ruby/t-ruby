@@ -1,0 +1,39 @@
+# JetBrains 플러그인 moon 설정
+# 문서: https://moonrepo.dev/docs/config/project
+
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+language: 'kotlin'
+type: 'application'
+
+# 프로젝트 메타데이터
+project:
+  name: 'jetbrains'
+  description: 'T-Ruby JetBrains IDE plugin'
+  channel: '#t-ruby'
+
+# 태스크 정의
+tasks:
+  # 빌드
+  build:
+    command: './gradlew buildPlugin'
+    inputs:
+      - 'src/**/*'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+    outputs:
+      - 'build/distributions/*.zip'
+    platform: 'system'
+
+  # 검증
+  verify:
+    command: './gradlew verifyPlugin'
+    deps:
+      - '~:build'
+    platform: 'system'
+
+  # 로컬 실행
+  run:
+    command: './gradlew runIde'
+    local: true
+    platform: 'system'

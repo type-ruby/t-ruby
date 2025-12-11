@@ -1,0 +1,19 @@
+# t-ruby 모노레포 워크스페이스 설정
+# 문서: https://moonrepo.dev/docs/config/workspace
+
+$schema: 'https://moonrepo.dev/schemas/workspace.json'
+
+# 프로젝트 목록 (t-ruby 저장소 내부만)
+projects:
+  - '.'                    # 루트 프로젝트 (컴파일러)
+  - 'editors/vscode'       # VSCode 확장
+  - 'editors/jetbrains'    # JetBrains 플러그인
+  - 'wasm'                 # WASM 패키지
+
+# VCS 설정
+vcs:
+  manager: 'git'
+  defaultBranch: 'main'
+
+# telemetry 비활성화
+telemetry: false

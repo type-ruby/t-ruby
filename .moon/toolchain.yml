@@ -1,0 +1,14 @@
+# moon 툴체인 설정
+# 문서: https://moonrepo.dev/docs/config/toolchain
+
+$schema: 'https://moonrepo.dev/schemas/toolchain.json'
+
+# Node.js 설정 (VSCode, WASM용)
+node:
+  version: '20.10.0'
+  packageManager: 'pnpm'
+  pnpm:
+    version: '9.0.0'
+
+# Ruby, Kotlin/Java는 system task로 처리
+# moon이 직접 관리하지 않고 시스템에 설치된 버전 사용

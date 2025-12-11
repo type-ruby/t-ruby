@@ -1,0 +1,48 @@
+# VSCode 확장 moon 설정
+# 문서: https://moonrepo.dev/docs/config/project
+
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+language: 'typescript'
+type: 'application'
+
+# 프로젝트 메타데이터
+project:
+  name: 'vscode'
+  description: 'T-Ruby VSCode extension'
+  channel: '#t-ruby'
+
+# 태스크 정의
+tasks:
+  # 컴파일
+  compile:
+    command: 'pnpm run compile'
+    inputs:
+      - 'src/**/*'
+      - 'tsconfig.json'
+    outputs:
+      - 'out/**/*'
+    platform: 'node'
+
+  # 린트
+  lint:
+    command: 'pnpm run lint'
+    inputs:
+      - 'src/**/*'
+      - '.eslintrc*'
+    platform: 'node'
+
+  # 패키징
+  package:
+    command: 'pnpm run package'
+    deps:
+      - '~:compile'
+    outputs:
+      - '*.vsix'
+    platform: 'node'
+
+  # 빌드 (컴파일 + 린트)
+  build:
+    deps:
+      - '~:compile'
+      - '~:lint'
