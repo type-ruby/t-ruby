@@ -30,6 +30,9 @@
   <a href="./README.ja.md">日本語</a>
 </p>
 
+> [!NOTE]
+> This project is still experimental. If you support this project, please give it a star! If you have suggestions for improvements, please open an issue. Pull requests are also welcome!
+
 ---
 
 ## What is T-Ruby?
