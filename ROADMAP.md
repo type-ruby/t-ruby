@@ -157,20 +157,28 @@
 
 ---
 
-## 🔮 Milestone 7: Next Generation
+## 🔄 Milestone 7: Next Generation (In Progress)
 
-| Feature | Description |
-|---------|-------------|
-| JetBrains IDE Plugin | IntelliJ IDEA, RubyMine 플러그인 (LSP 기반) |
-| External SMT Solver (Z3) | Z3 통합으로 고급 타입 추론 강화 |
-| WebAssembly Target | `.wasm` 컴파일 타겟 지원 |
-| LSP v3 | Language Server Protocol 3.x 지원 |
-| Type-safe Metaprogramming | 메타프로그래밍 타입 안전성 |
-| Gradual Typing Migration | 기존 Ruby 코드 점진적 마이그레이션 도구 |
+| Feature | Description | Status |
+|---------|-------------|--------|
+| JetBrains IDE Plugin | IntelliJ IDEA, RubyMine 플러그인 (LSP 기반) | ✅ Done |
+| WebAssembly Target | 브라우저용 WASM 패키지 (`@t-ruby/wasm`) | ✅ Done |
+| External SMT Solver (Z3) | Z3 통합으로 고급 타입 추론 강화 | ⏳ Planned |
+| LSP v3 | Language Server Protocol 3.x 지원 | ⏳ Planned |
+| Type-safe Metaprogramming | 메타프로그래밍 타입 안전성 | ⏳ Planned |
+| Gradual Typing Migration | 기존 Ruby 코드 점진적 마이그레이션 도구 | ⏳ Planned |
 
-### JetBrains IDE Plugin
+### ✅ JetBrains IDE Plugin (Completed)
 - IntelliJ Platform Plugin SDK 기반
 - LSP4IJ로 `trc --lsp` 연결
 - 문법 하이라이팅, 자동완성, 진단, 네비게이션
-- 지원 IDE: IntelliJ IDEA, RubyMine, 기타 JetBrains IDE
+- 지원 IDE: IntelliJ IDEA, RubyMine, WebStorm, PyCharm, GoLand (2024.2+)
 - 문서: 영어, 한국어, 일본어
+- **Marketplace**: https://plugins.jetbrains.com/plugin/29335-t-ruby
+- **Version**: v0.1.2
+
+### ✅ WebAssembly Target (Completed)
+- npm 패키지: `@t-ruby/wasm`
+- 브라우저에서 T-Ruby 컴파일러 실행
+- Playground 지원용
+- **Version**: v0.0.8
