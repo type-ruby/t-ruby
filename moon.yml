@@ -1,0 +1,49 @@
+# t-ruby 컴파일러 프로젝트 moon 설정
+# 문서: https://moonrepo.dev/docs/config/project
+
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+language: 'ruby'
+type: 'library'
+
+# 프로젝트 메타데이터
+project:
+  name: 't-ruby'
+  description: 'TypeScript-style type system for Ruby'
+  channel: '#t-ruby'
+
+# 태스크 정의
+tasks:
+  # 테스트 실행
+  test:
+    command: 'bundle exec rspec'
+    inputs:
+      - 'lib/**/*'
+      - 'spec/**/*'
+      - 'Gemfile'
+      - '.rspec'
+    platform: 'system'
+
+  # 린트 검사
+  lint:
+    command: 'bundle exec rubocop'
+    inputs:
+      - 'lib/**/*'
+      - '.rubocop.yml'
+    platform: 'system'
+
+  # 젬 빌드
+  build:
+    command: 'gem build t_ruby.gemspec'
+    deps:
+      - '~:test'
+      - '~:lint'
+    platform: 'system'
+
+  # 문서 예제 검증
+  docs-verify:
+    command: 'bundle exec rake docs:verify'
+    inputs:
+      - 'lib/**/*'
+      - '../t-ruby.github.io/docs/**/*'
+    platform: 'system'
