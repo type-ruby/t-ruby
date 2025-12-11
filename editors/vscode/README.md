@@ -1,6 +1,9 @@
-# T-Ruby for Visual Studio Code
+# T-Ruby for VS Code
 
 TypeScript-style type annotations for Ruby.
+
+> [!NOTE]
+> This project is still experimental. If you support this project, please give it a star! If you have suggestions for improvements, please open an issue. Pull requests are also welcome!
 
 ## Features
 
@@ -13,7 +16,7 @@ TypeScript-style type annotations for Ruby.
 
 ## Requirements
 
-- [T-Ruby compiler](https://github.com/anthropics/t-ruby) (`trc`) must be installed and available in your PATH
+- [T-Ruby compiler](https://github.com/type-ruby/t-ruby) (`trc`) must be installed and available in your PATH
 
 ```bash
 gem install t-ruby
@@ -55,8 +58,8 @@ end
 
 ## Learn More
 
-- [T-Ruby Documentation](https://github.com/anthropics/t-ruby)
-- [Language Specification](https://github.com/anthropics/t-ruby/blob/main/.claude/spec/README.md)
+- [T-Ruby Documentation](https://type-ruby.github.io)
+- [Language Specification](https://github.com/type-ruby/t-ruby/blob/main/.claude/spec/README.md)
 
 ## License
 

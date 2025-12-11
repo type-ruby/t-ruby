@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="rubyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#cc342d"/>
+      <stop offset="100%" style="stop-color:#8f2420"/>
+    </linearGradient>
+  </defs>
+  <!-- Ruby gem shape -->
+  <polygon
+    points="50,5 90,25 90,75 50,95 10,75 10,25"
+    fill="url(#rubyGradient)"
+  />
+  <!-- T letter -->
+  <text
+    x="50"
+    y="62"
+    font-family="system-ui, -apple-system, sans-serif"
+    font-size="42"
+    font-weight="800"
+    fill="white"
+    text-anchor="middle"
+  >T</text>
+</svg>

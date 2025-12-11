@@ -2,7 +2,7 @@
   "name": "t-ruby",
   "displayName": "T-Ruby",
   "description": "T-Ruby language support with type annotations for Ruby",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "publisher": "t-ruby",
   "engines": {
     "vscode": "^1.75.0"
@@ -32,7 +32,11 @@
           ".trb",
           ".d.trb"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/t-ruby.svg",
+          "dark": "./icons/t-ruby.svg"
+        }
       }
     ],
     "grammars": [
