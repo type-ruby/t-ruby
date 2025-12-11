@@ -1,0 +1,115 @@
+<idea-plugin>
+    <id>io.truby.intellij</id>
+    <name>T-Ruby</name>
+    <vendor email="support@type-ruby.io" url="https://type-ruby.github.io">T-Ruby</vendor>
+
+    <description><![CDATA[
+    <p>T-Ruby language support for JetBrains IDEs.</p>
+    <p>T-Ruby is a typed superset of Ruby, similar to TypeScript for JavaScript.</p>
+
+    <h3>Features</h3>
+    <ul>
+        <li>Syntax highlighting for .trb and .d.trb files</li>
+        <li>Code completion with type inference</li>
+        <li>Real-time diagnostics (type errors)</li>
+        <li>Go to definition</li>
+        <li>Hover information (type information)</li>
+        <li>Compile commands</li>
+    </ul>
+
+    <h3>Requirements</h3>
+    <ul>
+        <li>T-Ruby compiler (trc) installed and available in PATH</li>
+        <li>LSP4IJ plugin installed</li>
+    </ul>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.redhat.devtools.lsp4ij</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- File Type Registration -->
+        <fileType
+                name="T-Ruby"
+                implementationClass="io.truby.intellij.TRubyFileType"
+                fieldName="INSTANCE"
+                language="T-Ruby"
+                extensions="trb"/>
+
+        <fileType
+                name="T-Ruby Declaration"
+                implementationClass="io.truby.intellij.TRubyDeclarationFileType"
+                fieldName="INSTANCE"
+                language="T-Ruby"
+                patterns="*.d.trb"/>
+
+        <!-- Settings -->
+        <applicationConfigurable
+                parentId="tools"
+                instance="io.truby.intellij.settings.TRubySettingsConfigurable"
+                id="io.truby.intellij.settings"
+                displayName="T-Ruby"/>
+
+        <applicationService
+                serviceImplementation="io.truby.intellij.settings.TRubySettings"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+        <!-- LSP Server Registration -->
+        <server
+                id="truby"
+                name="T-Ruby Language Server"
+                factoryClass="io.truby.intellij.lsp.TRubyLspServerFactory">
+            <description><![CDATA[
+            T-Ruby Language Server provides code completion, diagnostics, and navigation features for T-Ruby files.
+            ]]></description>
+        </server>
+
+        <!-- Language Mapping -->
+        <languageMapping
+                language="T-Ruby"
+                serverId="truby"
+                languageId="t-ruby"/>
+
+        <!-- File Pattern Mapping -->
+        <fileNamePatternMapping
+                patterns="*.trb;*.d.trb"
+                serverId="truby"
+                languageId="t-ruby"/>
+    </extensions>
+
+    <actions>
+        <!-- Compile Action -->
+        <action
+                id="io.truby.intellij.actions.CompileTRubyFile"
+                class="io.truby.intellij.actions.CompileTRubyFileAction"
+                text="Compile T-Ruby File"
+                description="Compile the current T-Ruby file to Ruby">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift T"/>
+        </action>
+
+        <!-- Generate Declaration Action -->
+        <action
+                id="io.truby.intellij.actions.GenerateDeclaration"
+                class="io.truby.intellij.actions.GenerateDeclarationAction"
+                text="Generate Declaration File"
+                description="Generate .d.trb declaration file from current T-Ruby file">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift D"/>
+        </action>
+
+        <!-- T-Ruby Menu Group -->
+        <group
+                id="io.truby.intellij.TRubyMenu"
+                text="T-Ruby"
+                popup="true">
+            <reference ref="io.truby.intellij.actions.CompileTRubyFile"/>
+            <reference ref="io.truby.intellij.actions.GenerateDeclaration"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </group>
+    </actions>
+</idea-plugin>
