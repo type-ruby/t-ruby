@@ -1,16 +1,11 @@
 {
   "name": "@t-ruby/wasm",
-  "version": "0.0.7",
-  "description": "T-Ruby compiler running on WebAssembly - compile .trb files to .rb in the browser",
+  "version": "0.0.8",
+  "description": "T-Ruby compiler library files for WebAssembly - used by the playground to load T-Ruby in the browser",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./ruby.wasm": "./dist/ruby.wasm"
+    "./manifest.json": "./dist/manifest.json",
+    "./lib/*": "./dist/lib/*"
   },
   "files": [
     "dist/"
@@ -39,25 +34,5 @@
   "bugs": {
     "url": "https://github.com/type-ruby/t-ruby/issues"
   },
-  "homepage": "https://type-ruby.github.io",
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "peerDependencies": {
-    "@ruby/wasm-wasi": ">=2.5.0",
-    "@ruby/3.3-wasm-wasi": ">=2.5.0"
-  },
-  "peerDependenciesMeta": {
-    "@ruby/wasm-wasi": {
-      "optional": false
-    },
-    "@ruby/3.3-wasm-wasi": {
-      "optional": false
-    }
-  },
-  "devDependencies": {
-    "@ruby/wasm-wasi": "^2.7.0",
-    "@ruby/3.3-wasm-wasi": "^2.7.0",
-    "typescript": "^5.6.0"
-  }
+  "homepage": "https://type-ruby.github.io"
 }
