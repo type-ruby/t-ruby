@@ -6,13 +6,13 @@ module TRuby
   class Compiler
     attr_reader :declaration_loader, :use_ir, :optimizer
 
-    def initialize(config, use_ir: true, optimize: true)
-      @config = config
+    def initialize(config = nil, use_ir: true, optimize: true)
+      @config = config || Config.new
       @use_ir = use_ir
       @optimize = optimize
       @declaration_loader = DeclarationLoader.new
       @optimizer = IR::Optimizer.new if use_ir && optimize
-      setup_declaration_paths
+      setup_declaration_paths if @config
     end
 
     def compile(input_path)
@@ -56,6 +56,54 @@ module TRuby
       end
 
       output_path
+    end
+
+    # Compile T-Ruby source code from a string (useful for WASM/playground)
+    # @param source [String] T-Ruby source code
+    # @param options [Hash] Options for compilation
+    # @option options [Boolean] :rbs Whether to generate RBS output (default: true)
+    # @return [Hash] Result with :ruby, :rbs, :errors keys
+    def compile_string(source, options = {})
+      generate_rbs = options.fetch(:rbs, true)
+
+      parser = Parser.new(source, use_combinator: @use_ir)
+      parse_result = parser.parse
+
+      # Transform source to Ruby code
+      ruby_output = @use_ir ? transform_with_ir(source, parser) : transform_legacy(source, parse_result)
+
+      # Generate RBS if requested
+      rbs_output = ""
+      if generate_rbs
+        if @use_ir && parser.ir_program
+          generator = IR::RBSGenerator.new
+          rbs_output = generator.generate(parser.ir_program)
+        else
+          generator = RBSGenerator.new
+          rbs_output = generator.generate(
+            parse_result[:functions] || [],
+            parse_result[:type_aliases] || []
+          )
+        end
+      end
+
+      {
+        ruby: ruby_output,
+        rbs: rbs_output,
+        errors: []
+      }
+    rescue ParseError => e
+      {
+        ruby: "",
+        rbs: "",
+        errors: [e.message]
+      }
+    rescue StandardError => e
+      {
+        ruby: "",
+        rbs: "",
+        errors: ["Compilation error: #{e.message}"]
+      }
     end
 
     # Compile to IR without generating output files

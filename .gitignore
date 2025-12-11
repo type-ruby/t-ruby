@@ -24,3 +24,9 @@ editors/vscode/*.vsix
 
 ignore/
 *.gem
+
+# WASM package build artifacts
+wasm/node_modules/
+wasm/dist/
+wasm/*.tgz
+wasm/.npmrc
