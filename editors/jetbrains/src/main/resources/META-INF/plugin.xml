@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>io.truby.intellij</id>
+    <id>io.truby.t-ruby</id>
     <name>T-Ruby</name>
     <vendor email="support@type-ruby.io" url="https://type-ruby.github.io">T-Ruby</vendor>
 

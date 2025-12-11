@@ -1,5 +1,7 @@
 # T-Ruby JetBrains Plugin
 
+[![JetBrains Marketplace](https://img.shields.io/jetbrains/plugin/v/29335-t-ruby.svg)](https://plugins.jetbrains.com/plugin/29335-t-ruby)
+
 T-Ruby language support for JetBrains IDEs (RubyMine, IntelliJ IDEA, WebStorm, etc.).
 
 ## Features
@@ -115,6 +117,7 @@ MIT License - see [LICENSE](../../LICENSE) for details.
 
 ## Links
 
+- [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/29335-t-ruby)
 - [T-Ruby Documentation](https://type-ruby.github.io)
 - [GitHub Repository](https://github.com/type-ruby/t-ruby)
 - [LSP4IJ Plugin](https://plugins.jetbrains.com/plugin/23257-lsp4ij)

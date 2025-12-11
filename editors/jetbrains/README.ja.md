@@ -1,5 +1,7 @@
 # T-Ruby JetBrainsプラグイン
 
+[![JetBrains Marketplace](https://img.shields.io/jetbrains/plugin/v/29335-t-ruby.svg)](https://plugins.jetbrains.com/plugin/29335-t-ruby)
+
 JetBrains IDE（RubyMine、IntelliJ IDEA、WebStormなど）向けのT-Ruby言語サポートプラグインです。
 
 ## 機能
@@ -115,6 +117,7 @@ MIT License - 詳細は[LICENSE](../../LICENSE)を参照
 
 ## リンク
 
+- [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/29335-t-ruby)
 - [T-Rubyドキュメント](https://type-ruby.github.io)
 - [GitHubリポジトリ](https://github.com/type-ruby/t-ruby)
 - [LSP4IJプラグイン](https://plugins.jetbrains.com/plugin/23257-lsp4ij)

@@ -13,3 +13,6 @@ out/
 # OS
 .DS_Store
 Thumbs.db
+
+# Secrets (signing keys, tokens)
+.secrets/

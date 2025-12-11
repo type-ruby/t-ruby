@@ -25,7 +25,7 @@ dependencies {
 
 intellijPlatform {
     pluginConfiguration {
-        id = "io.truby.intellij"
+        id = "io.truby.t-ruby"
         name = "T-Ruby"
         version = project.version.toString()
         description = """
@@ -54,7 +54,7 @@ intellijPlatform {
         }
         ideaVersion {
             sinceBuild = "242"
-            untilBuild = "251.*"
+            untilBuild = "253.*"
         }
     }
 
