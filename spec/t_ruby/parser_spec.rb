@@ -171,4 +171,71 @@ describe TRuby::Parser do
       end
     end
   end
+
+  describe "parsing namespaced interfaces" do
+    it "parses namespaced interface correctly" do
+      source = <<~RUBY
+        interface Rails::Application
+          config: String
+        end
+      RUBY
+      parser = TRuby::Parser.new(source)
+
+      result = parser.parse
+      expect(result[:interfaces]).to be_a(Array)
+      expect(result[:interfaces][0][:name]).to eq("Rails::Application")
+    end
+
+    it "parses deeply nested namespace" do
+      source = <<~RUBY
+        interface Rails::Application::Configuration
+          root: Pathname
+        end
+      RUBY
+      parser = TRuby::Parser.new(source)
+
+      result = parser.parse
+      expect(result[:interfaces][0][:name]).to eq("Rails::Application::Configuration")
+    end
+
+    it "parses interface with method signatures" do
+      source = <<~RUBY
+        interface Rails::Application
+          initialize!: Rails::Application
+          eager_load!: void
+          initialized?: Boolean
+        end
+      RUBY
+      parser = TRuby::Parser.new(source)
+
+      result = parser.parse
+      expect(result[:interfaces][0][:name]).to eq("Rails::Application")
+      expect(result[:interfaces][0][:members].length).to eq(3)
+    end
+
+    it "parses multiple namespaced interfaces in one file" do
+      source = <<~RUBY
+        interface Rails
+          env: String
+        end
+
+        interface Rails::Application
+          config: String
+        end
+
+        interface ActiveRecord::Base
+          id: Integer
+        end
+      RUBY
+      parser = TRuby::Parser.new(source)
+
+      result = parser.parse
+      expect(result[:interfaces].length).to eq(3)
+      expect(result[:interfaces].map { |i| i[:name] }).to eq([
+        "Rails",
+        "Rails::Application",
+        "ActiveRecord::Base"
+      ])
+    end
+  end
 end
