@@ -131,6 +131,10 @@ bump_version() {
     # Update README badges
     update_readme_badges "$NEW_VERSION"
 
+    # Update Gemfile.lock
+    log_info "Updating Gemfile.lock..."
+    bundle install --quiet
+
     log_success "Version updated to $NEW_VERSION"
 
     # Auto commit
