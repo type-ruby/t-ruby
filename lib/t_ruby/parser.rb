@@ -116,6 +116,11 @@ module TRuby
       params_str = match[2]
       return_type_str = match[3]&.strip
 
+      # Validate return type if present
+      if return_type_str
+        return_type_str = validate_and_extract_type(return_type_str)
+      end
+
       params = parse_parameters(params_str)
 
       result = {
@@ -131,6 +136,34 @@ module TRuby
       end
 
       result
+    end
+
+    # Validate type string and return nil if invalid
+    def validate_and_extract_type(type_str)
+      return nil if type_str.nil? || type_str.empty?
+
+      # Check for whitespace in simple type names that would be invalid
+      # Pattern: Capital letter followed by lowercase, then space, then more lowercase
+      # e.g., "Str ing", "Int eger", "Bool ean"
+      if type_str.match?(/^[A-Z][a-z]*\s+[a-z]+/)
+        return nil
+      end
+
+      # Check for trailing operators
+      return nil if type_str.match?(/[|&]\s*$/)
+
+      # Check for leading operators
+      return nil if type_str.match?(/^\s*[|&]/)
+
+      # Check for unbalanced brackets
+      return nil if type_str.count("<") != type_str.count(">")
+      return nil if type_str.count("[") != type_str.count("]")
+      return nil if type_str.count("(") != type_str.count(")")
+
+      # Check for empty generic arguments
+      return nil if type_str.match?(/<\s*>/)
+
+      type_str
     end
 
     def parse_parameters(params_str)
