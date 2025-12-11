@@ -30,3 +30,6 @@ wasm/node_modules/
 wasm/dist/
 wasm/*.tgz
 wasm/.npmrc
+
+# Build output
+build/
