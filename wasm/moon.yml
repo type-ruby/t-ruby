@@ -1,0 +1,25 @@
+# @t-ruby/wasm 패키지 moon 설정
+# 문서: https://moonrepo.dev/docs/config/project
+
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+language: 'javascript'
+type: 'library'
+
+# 프로젝트 메타데이터
+project:
+  name: 'wasm'
+  description: 'T-Ruby WASM package for browser'
+  channel: '#t-ruby'
+
+# 태스크 정의
+tasks:
+  # 빌드
+  build:
+    command: 'pnpm run build'
+    inputs:
+      - '../lib/**/*'
+      - 'build.sh'
+    outputs:
+      - 'dist/**/*'
+    platform: 'node'
