@@ -19,7 +19,7 @@ T-Ruby syntax highlighting provides visual distinction for:
 
 ### Type Aliases
 
-```ruby
+```trb
 type UserId = String           # 'type' keyword, 'UserId' as type name
 type Age = Integer             # '=' operator, built-in type
 type UserMap = Hash<UserId, User>  # Generic type
@@ -27,7 +27,7 @@ type UserMap = Hash<UserId, User>  # Generic type
 
 ### Interfaces
 
-```ruby
+```trb
 interface Printable            # 'interface' keyword, interface name
   to_string: String           # Member name, type annotation
   print: void
@@ -36,7 +36,7 @@ end                           # 'end' keyword
 
 ### Functions with Type Annotations
 
-```ruby
+```trb
 def greet(name: String): String    # Function name, param with type, return type
   "Hello, #{name}!"
 end
@@ -48,7 +48,7 @@ end
 
 ### Union and Intersection Types
 
-```ruby
+```trb
 type StringOrInt = String | Integer    # Union type with '|'
 type ReadWrite = Readable & Writable   # Intersection type with '&'
 type MaybeString = String | nil        # Nullable type
@@ -167,7 +167,7 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 
 ### Simple Example
 
-```ruby
+```trb
 # simple.trb - Basic T-Ruby syntax
 
 type UserId = String
@@ -180,7 +180,7 @@ end
 
 ### Complex Example
 
-```ruby
+```trb
 # complex.trb - Advanced T-Ruby syntax
 
 type UserId = String

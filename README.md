@@ -110,7 +110,7 @@ end
 - Like TypeScript, types live inside your code.
 - Write `.trb`, and `trc` generates both `.rb` and `.rbs`.
 
-```ruby
+```trb
 # greet.trb
 def greet(name: String): String
   "Hello, #{name}!"
@@ -154,7 +154,7 @@ trc --version
 
 ### 1. Write `.trb`
 
-```ruby
+```trb
 # hello.trb
 def greet(name: String): String
   "Hello, #{name}!"

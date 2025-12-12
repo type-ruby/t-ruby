@@ -105,7 +105,7 @@ end
 - TypeScript のように、型がコードの中にあります。
 - `.trb` で書けば、`trc` が `.rb` と `.rbs` の両方を生成します。
 
-```ruby
+```trb
 # greet.trb
 def greet(name: String): String
   "Hello, #{name}!"
@@ -149,7 +149,7 @@ trc --version
 
 ### 1. `.trb` を書く
 
-```ruby
+```trb
 # hello.trb
 def greet(name: String): String
   "Hello, #{name}!"

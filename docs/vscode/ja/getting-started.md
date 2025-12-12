@@ -120,7 +120,7 @@ code --install-extension .
 
 1. 新しいファイル`hello.trb`を作成します：
 
-```ruby
+```trb
 type UserId = String
 
 interface User

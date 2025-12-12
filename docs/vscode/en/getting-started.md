@@ -120,7 +120,7 @@ Access via Command Palette (`Ctrl+Shift+P`):
 
 1. Create a new file `hello.trb`:
 
-```ruby
+```trb
 type UserId = String
 
 interface User

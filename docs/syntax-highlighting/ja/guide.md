@@ -19,7 +19,7 @@ T-Rubyシンタックスハイライトは以下の要素を視覚的に区別�
 
 ### 型エイリアス
 
-```ruby
+```trb
 type UserId = String           # 'type'キーワード、'UserId'を型名として
 type Age = Integer             # '='演算子、組み込み型
 type UserMap = Hash<UserId, User>  # ジェネリック型
@@ -27,7 +27,7 @@ type UserMap = Hash<UserId, User>  # ジェネリック型
 
 ### インターフェース
 
-```ruby
+```trb
 interface Printable            # 'interface'キーワード、インターフェース名
   to_string: String           # メンバー名、型アノテーション
   print: void
@@ -36,7 +36,7 @@ end                           # 'end'キーワード
 
 ### 型アノテーション付き関数
 
-```ruby
+```trb
 def greet(name: String): String    # 関数名、型付きパラメータ、戻り値型
   "こんにちは、#{name}さん！"
 end
@@ -48,7 +48,7 @@ end
 
 ### ユニオンとインターセクション型
 
-```ruby
+```trb
 type StringOrInt = String | Integer    # '|'を使ったユニオン型
 type ReadWrite = Readable & Writable   # '&'を使ったインターセクション型
 type MaybeString = String | nil        # Nullable型
@@ -167,7 +167,7 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 
 ### シンプルな例
 
-```ruby
+```trb
 # simple.trb - 基本的なT-Ruby構文
 
 type UserId = String
@@ -180,7 +180,7 @@ end
 
 ### 複雑な例
 
-```ruby
+```trb
 # complex.trb - 高度なT-Ruby構文
 
 type UserId = String

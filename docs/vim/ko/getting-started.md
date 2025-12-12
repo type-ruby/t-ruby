@@ -165,7 +165,7 @@ vim hello.trb
 
 2. 다음 코드 입력:
 
-```ruby
+```trb
 type UserId = String
 
 interface User

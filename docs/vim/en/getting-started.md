@@ -165,7 +165,7 @@ vim hello.trb
 
 2. Enter the following code:
 
-```ruby
+```trb
 type UserId = String
 
 interface User
