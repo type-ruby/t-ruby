@@ -19,7 +19,7 @@ T-Ruby 구문 강조는 다음 요소들을 시각적으로 구분합니다:
 
 ### 타입 별칭
 
-```ruby
+```trb
 type UserId = String           # 'type' 키워드, 'UserId' 타입명
 type Age = Integer             # '=' 연산자, 내장 타입
 type UserMap = Hash<UserId, User>  # 제네릭 타입
@@ -27,7 +27,7 @@ type UserMap = Hash<UserId, User>  # 제네릭 타입
 
 ### 인터페이스
 
-```ruby
+```trb
 interface Printable            # 'interface' 키워드, 인터페이스명
   to_string: String           # 멤버명, 타입 어노테이션
   print: void
@@ -36,7 +36,7 @@ end                           # 'end' 키워드
 
 ### 타입 어노테이션이 있는 함수
 
-```ruby
+```trb
 def greet(name: String): String    # 함수명, 타입이 있는 매개변수, 반환 타입
   "안녕하세요, #{name}님!"
 end
@@ -48,7 +48,7 @@ end
 
 ### 유니온 및 인터섹션 타입
 
-```ruby
+```trb
 type StringOrInt = String | Integer    # '|'를 사용한 유니온 타입
 type ReadWrite = Readable & Writable   # '&'를 사용한 인터섹션 타입
 type MaybeString = String | nil        # Nullable 타입
@@ -167,7 +167,7 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 
 ### 간단한 예제
 
-```ruby
+```trb
 # simple.trb - 기본 T-Ruby 구문
 
 type UserId = String
@@ -180,7 +180,7 @@ end
 
 ### 복잡한 예제
 
-```ruby
+```trb
 # complex.trb - 고급 T-Ruby 구문
 
 type UserId = String

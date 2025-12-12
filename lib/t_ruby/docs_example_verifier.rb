@@ -47,8 +47,6 @@ module TRuby
 
     def initialize
       @extractor = DocsExampleExtractor.new
-      @parser = TRuby::Parser.new
-      @type_checker = TRuby::TypeChecker.new
       @compiler = TRuby::Compiler.new
     end
 
@@ -138,17 +136,23 @@ module TRuby
       errors = []
 
       # Step 1: Parse
+      ir_program = nil
       begin
-        ast = @parser.parse(example.code)
+        parser = TRuby::Parser.new(example.code)
+        parser.parse
+        ir_program = parser.ir_program
       rescue TRuby::ParseError => e
         return fail_result(example, ["Parse error: #{e.message}"])
       end
 
       # Step 2: Type check (if enabled)
-      if example.should_typecheck?
+      if example.should_typecheck? && ir_program
         begin
-          type_errors = @type_checker.check(ast)
-          errors.concat(type_errors.map { |e| "Type error: #{e}" }) if type_errors.any?
+          type_checker = TRuby::TypeChecker.new(use_smt: false)
+          result = type_checker.check_program(ir_program)
+          if result[:errors]&.any?
+            errors.concat(result[:errors].map { |e| "Type error: #{e}" })
+          end
         rescue StandardError => e
           errors << "Type check error: #{e.message}"
         end
@@ -158,7 +162,7 @@ module TRuby
       output = nil
       if example.should_compile?
         begin
-          output = @compiler.compile(example.code)
+          output = @compiler.compile_string(example.code)
         rescue StandardError => e
           errors << "Compile error: #{e.message}"
         end

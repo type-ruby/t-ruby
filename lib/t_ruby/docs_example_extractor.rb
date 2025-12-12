@@ -48,8 +48,9 @@ module TRuby
       end
     end
 
-    # Code fence pattern: ```language{metadata}
-    CODE_FENCE_PATTERN = /^```(\w+)?(?:\{([^}]*)\})?$/
+    # Code fence pattern: ```language title="file.ext" {metadata}
+    # Supports Docusaurus format: ```ruby title="example.trb"
+    CODE_FENCE_PATTERN = /^```(\w+)?(?:\s+title="([^"]*)")?(?:\s*\{([^}]*)\})?/
 
     # Extract all code examples from a file
     #
@@ -78,9 +79,19 @@ module TRuby
         if !in_code_block && (match = line.match(CODE_FENCE_PATTERN))
           in_code_block = true
           block_start_line = line_number
+          lang = match[1] || "text"
+          title = match[2]
+          metadata = match[3]
+
+          # If title ends with .trb, treat as T-Ruby regardless of language tag
+          if title&.end_with?(".trb")
+            lang = "trb"
+          end
+
           current_block = {
-            language: match[1] || "text",
-            metadata: match[2],
+            language: lang,
+            metadata: metadata,
+            title: title,
             lines: [],
           }
         elsif in_code_block && line.match(/^```\s*$/)

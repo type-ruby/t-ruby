@@ -15,12 +15,23 @@ namespace :docs do
     verifier = TRuby::DocsExampleVerifier.new
 
     # Default patterns to check
+    # Includes both local docs and t-ruby.github.io documentation site
+    docs_site_path = "../t-ruby.github.io"
     patterns = [
       "docs/**/*.md",
       "README.md",
       "README.ja.md",
       "README.ko.md",
     ]
+
+    # Add t-ruby.github.io documentation if directory exists
+    if Dir.exist?(docs_site_path)
+      patterns += [
+        "#{docs_site_path}/docs/**/*.md",
+        "#{docs_site_path}/i18n/ko/docusaurus-plugin-content-docs/current/**/*.md",
+        "#{docs_site_path}/i18n/ja/docusaurus-plugin-content-docs/current/**/*.md",
+      ]
+    end
 
     puts "Verifying documentation examples..."
     puts
@@ -55,12 +66,21 @@ namespace :docs do
     verifier = TRuby::DocsExampleVerifier.new
     generator = TRuby::DocsBadgeGenerator.new
 
+    docs_site_path = "../t-ruby.github.io"
     patterns = [
       "docs/**/*.md",
       "README.md",
       "README.ja.md",
       "README.ko.md",
     ]
+
+    if Dir.exist?(docs_site_path)
+      patterns += [
+        "#{docs_site_path}/docs/**/*.md",
+        "#{docs_site_path}/i18n/ko/docusaurus-plugin-content-docs/current/**/*.md",
+        "#{docs_site_path}/i18n/ja/docusaurus-plugin-content-docs/current/**/*.md",
+      ]
+    end
 
     puts "Generating documentation coverage badge..."
 
@@ -87,12 +107,21 @@ namespace :docs do
 
     extractor = TRuby::DocsExampleExtractor.new
 
+    docs_site_path = "../t-ruby.github.io"
     patterns = [
       "docs/**/*.md",
       "README.md",
       "README.ja.md",
       "README.ko.md",
     ]
+
+    if Dir.exist?(docs_site_path)
+      patterns += [
+        "#{docs_site_path}/docs/**/*.md",
+        "#{docs_site_path}/i18n/ko/docusaurus-plugin-content-docs/current/**/*.md",
+        "#{docs_site_path}/i18n/ja/docusaurus-plugin-content-docs/current/**/*.md",
+      ]
+    end
 
     all_examples = []
     patterns.each do |pattern|

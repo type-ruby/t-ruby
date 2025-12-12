@@ -203,7 +203,7 @@ vim.api.nvim_create_autocmd("FileType", {
 
 1. `hello.trb` 생성:
 
-```ruby
+```trb
 type UserId = String
 
 interface User
