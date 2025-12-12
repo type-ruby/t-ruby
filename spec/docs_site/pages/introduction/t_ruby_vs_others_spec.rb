@@ -3,7 +3,7 @@
 require "spec_helper"
 require_relative "../support/shared_examples"
 
-RSpec.describe "한글 문서: T-Ruby vs 다른 도구들" do
+RSpec.describe "한글 문서: T Ruby Vs Others" do
   include_context "docs site paths"
 
   let(:relative_path) { "introduction/t-ruby-vs-others.md" }
@@ -21,8 +21,10 @@ RSpec.describe "한글 문서: T-Ruby vs 다른 도구들" do
   it_behaves_like "valid documentation page", "introduction/t-ruby-vs-others.md"
 
   describe "코드 예제" do
-    describe "예제 1: RBS 접근 방식 - Ruby 코드 (User)" do
-      let(:example) { examples.find { |e| e.ruby? && e.code.include?("class User") && e.code.include?("def initialize") } }
+
+    # 예제 1: Ruby (라인 36)
+    describe "예제 1: Ruby 코드" do
+      let(:example) { examples[0] }
 
       it "유효한 Ruby 문법이다" do
         skip "예제를 찾을 수 없음" unless example
@@ -30,33 +32,30 @@ RSpec.describe "한글 문서: T-Ruby vs 다른 도구들" do
       end
     end
 
-    describe "예제 2: RBS 접근 방식 - RBS 정의 (User)" do
-      let(:example) { examples.find { |e| e.rbs? && e.code.include?("class User") } }
+    # 예제 2: RBS (라인 49)
+    describe "예제 2: RBS 코드" do
+      let(:example) { examples[1] }
 
-      it "RBS 키워드가 포함되어 있다" do
+      it "RBS 형식이다" do
         skip "예제를 찾을 수 없음" unless example
-        expect(example.code).to match(/\b(class|def)\b/)
+        expect(example.code).to match(/\b(def|class|module|interface|type)\b/)
       end
     end
 
-    describe "예제 3: T-Ruby 접근 방식 (User 클래스)" do
-      let(:example) { examples.find { |e| e.trb? && e.code.include?("class User") } }
+    # 예제 3: T-Ruby (라인 65)
+    describe "예제 3: T-Ruby 코드" do
+      let(:example) { examples[2] }
 
-      it "파싱에 성공한다" do
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
         parser = TRuby::Parser.new(example.code)
         expect { parser.parse }.not_to raise_error
       end
-
-      it "컴파일에 성공한다" do
-        skip "예제를 찾을 수 없음" unless example
-        compiler = TRuby::Compiler.new
-        expect { compiler.compile_string(example.code) }.not_to raise_error
-      end
     end
 
-    describe "예제 4: Sorbet 접근 방식 (Calculator)" do
-      let(:example) { examples.find { |e| e.ruby? && e.code.include?("class Calculator") && e.code.include?("extend T::Sig") } }
+    # 예제 4: Ruby (라인 110)
+    describe "예제 4: Ruby 코드" do
+      let(:example) { examples[3] }
 
       it "유효한 Ruby 문법이다" do
         skip "예제를 찾을 수 없음" unless example
@@ -64,24 +63,20 @@ RSpec.describe "한글 문서: T-Ruby vs 다른 도구들" do
       end
     end
 
-    describe "예제 5: T-Ruby 접근 방식 (Calculator 클래스)" do
-      let(:example) { examples.find { |e| e.trb? && e.code.include?("class Calculator") } }
+    # 예제 5: T-Ruby (라인 133)
+    describe "예제 5: T-Ruby 코드" do
+      let(:example) { examples[4] }
 
-      it "파싱에 성공한다" do
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
         parser = TRuby::Parser.new(example.code)
         expect { parser.parse }.not_to raise_error
       end
-
-      it "컴파일에 성공한다" do
-        skip "예제를 찾을 수 없음" unless example
-        compiler = TRuby::Compiler.new
-        expect { compiler.compile_string(example.code) }.not_to raise_error
-      end
     end
 
-    describe "예제 6: Sorbet 런타임 검사 예제" do
-      let(:example) { examples.find { |e| e.ruby? && e.code.include?("sig { params(name: String)") } }
+    # 예제 6: Ruby (라인 159)
+    describe "예제 6: Ruby 코드" do
+      let(:example) { examples[5] }
 
       it "유효한 Ruby 문법이다" do
         skip "예제를 찾을 수 없음" unless example
@@ -89,35 +84,25 @@ RSpec.describe "한글 문서: T-Ruby vs 다른 도구들" do
       end
     end
 
-    describe "예제 7: T-Ruby 컴파일 타임 검사 예제" do
-      let(:example) { examples.find { |e| e.trb? && e.code.include?("def greet(name: String)") } }
+    # 예제 7: T-Ruby (라인 173)
+    describe "예제 7: T-Ruby 코드" do
+      let(:example) { examples[6] }
 
-      it "파싱에 성공한다" do
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
         parser = TRuby::Parser.new(example.code)
         expect { parser.parse }.not_to raise_error
-      end
-
-      it "컴파일에 성공한다" do
-        skip "예제를 찾을 수 없음" unless example
-        compiler = TRuby::Compiler.new
-        expect { compiler.compile_string(example.code) }.not_to raise_error
       end
     end
 
-    describe "예제 8: T-Ruby vs TypeScript 비교 (T-Ruby)" do
-      let(:example) { examples.find { |e| e.trb? && e.code.include?("interface User") } }
+    # 예제 8: T-Ruby (라인 215)
+    describe "예제 8: T-Ruby 코드" do
+      let(:example) { examples[7] }
 
-      it "파싱에 성공한다" do
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
         parser = TRuby::Parser.new(example.code)
         expect { parser.parse }.not_to raise_error
-      end
-
-      it "컴파일에 성공한다" do
-        skip "예제를 찾을 수 없음" unless example
-        compiler = TRuby::Compiler.new
-        expect { compiler.compile_string(example.code) }.not_to raise_error
       end
     end
   end

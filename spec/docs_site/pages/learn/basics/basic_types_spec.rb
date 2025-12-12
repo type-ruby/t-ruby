@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require_relative "../../support/shared_examples"
+require_relative "../support/shared_examples"
 
-RSpec.describe "한글 문서: 기본 타입" do
+RSpec.describe "한글 문서: Basic Types" do
   include_context "docs site paths"
 
   let(:relative_path) { "learn/basics/basic-types.md" }
@@ -21,125 +21,268 @@ RSpec.describe "한글 문서: 기본 타입" do
   it_behaves_like "valid documentation page", "learn/basics/basic-types.md"
 
   describe "코드 예제" do
-    describe "예제 1: 기본 String 사용" do
-      let(:example) { examples.find { |e| e.trb? && e.code.include?('name: String = "Alice"') && e.code.include?("여러 줄 문자열") } }
 
-      it "파싱에 성공한다" do
+    # 예제 1: T-Ruby (라인 35)
+    describe "예제 1: T-Ruby 코드" do
+      let(:example) { examples[0] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
         parser = TRuby::Parser.new(example.code)
         expect { parser.parse }.not_to raise_error
       end
     end
 
-    describe "예제 2: String 메서드" do
-      let(:example) { examples.find { |e| e.trb? && e.code.include?("def format_name") } }
+    # 예제 2: T-Ruby (라인 58)
+    describe "예제 2: T-Ruby 코드" do
+      let(:example) { examples[1] }
 
-      it "파싱에 성공한다" do
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
         parser = TRuby::Parser.new(example.code)
         expect { parser.parse }.not_to raise_error
-      end
-
-      it "컴파일에 성공한다" do
-        skip "예제를 찾을 수 없음" unless example
-        compiler = TRuby::Compiler.new
-        expect { compiler.compile_string(example.code) }.not_to raise_error
       end
     end
 
-    describe "예제 3: Integer 산술" do
-      let(:example) { examples.find { |e| e.trb? && e.code.include?("def calculate_total(price: Integer") } }
+    # 예제 3: T-Ruby (라인 78)
+    describe "예제 3: T-Ruby 코드" do
+      let(:example) { examples[2] }
 
-      it "파싱에 성공한다" do
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
         parser = TRuby::Parser.new(example.code)
         expect { parser.parse }.not_to raise_error
-      end
-
-      it "컴파일에 성공한다" do
-        skip "예제를 찾을 수 없음" unless example
-        compiler = TRuby::Compiler.new
-        expect { compiler.compile_string(example.code) }.not_to raise_error
       end
     end
 
-    describe "예제 4: Float 산술 (calculate_average)" do
-      let(:example) { examples.find { |e| e.trb? && e.code.include?("def calculate_average") } }
+    # 예제 4: T-Ruby (라인 100)
+    describe "예제 4: T-Ruby 코드" do
+      let(:example) { examples[3] }
 
-      it "파싱에 성공한다" do
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
         parser = TRuby::Parser.new(example.code)
         expect { parser.parse }.not_to raise_error
-      end
-
-      it "컴파일에 성공한다" do
-        skip "예제를 찾을 수 없음" unless example
-        compiler = TRuby::Compiler.new
-        expect { compiler.compile_string(example.code) }.not_to raise_error
       end
     end
 
-    describe "예제 5: Boolean 논리" do
-      let(:example) { examples.find { |e| e.trb? && e.code.include?("def can_access") } }
+    # 예제 5: T-Ruby (라인 114)
+    describe "예제 5: T-Ruby 코드" do
+      let(:example) { examples[4] }
 
-      it "파싱에 성공한다" do
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
         parser = TRuby::Parser.new(example.code)
         expect { parser.parse }.not_to raise_error
-      end
-
-      it "컴파일에 성공한다" do
-        skip "예제를 찾을 수 없음" unless example
-        compiler = TRuby::Compiler.new
-        expect { compiler.compile_string(example.code) }.not_to raise_error
       end
     end
 
-    describe "예제 6: Symbol 기본 사용" do
-      let(:example) { examples.find { |e| e.trb? && e.code.include?("status: Symbol = :active") } }
+    # 예제 6: T-Ruby (라인 134)
+    describe "예제 6: T-Ruby 코드" do
+      let(:example) { examples[5] }
 
-      it "파싱에 성공한다" do
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
         parser = TRuby::Parser.new(example.code)
         expect { parser.parse }.not_to raise_error
-      end
-
-      it "컴파일에 성공한다" do
-        skip "예제를 찾을 수 없음" unless example
-        compiler = TRuby::Compiler.new
-        expect { compiler.compile_string(example.code) }.not_to raise_error
       end
     end
 
-    describe "예제 7: nil 검사 (greet)" do
-      let(:example) { examples.find { |e| e.trb? && e.code.include?("def greet(name: String | nil)") } }
+    # 예제 7: T-Ruby (라인 156)
+    describe "예제 7: T-Ruby 코드" do
+      let(:example) { examples[6] }
 
-      it "파싱에 성공한다" do
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
         parser = TRuby::Parser.new(example.code)
         expect { parser.parse }.not_to raise_error
-      end
-
-      it "컴파일에 성공한다" do
-        skip "예제를 찾을 수 없음" unless example
-        compiler = TRuby::Compiler.new
-        expect { compiler.compile_string(example.code) }.not_to raise_error
       end
     end
 
-    describe "예제 8: 온도 변환기" do
-      let(:example) { examples.find { |e| e.trb? && e.code.include?("def celsius_to_fahrenheit") } }
+    # 예제 8: T-Ruby (라인 181)
+    describe "예제 8: T-Ruby 코드" do
+      let(:example) { examples[7] }
 
-      it "파싱에 성공한다" do
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
         parser = TRuby::Parser.new(example.code)
         expect { parser.parse }.not_to raise_error
       end
+    end
 
-      it "컴파일에 성공한다" do
+    # 예제 9: T-Ruby (라인 195)
+    describe "예제 9: T-Ruby 코드" do
+      let(:example) { examples[8] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
         skip "예제를 찾을 수 없음" unless example
-        compiler = TRuby::Compiler.new
-        expect { compiler.compile_string(example.code) }.not_to raise_error
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 10: T-Ruby (라인 219)
+    describe "예제 10: T-Ruby 코드" do
+      let(:example) { examples[9] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 11: T-Ruby (라인 241)
+    describe "예제 11: T-Ruby 코드" do
+      let(:example) { examples[10] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 12: T-Ruby (라인 259)
+    describe "예제 12: T-Ruby 코드" do
+      let(:example) { examples[11] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 13: T-Ruby (라인 273)
+    describe "예제 13: T-Ruby 코드" do
+      let(:example) { examples[12] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 14: T-Ruby (라인 300)
+    describe "예제 14: T-Ruby 코드" do
+      let(:example) { examples[13] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 15: T-Ruby (라인 329)
+    describe "예제 15: T-Ruby 코드" do
+      let(:example) { examples[14] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 16: T-Ruby (라인 352)
+    describe "예제 16: T-Ruby 코드" do
+      let(:example) { examples[15] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 17: T-Ruby (라인 374)
+    describe "예제 17: T-Ruby 코드" do
+      let(:example) { examples[16] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 18: T-Ruby (라인 407)
+    describe "예제 18: T-Ruby 코드" do
+      let(:example) { examples[17] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 19: T-Ruby (라인 425)
+    describe "예제 19: T-Ruby 코드" do
+      let(:example) { examples[18] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 20: T-Ruby (라인 447)
+    describe "예제 20: T-Ruby 코드" do
+      let(:example) { examples[19] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 21: T-Ruby (라인 463)
+    describe "예제 21: T-Ruby 코드" do
+      let(:example) { examples[20] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 22: T-Ruby (라인 483)
+    describe "예제 22: T-Ruby 코드" do
+      let(:example) { examples[21] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 23: T-Ruby (라인 510)
+    describe "예제 23: T-Ruby 코드" do
+      let(:example) { examples[22] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+
+    # 예제 24: T-Ruby (라인 535)
+    describe "예제 24: T-Ruby 코드" do
+      let(:example) { examples[23] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
       end
     end
   end

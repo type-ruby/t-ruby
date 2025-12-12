@@ -3,7 +3,7 @@
 require "spec_helper"
 require_relative "../support/shared_examples"
 
-RSpec.describe "한글 문서: 프로젝트 구성" do
+RSpec.describe "한글 문서: Project Configuration" do
   include_context "docs site paths"
 
   let(:relative_path) { "getting-started/project-configuration.md" }
@@ -21,8 +21,10 @@ RSpec.describe "한글 문서: 프로젝트 구성" do
   it_behaves_like "valid documentation page", "getting-started/project-configuration.md"
 
   describe "코드 예제" do
-    describe "예제 1: Gemfile" do
-      let(:example) { examples.find { |e| e.ruby? && e.code.include?('gem "t-ruby"') } }
+
+    # 예제 1: Ruby (라인 241)
+    describe "예제 1: Ruby 코드" do
+      let(:example) { examples[0] }
 
       it "유효한 Ruby 문법이다" do
         skip "예제를 찾을 수 없음" unless example
@@ -30,8 +32,9 @@ RSpec.describe "한글 문서: 프로젝트 구성" do
       end
     end
 
-    describe "예제 2: Rakefile" do
-      let(:example) { examples.find { |e| e.ruby? && e.code.include?("TRuby::RakeTask") } }
+    # 예제 2: Ruby (라인 255)
+    describe "예제 2: Ruby 코드" do
+      let(:example) { examples[1] }
 
       it "유효한 Ruby 문법이다" do
         skip "예제를 찾을 수 없음" unless example
@@ -39,8 +42,9 @@ RSpec.describe "한글 문서: 프로젝트 구성" do
       end
     end
 
-    describe "예제 3: Rails 통합 - application.rb" do
-      let(:example) { examples.find { |e| e.ruby? && e.code.include?("config.watchable_extensions") } }
+    # 예제 3: Ruby (라인 302)
+    describe "예제 3: Ruby 코드" do
+      let(:example) { examples[2] }
 
       it "유효한 Ruby 문법이다" do
         skip "예제를 찾을 수 없음" unless example

@@ -3,7 +3,7 @@
 require "spec_helper"
 require_relative "../support/shared_examples"
 
-RSpec.describe "한글 문서: 변경 이력" do
+RSpec.describe "한글 문서: Changelog" do
   include_context "docs site paths"
 
   let(:relative_path) { "project/changelog.md" }
@@ -19,4 +19,18 @@ RSpec.describe "한글 문서: 변경 이력" do
   end
 
   it_behaves_like "valid documentation page", "project/changelog.md"
+
+  describe "코드 예제" do
+
+    # 예제 1: T-Ruby (라인 191)
+    describe "예제 1: T-Ruby 코드" do
+      let(:example) { examples[0] }
+
+      it "T-Ruby 코드가 파싱에 성공한다" do
+        skip "예제를 찾을 수 없음" unless example
+        parser = TRuby::Parser.new(example.code)
+        expect { parser.parse }.not_to raise_error
+      end
+    end
+  end
 end
