@@ -3,7 +3,12 @@
 require "yaml"
 
 module TRuby
+  # Error raised when configuration is invalid
+  class ConfigError < StandardError; end
+
   class Config
+    # Valid strictness levels
+    VALID_STRICTNESS = %w[strict standard permissive].freeze
     # New schema structure (v0.0.12+)
     DEFAULT_CONFIG = {
       "source" => {
@@ -78,6 +83,19 @@ module TRuby
       @output["clean_before_build"] == true
     end
 
+    # Get compiler strictness level
+    # @return [String] one of: strict, standard, permissive
+    def strictness
+      @compiler["strictness"] || "standard"
+    end
+
+    # Validate the configuration
+    # @raise [ConfigError] if configuration is invalid
+    def validate!
+      validate_strictness!
+      true
+    end
+
     # Backwards compatible: alias for ruby_dir
     def out_dir
       ruby_dir
@@ -145,6 +163,14 @@ module TRuby
     end
 
     private
+
+    # Validate strictness value
+    def validate_strictness!
+      value = strictness
+      return if VALID_STRICTNESS.include?(value)
+
+      raise ConfigError, "Invalid compiler.strictness: '#{value}'. Must be one of: #{VALID_STRICTNESS.join(', ')}"
+    end
 
     def load_raw_config(config_path)
       if config_path && File.exist?(config_path)
