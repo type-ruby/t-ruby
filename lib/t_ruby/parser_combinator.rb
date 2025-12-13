@@ -571,8 +571,8 @@ module TRuby
         Fail.new(message)
       end
 
-      def lazy(&block)
-        Lazy.new(&block)
+      def lazy(&)
+        Lazy.new(&)
       end
 
       def choice(*parsers)

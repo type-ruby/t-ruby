@@ -2,7 +2,7 @@
 # https://docs.rubocop.org/rubocop/
 
 AllCops:
-  TargetRubyVersion: 3.0
+  TargetRubyVersion: 3.1
   NewCops: enable
   SuggestExtensions: false
   Exclude:
@@ -130,6 +130,10 @@ Lint/Void:
 
 Lint/DuplicateBranch:
   Enabled: false
+
+Lint/DeprecatedConstants:
+  Exclude:
+    - "lib/t_ruby/smt_solver.rb"
 
 # Style exceptions for specs
 Style/StringConcatenation:
