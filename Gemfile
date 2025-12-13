@@ -5,7 +5,6 @@ source "https://rubygems.org"
 gemspec
 
 group :development, :test do
-  gem "coveralls_reborn", "~> 0.28.0", require: false
   gem "rake", "~> 13.0"
   gem "rspec", "~> 3.0"
   gem "rspec_junit_formatter", "~> 0.6.0"

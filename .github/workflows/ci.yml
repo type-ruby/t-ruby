@@ -74,9 +74,13 @@ jobs:
       - name: Run tests with coverage
         run: bundle exec rspec
         env:
-          CI: true
           COVERAGE: true
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+
+      - name: Upload coverage to Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          file: coverage/lcov.info
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   # VSCode 플러그인 빌드
   vscode:
