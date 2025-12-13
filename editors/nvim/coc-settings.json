@@ -4,7 +4,7 @@
       "command": "trc",
       "args": ["--lsp"],
       "filetypes": ["truby"],
-      "rootPatterns": [".trb.yml", ".git/"],
+      "rootPatterns": ["trbconfig.yml", ".git/"],
       "initializationOptions": {},
       "settings": {}
     }

@@ -132,7 +132,7 @@ type NilableBoolean = Boolean | nil
 # 1. Add the stdlib_types directory to your declaration search path
 # 2. Types will be automatically available for type checking
 #
-# Example .trb.yml configuration:
+# Example trbconfig.yml configuration:
 #
 #   paths:
 #     types:

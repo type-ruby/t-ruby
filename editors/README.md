@@ -123,7 +123,7 @@ Add the contents of `nvim/coc-settings.json` to your coc-settings:
       "command": "trc",
       "args": ["--lsp"],
       "filetypes": ["truby"],
-      "rootPatterns": [".trb.yml", ".git/"]
+      "rootPatterns": ["trbconfig.yml", ".git/"]
     }
   }
 }

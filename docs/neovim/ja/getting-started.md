@@ -115,7 +115,7 @@ coc.nvimを好む場合は、`:CocConfig`に追加：
       "command": "trc",
       "args": ["--lsp"],
       "filetypes": ["truby"],
-      "rootPatterns": [".trb.yml", ".git/"]
+      "rootPatterns": ["trbconfig.yml", ".git/"]
     }
   }
 }

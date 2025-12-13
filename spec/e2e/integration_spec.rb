@@ -17,8 +17,8 @@ RSpec.describe "T-Ruby E2E Integration" do
       lib_dir = File.join(tmpdir, "lib")
       FileUtils.mkdir_p(lib_dir)
 
-      # Create .trb.yml config to set output dir
-      File.write(File.join(tmpdir, ".trb.yml"), <<~YAML)
+      # Create trbconfig.yml config to set output dir
+      File.write(File.join(tmpdir, "trbconfig.yml"), <<~YAML)
         emit:
           rb: true
           rbs: false
@@ -75,7 +75,7 @@ RSpec.describe "T-Ruby E2E Integration" do
       TRB
 
       # Compile all files with custom config
-      config = TRuby::Config.new(File.join(tmpdir, ".trb.yml"))
+      config = TRuby::Config.new(File.join(tmpdir, "trbconfig.yml"))
       compiler = TRuby::Compiler.new(config)
 
       trb_files = Dir.glob(File.join(lib_dir, "*.trb"))
@@ -92,8 +92,8 @@ RSpec.describe "T-Ruby E2E Integration" do
       lib_dir = File.join(tmpdir, "lib")
       FileUtils.mkdir_p(lib_dir)
 
-      # Create .trb.yml config to set output dir
-      File.write(File.join(tmpdir, ".trb.yml"), <<~YAML)
+      # Create trbconfig.yml config to set output dir
+      File.write(File.join(tmpdir, "trbconfig.yml"), <<~YAML)
         emit:
           rb: true
           rbs: false
@@ -107,7 +107,7 @@ RSpec.describe "T-Ruby E2E Integration" do
       file1 = File.join(lib_dir, "file1.trb")
       File.write(file1, "def hello(name: String): String\n  \"Hello, \#{name}\"\nend")
 
-      config = TRuby::Config.new(File.join(tmpdir, ".trb.yml"))
+      config = TRuby::Config.new(File.join(tmpdir, "trbconfig.yml"))
       compiler = TRuby::Compiler.new(config)
       ic = TRuby::IncrementalCompiler.new(compiler)
 
