@@ -72,6 +72,12 @@ module TRuby
       @output["preserve_structure"] != false
     end
 
+    # Check if output directory should be cleaned before build
+    # @return [Boolean] true if should clean before build
+    def clean_before_build?
+      @output["clean_before_build"] == true
+    end
+
     # Backwards compatible: alias for ruby_dir
     def out_dir
       ruby_dir
