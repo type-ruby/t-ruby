@@ -114,6 +114,12 @@ module TRuby
       experimental_features.include?(feature)
     end
 
+    # Check if no_implicit_any check is enabled
+    # @return [Boolean] true if check is enabled
+    def check_no_implicit_any?
+      @compiler.dig("checks", "no_implicit_any") == true
+    end
+
     # Validate the configuration
     # @raise [ConfigError] if configuration is invalid
     def validate!
