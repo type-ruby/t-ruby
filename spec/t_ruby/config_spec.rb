@@ -312,6 +312,39 @@ describe TRuby::Config do
     end
   end
 
+  describe "watch.clear_screen" do
+    it "returns false by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.watch_clear_screen?).to be false
+        end
+      end
+    end
+
+    it "returns true when enabled" do
+      yaml = <<~YAML
+        watch:
+          clear_screen: true
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.watch_clear_screen?).to be true
+      end
+    end
+
+    it "returns false when disabled" do
+      yaml = <<~YAML
+        watch:
+          clear_screen: false
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.watch_clear_screen?).to be false
+      end
+    end
+  end
+
   describe "output.clean_before_build" do
     it "returns false by default" do
       Dir.mktmpdir do |tmpdir|

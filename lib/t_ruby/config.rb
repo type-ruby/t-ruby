@@ -144,6 +144,12 @@ module TRuby
       @watch["debounce"] || 100
     end
 
+    # Check if terminal should be cleared before rebuild
+    # @return [Boolean] true if terminal should be cleared
+    def watch_clear_screen?
+      @watch["clear_screen"] == true
+    end
+
     # Validate the configuration
     # @raise [ConfigError] if configuration is invalid
     def validate!
