@@ -76,6 +76,12 @@ module TRuby
       @source["exclude"] || []
     end
 
+    # Get source file extensions
+    # @return [Array<String>] list of file extensions (e.g., [".trb", ".truby"])
+    def source_extensions
+      @source["extensions"] || [".trb"]
+    end
+
     # Get include patterns for file discovery
     def include_patterns
       extensions = @source["extensions"] || [".trb"]
