@@ -59,8 +59,8 @@ module TRuby
       compile_all
       @stats[:total_time] += Time.now - start_time
 
-      # Start watching
-      listener = Listen.to(*watch_directories, only: /\.trb$/) do |modified, added, removed|
+      # Start watching (.trb and .rb files)
+      listener = Listen.to(*watch_directories, only: /\.(trb|rb)$/) do |modified, added, removed|
         handle_changes(modified, added, removed)
       end
 
@@ -91,7 +91,7 @@ module TRuby
     end
 
     def handle_changes(modified, added, removed)
-      changed_files = (modified + added).select { |f| f.end_with?(".trb") }
+      changed_files = (modified + added).select { |f| f.end_with?(".trb") || f.end_with?(".rb") }
       return if changed_files.empty? && removed.empty?
 
       puts
@@ -120,7 +120,9 @@ module TRuby
       errors = []
 
       trb_files = find_trb_files
-      @file_count = trb_files.size
+      rb_files = find_rb_files
+      all_files = trb_files + rb_files
+      @file_count = all_files.size
 
       if @incremental && @cross_file_check
         # Use enhanced incremental compiler with cross-file checking
@@ -128,9 +130,15 @@ module TRuby
         errors = result[:errors].map { |e| format_error(e[:file], e[:error] || e[:message]) }
         @error_count = errors.size
         @stats[:total_compilations] += trb_files.size
-      elsif @parallel && trb_files.size > 1
+
+        # Also compile .rb files
+        rb_files.each do |file|
+          result = compile_file(file)
+          errors.concat(result[:errors]) if result[:errors].any?
+        end
+      elsif @parallel && all_files.size > 1
         # Parallel compilation
-        results = @parallel_processor.process_files(trb_files) do |file|
+        results = @parallel_processor.process_files(all_files) do |file|
           compile_file(file)
         end
         results.each do |result|
@@ -138,7 +146,7 @@ module TRuby
         end
       else
         # Sequential compilation
-        trb_files.each do |file|
+        all_files.each do |file|
           result = compile_file(file)
           errors.concat(result[:errors]) if result[:errors].any?
         end
@@ -228,6 +236,18 @@ module TRuby
         if File.directory?(path)
           files.concat(Dir.glob(File.join(path, "**", "*.trb")))
         elsif File.file?(path) && path.end_with?(".trb")
+          files << path
+        end
+      end
+      files.uniq
+    end
+
+    def find_rb_files
+      files = []
+      @paths.each do |path|
+        if File.directory?(path)
+          files.concat(Dir.glob(File.join(path, "**", "*.rb")))
+        elsif File.file?(path) && path.end_with?(".rb")
           files << path
         end
       end

@@ -150,7 +150,7 @@ describe TRuby::CLI do
     end
 
     context "with wrong file extension" do
-      it "displays error message for .rb file" do
+      it "compiles .rb file successfully (copies to build and generates rbs)" do
         Dir.mktmpdir do |tmpdir|
           input_file = File.join(tmpdir, "test.rb")
           File.write(input_file, "puts 'hello'")
@@ -159,7 +159,7 @@ describe TRuby::CLI do
 
           expect {
             cli.run
-          }.to raise_error(SystemExit)
+          }.to output(/Compiled: .* -> /).to_stdout
         end
       end
 

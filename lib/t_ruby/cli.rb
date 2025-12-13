@@ -7,6 +7,7 @@ module TRuby
 
       Usage:
         trc <file.trb>           Compile a .trb file to .rb
+        trc <file.rb>            Copy .rb file to build/ and generate .rbs
         trc --init               Initialize a new t-ruby project
         trc --watch, -w          Watch input files and recompile on change
         trc --decl <file.trb>    Generate .d.trb declaration file
@@ -16,9 +17,10 @@ module TRuby
 
       Examples:
         trc hello.trb            Compile hello.trb to build/hello.rb
+        trc utils.rb             Copy utils.rb to build/ and generate utils.rbs
         trc --init               Create trbconfig.yml and src/, build/ directories
-        trc -w                   Watch all .trb files in current directory
-        trc -w src/              Watch all .trb files in src/ directory
+        trc -w                   Watch all .trb and .rb files in current directory
+        trc -w src/              Watch all .trb and .rb files in src/ directory
         trc --watch hello.trb    Watch specific file for changes
         trc --decl hello.trb     Generate hello.d.trb declaration file
         trc --lsp                Start language server for VS Code
