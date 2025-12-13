@@ -131,19 +131,9 @@ describe TRuby::CLI do
       it "displays error message" do
         cli = TRuby::CLI.new(["/nonexistent/file.trb"])
 
-        output = begin
-          capture_stderr { cli.run }
-        rescue StandardError
-          nil
-        end
-        stdout = begin
-          capture_stdout { cli.run }
-        rescue StandardError
-          nil
-        end
-
-        combined_output = (output || "") + (stdout || "")
-        expect(combined_output).to include("Error:")
+        expect do
+          cli.run
+        end.to output(/Error:/).to_stdout.and raise_error(SystemExit)
       end
 
       it "exits with status 1" do
