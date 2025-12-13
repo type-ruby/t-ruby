@@ -14,6 +14,37 @@ describe TRuby::Config do
     end
   end
 
+  describe "output.ruby_dir" do
+    it "returns default ruby_dir 'build'" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.ruby_dir).to eq("build")
+        end
+      end
+    end
+
+    it "returns custom ruby_dir from config" do
+      yaml = <<~YAML
+        output:
+          ruby_dir: dist
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.ruby_dir).to eq("dist")
+      end
+    end
+
+    it "ruby_dir is aliased to out_dir for backwards compatibility" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.out_dir).to eq(config.ruby_dir)
+        end
+      end
+    end
+  end
+
   describe "source.extensions" do
     it "returns default extension .trb" do
       Dir.mktmpdir do |tmpdir|

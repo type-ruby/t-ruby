@@ -54,9 +54,15 @@ module TRuby
       @watch = config["watch"]
     end
 
-    # Backwards compatible: output.ruby_dir
+    # Get output directory for compiled Ruby files
+    # @return [String] output directory path
+    def ruby_dir
+      @output["ruby_dir"] || "build"
+    end
+
+    # Backwards compatible: alias for ruby_dir
     def out_dir
-      @output["ruby_dir"]
+      ruby_dir
     end
 
     # Backwards compatible: first source.include directory
