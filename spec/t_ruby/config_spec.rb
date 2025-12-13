@@ -14,6 +14,39 @@ describe TRuby::Config do
     end
   end
 
+  describe "output.preserve_structure" do
+    it "returns true by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.preserve_structure?).to be true
+        end
+      end
+    end
+
+    it "returns false when set to false" do
+      yaml = <<~YAML
+        output:
+          preserve_structure: false
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.preserve_structure?).to be false
+      end
+    end
+
+    it "returns true when set to true" do
+      yaml = <<~YAML
+        output:
+          preserve_structure: true
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.preserve_structure?).to be true
+      end
+    end
+  end
+
   describe "output.rbs_dir" do
     it "returns nil by default (uses ruby_dir)" do
       Dir.mktmpdir do |tmpdir|

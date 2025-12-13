@@ -66,6 +66,12 @@ module TRuby
       @output["rbs_dir"] || ruby_dir
     end
 
+    # Check if source directory structure should be preserved in output
+    # @return [Boolean] true if structure should be preserved
+    def preserve_structure?
+      @output["preserve_structure"] != false
+    end
+
     # Backwards compatible: alias for ruby_dir
     def out_dir
       ruby_dir
