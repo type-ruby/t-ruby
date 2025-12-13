@@ -14,6 +14,50 @@ describe TRuby::Config do
     end
   end
 
+  describe "compiler.strictness" do
+    it "returns 'standard' by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.strictness).to eq("standard")
+        end
+      end
+    end
+
+    it "returns 'strict' when set" do
+      yaml = <<~YAML
+        compiler:
+          strictness: strict
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.strictness).to eq("strict")
+      end
+    end
+
+    it "returns 'permissive' when set" do
+      yaml = <<~YAML
+        compiler:
+          strictness: permissive
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.strictness).to eq("permissive")
+      end
+    end
+
+    it "validates strictness value" do
+      yaml = <<~YAML
+        compiler:
+          strictness: invalid
+      YAML
+
+      expect {
+        create_config(yaml) { |config| config.validate! }
+      }.to raise_error(TRuby::ConfigError)
+    end
+  end
+
   describe "output.clean_before_build" do
     it "returns false by default" do
       Dir.mktmpdir do |tmpdir|
