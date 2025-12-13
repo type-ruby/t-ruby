@@ -266,6 +266,30 @@ describe TRuby::Config do
     end
   end
 
+  describe "watch.paths" do
+    it "returns empty array by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.watch_paths).to eq([])
+        end
+      end
+    end
+
+    it "returns configured paths" do
+      yaml = <<~YAML
+        watch:
+          paths:
+            - config
+            - types
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.watch_paths).to eq(["config", "types"])
+      end
+    end
+  end
+
   describe "output.clean_before_build" do
     it "returns false by default" do
       Dir.mktmpdir do |tmpdir|

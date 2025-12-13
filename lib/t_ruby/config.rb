@@ -132,6 +132,12 @@ module TRuby
       @compiler.dig("checks", "strict_nil") == true
     end
 
+    # Get additional watch paths
+    # @return [Array<String>] list of additional paths to watch
+    def watch_paths
+      @watch["paths"] || []
+    end
+
     # Validate the configuration
     # @raise [ConfigError] if configuration is invalid
     def validate!
