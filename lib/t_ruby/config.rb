@@ -150,6 +150,12 @@ module TRuby
       @watch["clear_screen"] == true
     end
 
+    # Get command to run after successful compilation
+    # @return [String, nil] command to run on success
+    def watch_on_success
+      @watch["on_success"]
+    end
+
     # Validate the configuration
     # @raise [ConfigError] if configuration is invalid
     def validate!

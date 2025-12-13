@@ -345,6 +345,28 @@ describe TRuby::Config do
     end
   end
 
+  describe "watch.on_success" do
+    it "returns nil by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.watch_on_success).to be_nil
+        end
+      end
+    end
+
+    it "returns configured command" do
+      yaml = <<~YAML
+        watch:
+          on_success: "bundle exec rspec"
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.watch_on_success).to eq("bundle exec rspec")
+      end
+    end
+  end
+
   describe "output.clean_before_build" do
     it "returns false by default" do
       Dir.mktmpdir do |tmpdir|
