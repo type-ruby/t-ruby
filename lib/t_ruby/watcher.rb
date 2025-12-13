@@ -91,7 +91,9 @@ module TRuby
     end
 
     def handle_changes(modified, added, removed)
-      changed_files = (modified + added).select { |f| f.end_with?(".trb") || f.end_with?(".rb") }
+      changed_files = (modified + added)
+        .select { |f| f.end_with?(".trb") || f.end_with?(".rb") }
+        .reject { |f| @config.excluded?(f) }
       return if changed_files.empty? && removed.empty?
 
       puts
@@ -231,26 +233,34 @@ module TRuby
     end
 
     def find_trb_files
-      files = []
-      @paths.each do |path|
-        if File.directory?(path)
-          files.concat(Dir.glob(File.join(path, "**", "*.trb")))
-        elsif File.file?(path) && path.end_with?(".trb")
-          files << path
-        end
-      end
-      files.uniq
+      find_source_files_by_extension(".trb")
     end
 
     def find_rb_files
+      find_source_files_by_extension(".rb")
+    end
+
+    def find_source_files_by_extension(ext)
       files = []
-      @paths.each do |path|
-        if File.directory?(path)
-          files.concat(Dir.glob(File.join(path, "**", "*.rb")))
-        elsif File.file?(path) && path.end_with?(".rb")
-          files << path
+
+      # If watching specific paths, use those paths
+      # Otherwise, use Config's find_source_files which respects include/exclude patterns
+      if @paths == [File.expand_path(".")]
+        # Default case: use config's src_dir with include/exclude patterns
+        files = @config.find_source_files.select { |f| f.end_with?(ext) }
+      else
+        # Specific paths provided: search in those paths but still apply exclude patterns
+        @paths.each do |path|
+          if File.directory?(path)
+            Dir.glob(File.join(path, "**", "*#{ext}")).each do |file|
+              files << file unless @config.excluded?(file)
+            end
+          elsif File.file?(path) && path.end_with?(ext) && !@config.excluded?(path)
+            files << path
+          end
         end
       end
+
       files.uniq
     end
 
