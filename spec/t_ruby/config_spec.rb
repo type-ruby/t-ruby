@@ -14,6 +14,55 @@ describe TRuby::Config do
     end
   end
 
+  describe "source.include" do
+    it "returns source include directories" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.source_include).to eq(["src"])
+        end
+      end
+    end
+
+    it "returns custom include directories from config" do
+      yaml = <<~YAML
+        source:
+          include:
+            - src
+            - lib
+            - app/models
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.source_include).to eq(["src", "lib", "app/models"])
+      end
+    end
+
+    it "uses source_include in find_source_files" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          FileUtils.mkdir_p("src")
+          FileUtils.mkdir_p("lib")
+          File.write("src/main.trb", "# main")
+          File.write("lib/utils.trb", "# utils")
+
+          File.write("trbconfig.yml", <<~YAML)
+            source:
+              include:
+                - src
+                - lib
+          YAML
+
+          config = TRuby::Config.new
+          files = config.find_source_files
+
+          expect(files.size).to eq(2)
+          expect(files.map { |f| File.basename(f) }).to contain_exactly("main.trb", "utils.trb")
+        end
+      end
+    end
+  end
+
   describe "new schema structure" do
     describe "DEFAULT_CONFIG" do
       it "has source section" do
