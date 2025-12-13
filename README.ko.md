@@ -147,10 +147,21 @@ trc --version
 
 ## 빠른 시작
 
-### 1. `.trb` 작성
+### 1. 프로젝트 초기화
+
+```bash
+trc --init
+```
+
+다음 항목들이 생성됩니다:
+- `trbconfig.yml` — 프로젝트 설정 파일
+- `src/` — 소스 디렉토리
+- `build/` — 출력 디렉토리
+
+### 2. `.trb` 작성
 
 ```trb
-# hello.trb
+# src/hello.trb
 def greet(name: String): String
   "Hello, #{name}!"
 end
@@ -158,17 +169,67 @@ end
 puts greet("world")
 ```
 
-### 2. 컴파일
+### 3. 컴파일
 
 ```bash
-trc hello.trb
+trc src/hello.trb
 ```
 
-### 3. 실행
+### 4. 실행
 
 ```bash
 ruby build/hello.rb
 # => Hello, world!
+```
+
+### 5. 워치 모드
+
+```bash
+trc -w           # trbconfig.yml의 소스 디렉토리 감시 (기본값: src/)
+trc -w lib/      # 특정 디렉토리 감시
+```
+
+파일 변경 시 자동으로 재컴파일됩니다.
+
+---
+
+## 설정
+
+`trc --init`은 모든 설정 옵션이 포함된 `trbconfig.yml` 파일을 생성합니다:
+
+```yaml
+# T-Ruby 설정 파일
+# 참고: https://type-ruby.github.io/docs/getting-started/project-configuration
+
+source:
+  include:
+    - src
+  exclude: []
+  extensions:
+    - ".trb"
+    - ".rb"
+
+output:
+  ruby_dir: build
+  # rbs_dir: sig  # 선택: .rbs 파일을 위한 별도 디렉토리
+  preserve_structure: true
+  # clean_before_build: false
+
+compiler:
+  strictness: standard  # strict | standard | permissive
+  generate_rbs: true
+  target_ruby: "3.0"
+  # experimental: []
+  # checks:
+  #   no_implicit_any: false
+  #   no_unused_vars: false
+  #   strict_nil: false
+
+watch:
+  # paths: []  # 추가 감시 경로
+  debounce: 100
+  # clear_screen: false
+  # on_success: "bundle exec rspec"
 ```
 
 ---
