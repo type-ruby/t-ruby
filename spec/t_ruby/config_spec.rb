@@ -290,6 +290,28 @@ describe TRuby::Config do
     end
   end
 
+  describe "watch.debounce" do
+    it "returns 100 by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.watch_debounce).to eq(100)
+        end
+      end
+    end
+
+    it "returns configured debounce value" do
+      yaml = <<~YAML
+        watch:
+          debounce: 200
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.watch_debounce).to eq(200)
+      end
+    end
+  end
+
   describe "output.clean_before_build" do
     it "returns false by default" do
       Dir.mktmpdir do |tmpdir|

@@ -138,6 +138,12 @@ module TRuby
       @watch["paths"] || []
     end
 
+    # Get watch debounce delay in milliseconds
+    # @return [Integer] debounce delay in milliseconds
+    def watch_debounce
+      @watch["debounce"] || 100
+    end
+
     # Validate the configuration
     # @raise [ConfigError] if configuration is invalid
     def validate!
