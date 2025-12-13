@@ -58,6 +58,39 @@ describe TRuby::Config do
     end
   end
 
+  describe "compiler.generate_rbs" do
+    it "returns true by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.generate_rbs?).to be true
+        end
+      end
+    end
+
+    it "returns false when set to false" do
+      yaml = <<~YAML
+        compiler:
+          generate_rbs: false
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.generate_rbs?).to be false
+      end
+    end
+
+    it "returns true when set to true" do
+      yaml = <<~YAML
+        compiler:
+          generate_rbs: true
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.generate_rbs?).to be true
+      end
+    end
+  end
+
   describe "output.clean_before_build" do
     it "returns false by default" do
       Dir.mktmpdir do |tmpdir|

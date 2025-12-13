@@ -89,6 +89,12 @@ module TRuby
       @compiler["strictness"] || "standard"
     end
 
+    # Check if RBS files should be generated
+    # @return [Boolean] true if RBS files should be generated
+    def generate_rbs?
+      @compiler["generate_rbs"] != false
+    end
+
     # Validate the configuration
     # @raise [ConfigError] if configuration is invalid
     def validate!
