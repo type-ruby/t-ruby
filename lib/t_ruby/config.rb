@@ -64,6 +64,12 @@ module TRuby
       @source["include"].first || "src"
     end
 
+    # Get source include directories
+    # @return [Array<String>] list of include directories
+    def source_include
+      @source["include"] || ["src"]
+    end
+
     # Get include patterns for file discovery
     def include_patterns
       extensions = @source["extensions"] || [".trb"]
