@@ -14,6 +14,56 @@ describe TRuby::Config do
     end
   end
 
+  describe "source.extensions" do
+    it "returns default extension .trb" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.source_extensions).to eq([".trb"])
+        end
+      end
+    end
+
+    it "returns custom extensions from config" do
+      yaml = <<~YAML
+        source:
+          extensions:
+            - .trb
+            - .truby
+            - .rb
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.source_extensions).to eq([".trb", ".truby", ".rb"])
+      end
+    end
+
+    it "finds files with custom extensions" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          FileUtils.mkdir_p("src")
+          File.write("src/main.trb", "# main")
+          File.write("src/utils.truby", "# utils")
+          File.write("src/helper.rb", "# helper")
+          File.write("src/readme.md", "# readme")
+
+          File.write("trbconfig.yml", <<~YAML)
+            source:
+              extensions:
+                - .trb
+                - .truby
+          YAML
+
+          config = TRuby::Config.new
+          files = config.find_source_files
+
+          expect(files.size).to eq(2)
+          expect(files.map { |f| File.basename(f) }).to contain_exactly("main.trb", "utils.truby")
+        end
+      end
+    end
+  end
+
   describe "source.exclude" do
     it "returns empty array by default" do
       Dir.mktmpdir do |tmpdir|
