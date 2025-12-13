@@ -70,6 +70,12 @@ module TRuby
       @source["include"] || ["src"]
     end
 
+    # Get source exclude patterns
+    # @return [Array<String>] list of exclude patterns
+    def source_exclude
+      @source["exclude"] || []
+    end
+
     # Get include patterns for file discovery
     def include_patterns
       extensions = @source["extensions"] || [".trb"]

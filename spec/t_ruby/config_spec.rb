@@ -14,6 +14,56 @@ describe TRuby::Config do
     end
   end
 
+  describe "source.exclude" do
+    it "returns empty array by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.source_exclude).to eq([])
+        end
+      end
+    end
+
+    it "returns custom exclude patterns from config" do
+      yaml = <<~YAML
+        source:
+          exclude:
+            - "**/*_test.trb"
+            - "**/fixtures/**"
+            - vendor
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.source_exclude).to eq(["**/*_test.trb", "**/fixtures/**", "vendor"])
+      end
+    end
+
+    it "excludes files matching patterns" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          FileUtils.mkdir_p("src/tests")
+          FileUtils.mkdir_p("src/vendor")
+          File.write("src/main.trb", "# main")
+          File.write("src/tests/main_test.trb", "# test")
+          File.write("src/vendor/lib.trb", "# vendor lib")
+
+          File.write("trbconfig.yml", <<~YAML)
+            source:
+              exclude:
+                - tests
+                - vendor
+          YAML
+
+          config = TRuby::Config.new
+          files = config.find_source_files
+
+          expect(files.size).to eq(1)
+          expect(files.first).to end_with("main.trb")
+        end
+      end
+    end
+  end
+
   describe "source.include" do
     it "returns source include directories" do
       Dir.mktmpdir do |tmpdir|
