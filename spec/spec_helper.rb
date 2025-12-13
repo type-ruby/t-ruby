@@ -13,10 +13,12 @@ if ENV["COVERAGE"]
     c.single_report_path = "coverage/lcov.info"
   end
 
-  SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new([
-    SimpleCov::Formatter::HTMLFormatter,
-    SimpleCov::Formatter::LcovFormatter
-  ])
+  SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new(
+    [
+      SimpleCov::Formatter::HTMLFormatter,
+      SimpleCov::Formatter::LcovFormatter,
+    ]
+  )
 
   SimpleCov.start do
     add_filter "/spec/"
