@@ -91,6 +91,39 @@ describe TRuby::Config do
     end
   end
 
+  describe "compiler.target_ruby" do
+    it "returns '3.0' by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.target_ruby).to eq("3.0")
+        end
+      end
+    end
+
+    it "returns custom version when set" do
+      yaml = <<~YAML
+        compiler:
+          target_ruby: "3.2"
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.target_ruby).to eq("3.2")
+      end
+    end
+
+    it "supports version without quotes" do
+      yaml = <<~YAML
+        compiler:
+          target_ruby: 3.3
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.target_ruby).to eq("3.3")
+      end
+    end
+  end
+
   describe "output.clean_before_build" do
     it "returns false by default" do
       Dir.mktmpdir do |tmpdir|

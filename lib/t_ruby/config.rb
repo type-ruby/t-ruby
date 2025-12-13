@@ -95,6 +95,12 @@ module TRuby
       @compiler["generate_rbs"] != false
     end
 
+    # Get target Ruby version
+    # @return [String] target Ruby version (e.g., "3.0", "3.2")
+    def target_ruby
+      (@compiler["target_ruby"] || "3.0").to_s
+    end
+
     # Validate the configuration
     # @raise [ConfigError] if configuration is invalid
     def validate!
