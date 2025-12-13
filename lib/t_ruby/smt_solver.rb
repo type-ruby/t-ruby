@@ -193,9 +193,9 @@ module TRuby
         l = @left.simplify
         r = @right.simplify
 
-        return false if l == false || r == false
-        return r if l == true
-        return l if r == true
+        return FALSE if l == FALSE || r == FALSE
+        return r if l == TRUE
+        return l if r == TRUE
         return l if l == r
 
         And.new(l, r)
@@ -235,9 +235,9 @@ module TRuby
         l = @left.simplify
         r = @right.simplify
 
-        return true if l == true || r == true
-        return r if l == false
-        return l if r == false
+        return TRUE if l == TRUE || r == TRUE
+        return r if l == FALSE
+        return l if r == FALSE
         return l if l == r
 
         Or.new(l, r)
@@ -441,7 +441,7 @@ module TRuby
       end
 
       def simplify
-        return true if @left == @right
+        return TRUE if @left == @right
 
         self
       end

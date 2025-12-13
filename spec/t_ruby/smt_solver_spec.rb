@@ -28,7 +28,7 @@ RSpec.describe TRuby::SMT do
 
       it "simplifies double negation" do
         v = var("x")
-        double_neg = !v.nil?
+        double_neg = TRuby::SMT::Not.new(TRuby::SMT::Not.new(v))
         expect(double_neg.simplify).to eq(v)
       end
 

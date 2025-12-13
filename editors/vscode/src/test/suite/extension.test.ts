@@ -28,14 +28,13 @@ suite('T-Ruby Extension Test Suite', () => {
     });
 
     test('T-Ruby language should be registered', () => {
-        const languages = vscode.languages.getLanguages();
         // Language registration is async, so we just check the extension contributes it
         const extension = vscode.extensions.getExtension('t-ruby.t-ruby');
         assert.ok(extension);
 
         const contributes = extension.packageJSON.contributes;
         assert.ok(contributes.languages);
-        assert.ok(contributes.languages.some((lang: any) => lang.id === 't-ruby'));
+        assert.ok(contributes.languages.some((lang: { id: string }) => lang.id === 't-ruby'));
     });
 
     test('Grammar should be registered', () => {
@@ -44,7 +43,7 @@ suite('T-Ruby Extension Test Suite', () => {
 
         const contributes = extension.packageJSON.contributes;
         assert.ok(contributes.grammars);
-        assert.ok(contributes.grammars.some((grammar: any) => grammar.language === 't-ruby'));
+        assert.ok(contributes.grammars.some((grammar: { language: string }) => grammar.language === 't-ruby'));
     });
 
     test('Configuration should be available', () => {
@@ -62,7 +61,7 @@ suite('T-Ruby Extension Test Suite', () => {
         assert.ok(extension);
 
         const languages = extension.packageJSON.contributes.languages;
-        const tRubyLang = languages.find((lang: any) => lang.id === 't-ruby');
+        const tRubyLang = languages.find((lang: { id: string; extensions: string[] }) => lang.id === 't-ruby');
 
         assert.ok(tRubyLang);
         assert.ok(tRubyLang.extensions.includes('.trb'));
