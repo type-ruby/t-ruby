@@ -11,20 +11,31 @@ describe TRuby::CLI do
       FileUtils.rm_rf(tmpdir)
     end
 
-    it "creates trbconfig.yml file" do
+    it "creates trbconfig.yml file with new schema" do
       Dir.chdir(tmpdir) do
         expect { TRuby::CLI.run(["--init"]) }.to output(/Created:.*trbconfig\.yml/).to_stdout
 
         expect(File.exist?("trbconfig.yml")).to be true
 
         config = YAML.safe_load_file("trbconfig.yml")
-        expect(config["emit"]["rb"]).to eq(true)
-        expect(config["emit"]["rbs"]).to eq(true)
-        expect(config["paths"]["src"]).to eq("./src")
-        expect(config["paths"]["out"]).to eq("./build")
-        expect(config["include"]).to eq(["**/*.trb", "**/*.rb"])
-        expect(config["exclude"]).to include("node_modules")
-        expect(config["exclude"]).to include("vendor")
+
+        # New schema structure
+        expect(config["source"]).to be_a(Hash)
+        expect(config["source"]["include"]).to eq(["src"])
+        expect(config["source"]["exclude"]).to eq([])
+        expect(config["source"]["extensions"]).to eq([".trb", ".rb"])
+
+        expect(config["output"]).to be_a(Hash)
+        expect(config["output"]["ruby_dir"]).to eq("build")
+        expect(config["output"]["preserve_structure"]).to eq(true)
+
+        expect(config["compiler"]).to be_a(Hash)
+        expect(config["compiler"]["generate_rbs"]).to eq(true)
+        expect(config["compiler"]["strictness"]).to eq("standard")
+        expect(config["compiler"]["target_ruby"]).to eq("3.0")
+
+        expect(config["watch"]).to be_a(Hash)
+        expect(config["watch"]["debounce"]).to eq(100)
       end
     end
 

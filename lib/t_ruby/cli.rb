@@ -86,37 +86,43 @@ module TRuby
       created = []
       skipped = []
 
-      # Create trbconfig.yml
+      # Create trbconfig.yml with new schema
       if File.exist?(config_file)
         skipped << config_file
       else
         File.write(config_file, <<~YAML)
-          emit:
-            rb: true
-            rbs: true
-            dtrb: false
+          # T-Ruby configuration file
+          # See: https://type-ruby.github.io/docs/getting-started/project-configuration
 
-          paths:
-            src: "./#{src_dir}"
-            out: "./#{build_dir}"
+          source:
+            include:
+              - #{src_dir}
+            exclude: []
+            extensions:
+              - ".trb"
+              - ".rb"
 
-          # File patterns to include (relative to paths.src)
-          include:
-            - "**/*.trb"
-            - "**/*.rb"
+          output:
+            ruby_dir: #{build_dir}
+            # rbs_dir: sig  # Optional: separate directory for .rbs files
+            preserve_structure: true
+            # clean_before_build: false
 
-          # File patterns to exclude (relative to paths.src)
-          # Note: .git and paths.out are always excluded automatically
-          exclude:
-            - "node_modules"
-            - "vendor"
-            - "tmp"
-            - "log"
+          compiler:
+            strictness: standard  # strict | standard | permissive
+            generate_rbs: true
+            target_ruby: "3.0"
+            # experimental: []
+            # checks:
+            #   no_implicit_any: false
+            #   no_unused_vars: false
+            #   strict_nil: false
 
-          strict:
-            rbs_compat: true
-            null_safety: false
-            inference: basic
+          watch:
+            # paths: []  # Additional paths to watch
+            debounce: 100
+            # clear_screen: false
+            # on_success: "bundle exec rspec"
         YAML
         created << config_file
       end
