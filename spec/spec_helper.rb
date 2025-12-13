@@ -4,23 +4,31 @@ require "tmpdir"
 require "fileutils"
 
 # SimpleCov configuration for code coverage tracking
-require "simplecov"
-require "simplecov-cobertura"
+if ENV["COVERAGE"]
+  require "simplecov"
 
-SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new([
-                                                                  SimpleCov::Formatter::HTMLFormatter,
-                                                                  SimpleCov::Formatter::CoberturaFormatter,
-                                                                ])
+  formatters = [SimpleCov::Formatter::HTMLFormatter]
 
-SimpleCov.start do
-  add_filter "/spec/"
-  add_filter "/bin/"
+  # Only add Cobertura formatter if it loads successfully
+  begin
+    require "simplecov-cobertura"
+    formatters << SimpleCov::Formatter::CoberturaFormatter
+  rescue LoadError
+    # simplecov-cobertura not available
+  end
 
-  add_group "Libraries", "/lib/"
-  add_group "CLI", "/lib/t_ruby/cli"
-  add_group "Compiler", "/lib/t_ruby/compiler"
-  add_group "Config", "/lib/t_ruby/config"
-  add_group "Version", "/lib/t_ruby/version"
+  SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new(formatters)
+
+  SimpleCov.start do
+    add_filter "/spec/"
+    add_filter "/bin/"
+
+    add_group "Libraries", "/lib/"
+    add_group "CLI", "/lib/t_ruby/cli"
+    add_group "Compiler", "/lib/t_ruby/compiler"
+    add_group "Config", "/lib/t_ruby/config"
+    add_group "Version", "/lib/t_ruby/version"
+  end
 end
 
 # Load the t-ruby library
