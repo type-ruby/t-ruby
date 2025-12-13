@@ -19,9 +19,12 @@ describe TRuby::CLI do
 
         config = YAML.safe_load_file("trbconfig.yml")
         expect(config["emit"]["rb"]).to eq(true)
-        expect(config["emit"]["rbs"]).to eq(false)
+        expect(config["emit"]["rbs"]).to eq(true)
         expect(config["paths"]["src"]).to eq("./src")
         expect(config["paths"]["out"]).to eq("./build")
+        expect(config["include"]).to eq(["**/*.trb", "**/*.rb"])
+        expect(config["exclude"]).to include("node_modules")
+        expect(config["exclude"]).to include("vendor")
       end
     end
 
@@ -75,6 +78,74 @@ describe TRuby::CLI do
     it "shows success message when project is initialized" do
       Dir.chdir(tmpdir) do
         expect { TRuby::CLI.run(["--init"]) }.to output(/t-ruby project initialized successfully/).to_stdout
+      end
+    end
+  end
+
+  describe "--config option" do
+    let(:tmpdir) { Dir.mktmpdir("trb_cli_config") }
+
+    after do
+      FileUtils.rm_rf(tmpdir)
+    end
+
+    it "accepts --config flag with a custom config path" do
+      Dir.chdir(tmpdir) do
+        # Create custom config file
+        FileUtils.mkdir_p("configs")
+        File.write("configs/custom.yml", <<~YAML)
+          source:
+            include:
+              - lib
+          output:
+            ruby_dir: out
+        YAML
+
+        # Create source directory and file
+        FileUtils.mkdir_p("lib")
+        File.write("lib/test.trb", "puts 'hello'")
+
+        # Compile with custom config
+        expect {
+          begin
+            TRuby::CLI.run(["--config", "configs/custom.yml", "lib/test.trb"])
+          rescue SystemExit => e
+            raise "CLI exited with status #{e.status}" if e.status != 0
+          end
+        }.to output(/Compiled:/).to_stdout
+
+        # Should output to 'out' directory from custom config
+        expect(File.exist?("out/test.rb")).to be true
+      end
+    end
+
+    it "accepts -c shorthand for --config" do
+      Dir.chdir(tmpdir) do
+        # Create custom config file
+        FileUtils.mkdir_p("configs")
+        File.write("configs/custom.yml", <<~YAML)
+          source:
+            include:
+              - lib
+          output:
+            ruby_dir: dist
+        YAML
+
+        # Create source directory and file
+        FileUtils.mkdir_p("lib")
+        File.write("lib/test.trb", "puts 'hello'")
+
+        # Compile with custom config using shorthand
+        expect {
+          begin
+            TRuby::CLI.run(["-c", "configs/custom.yml", "lib/test.trb"])
+          rescue SystemExit => e
+            raise "CLI exited with status #{e.status}" if e.status != 0
+          end
+        }.to output(/Compiled:/).to_stdout
+
+        # Should output to 'dist' directory from custom config
+        expect(File.exist?("dist/test.rb")).to be true
       end
     end
   end
