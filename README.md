@@ -138,7 +138,7 @@ We still love Ruby, and we want this to be
 gem install t-ruby
 
 # from source
-git clone https://github.com/pyhyun/t-ruby
+git clone https://github.com/type-ruby/t-ruby
 cd t-ruby && bundle install
 ```
 
@@ -252,10 +252,11 @@ watch:
 
 ---
 
-## Quick links
+## Links
 
-**Getting Started**
-- [VS Code Extension](./docs/vscode/en/getting-started.md)
+**IDE Support**
+- [VS Code Extension (and Cursor)](./docs/vscode/en/getting-started.md)
+- [JetBrains Plugin](./docs/jetbrains/en/getting-started.md)
 - [Vim Setup](./docs/vim/en/getting-started.md)
 - [Neovim Setup](./docs/neovim/en/getting-started.md)
 

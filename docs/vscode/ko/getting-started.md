@@ -1,12 +1,30 @@
-# T-Ruby for VS Code - 시작하기
+<p align="center">
+  <img src="https://avatars.githubusercontent.com/u/248530250" alt="T-Ruby" height="120">
+</p>
+
+<h1 align="center">T-Ruby for VS Code</h1>
+
+<p align="center">
+  <a href="https://type-ruby.github.io">공식 홈페이지</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="https://github.com/type-ruby/t-ruby">GitHub</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="https://marketplace.visualstudio.com/items?itemName=t-ruby.t-ruby">VS Code 마켓플레이스</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="https://open-vsx.org/extension/t-ruby/t-ruby">Cursor 마켓플레이스</a>
+</p>
+
+---
 
 T-Ruby VS Code 확장 프로그램에 오신 것을 환영합니다! 이 가이드는 타입이 있는 Ruby 개발을 위한 T-Ruby 확장 프로그램의 설치 및 구성 방법을 안내합니다.
+
+> **Note**: 이 확장은 VS Code와 Cursor에서 동일한 소스코드를 공유하며, 두 에디터 모두에서 동일하게 동작합니다.
 
 ## 사전 요구 사항
 
 확장 프로그램을 설치하기 전에 다음이 필요합니다:
 
-- **Visual Studio Code** 1.75.0 이상
+- **Visual Studio Code** 1.75.0 이상 (또는 **Cursor**)
 - **Ruby** 3.0 이상
 - **T-Ruby 컴파일러** (`trc`)가 설치되어 PATH에 등록되어 있어야 함
 
@@ -15,12 +33,6 @@ T-Ruby VS Code 확장 프로그램에 오신 것을 환영합니다! 이 가이�
 ```bash
 # gem으로 설치 (권장)
 gem install t-ruby
-
-# 또는 소스에서 빌드
-git clone https://github.com/type-ruby/t-ruby.git
-cd t-ruby
-bundle install
-rake install
 ```
 
 설치 확인:
@@ -30,14 +42,25 @@ trc --version
 
 ## 설치 방법
 
-### 방법 1: VS Code 마켓플레이스 (권장)
+### 방법 1: 마켓플레이스 (권장)
 
+**VS Code:**
 1. VS Code를 엽니다
 2. `Ctrl+Shift+X` (Windows/Linux) 또는 `Cmd+Shift+X` (macOS)를 눌러 확장 탭을 엽니다
 3. "T-Ruby"를 검색합니다
 4. **설치**를 클릭합니다
 
-### 방법 2: VSIX 파일로 설치
+또는 [VS Code 마켓플레이스](https://marketplace.visualstudio.com/items?itemName=t-ruby.t-ruby)에서 직접 설치하세요.
+
+**Cursor:**
+1. Cursor를 엽니다
+2. `Ctrl+Shift+X` (Windows/Linux) 또는 `Cmd+Shift+X` (macOS)를 눌러 확장 탭을 엽니다
+3. "T-Ruby"를 검색합니다
+4. **설치**를 클릭합니다
+
+또는 [Cursor 마켓플레이스](https://open-vsx.org/extension/t-ruby/t-ruby)에서 직접 설치하세요.
+
+### 방법 2: VSIX 파일로 설치 (예정)
 
 1. [Releases](https://github.com/type-ruby/t-ruby/releases)에서 `.vsix` 파일을 다운로드합니다
 2. VS Code를 엽니다
@@ -166,6 +189,5 @@ end
 
 ## 지원
 
-질문이나 버그 보고는 다음을 방문해 주세요:
-- GitHub Issues: https://github.com/type-ruby/t-ruby/issues
-- Discussions: https://github.com/type-ruby/t-ruby/discussions
+질문이나 버그 보고는 GitHub Issues를 방문해 주세요:
+https://github.com/type-ruby/t-ruby/issues

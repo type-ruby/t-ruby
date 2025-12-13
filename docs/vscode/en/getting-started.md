@@ -1,12 +1,30 @@
-# T-Ruby for VS Code - Getting Started
+<p align="center">
+  <img src="https://avatars.githubusercontent.com/u/248530250" alt="T-Ruby" height="120">
+</p>
+
+<h1 align="center">T-Ruby for VS Code</h1>
+
+<p align="center">
+  <a href="https://type-ruby.github.io">Official Website</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="https://github.com/type-ruby/t-ruby">GitHub</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="https://marketplace.visualstudio.com/items?itemName=t-ruby.t-ruby">VS Code Marketplace</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="https://open-vsx.org/extension/t-ruby/t-ruby">Cursor Marketplace</a>
+</p>
+
+---
 
 Welcome to T-Ruby for Visual Studio Code! This guide will help you install and configure the T-Ruby extension for a seamless typed Ruby development experience.
+
+> **Note**: This extension shares the same source code for both VS Code and Cursor, providing identical functionality in both editors.
 
 ## Prerequisites
 
 Before installing the extension, ensure you have:
 
-- **Visual Studio Code** 1.75.0 or higher
+- **Visual Studio Code** 1.75.0 or higher (or **Cursor**)
 - **Ruby** 3.0 or higher
 - **T-Ruby Compiler** (`trc`) installed and available in your PATH
 
@@ -15,12 +33,6 @@ Before installing the extension, ensure you have:
 ```bash
 # Install via gem (recommended)
 gem install t-ruby
-
-# Or build from source
-git clone https://github.com/type-ruby/t-ruby.git
-cd t-ruby
-bundle install
-rake install
 ```
 
 Verify the installation:
@@ -30,14 +42,25 @@ trc --version
 
 ## Installation
 
-### Method 1: VS Code Marketplace (Recommended)
+### Method 1: Marketplace (Recommended)
 
+**VS Code:**
 1. Open VS Code
 2. Press `Ctrl+Shift+X` (Windows/Linux) or `Cmd+Shift+X` (macOS) to open Extensions
 3. Search for "T-Ruby"
 4. Click **Install**
 
-### Method 2: Install from VSIX
+Or install directly from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=t-ruby.t-ruby).
+
+**Cursor:**
+1. Open Cursor
+2. Press `Ctrl+Shift+X` (Windows/Linux) or `Cmd+Shift+X` (macOS) to open Extensions
+3. Search for "T-Ruby"
+4. Click **Install**
+
+Or install directly from the [Cursor Marketplace](https://open-vsx.org/extension/t-ruby/t-ruby).
+
+### Method 2: Install from VSIX (Coming Soon)
 
 1. Download the `.vsix` file from [Releases](https://github.com/type-ruby/t-ruby/releases)
 2. Open VS Code
@@ -166,6 +189,5 @@ end
 
 ## Support
 
-For questions and bug reports, please visit:
-- GitHub Issues: https://github.com/type-ruby/t-ruby/issues
-- Discussions: https://github.com/type-ruby/t-ruby/discussions
+For questions and bug reports, please visit GitHub Issues:
+https://github.com/type-ruby/t-ruby/issues

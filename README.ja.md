@@ -133,7 +133,7 @@ trc greet.trb
 gem install t-ruby
 
 # ソースからインストール
-git clone https://github.com/pyhyun/t-ruby
+git clone https://github.com/type-ruby/t-ruby
 cd t-ruby && bundle install
 ```
 
@@ -247,10 +247,11 @@ watch:
 
 ---
 
-## クイックリンク
+## リンク
 
-**はじめに**
-- [VS Code 拡張](./docs/vscode/ja/getting-started.md)
+**IDE サポート**
+- [VS Code 拡張 (および Cursor)](./docs/vscode/ja/getting-started.md)
+- [JetBrains プラグイン](./docs/jetbrains/ja/getting-started.md)
 - [Vim セットアップ](./docs/vim/ja/getting-started.md)
 - [Neovim セットアップ](./docs/neovim/ja/getting-started.md)
 

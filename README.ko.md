@@ -133,7 +133,7 @@ trc greet.trb
 gem install t-ruby
 
 # 소스에서 설치
-git clone https://github.com/pyhyun/t-ruby
+git clone https://github.com/type-ruby/t-ruby
 cd t-ruby && bundle install
 ```
 
@@ -247,10 +247,11 @@ watch:
 
 ---
 
-## 빠른 링크
+## 링크
 
-**시작하기**
-- [VS Code 확장](./docs/vscode/ko/getting-started.md)
+**IDE 지원**
+- [VS Code 확장 (및 Cursor)](./docs/vscode/ko/getting-started.md)
+- [JetBrains 플러그인](./docs/jetbrains/ko/getting-started.md)
 - [Vim 설정](./docs/vim/ko/getting-started.md)
 - [Neovim 설정](./docs/neovim/ko/getting-started.md)
 
