@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/ruby-3.0+-cc342d" alt="Ruby 3.0+" />
   <a href="https://rubygems.org/gems/t-ruby"><img src="https://img.shields.io/gem/v/t-ruby" alt="Gem Version" /></a>
   <img src="https://img.shields.io/gem/dt/t-ruby" alt="Downloads" />
-  <a href="https://codecov.io/gh/type-ruby/t-ruby"><img src="https://codecov.io/gh/type-ruby/t-ruby/branch/main/graph/badge.svg" alt="Coverage" /></a>
+  <a href="https://coveralls.io/github/type-ruby/t-ruby?branch=main"><img src="https://coveralls.io/repos/github/type-ruby/t-ruby/badge.svg?branch=main" alt="Coverage" /></a>
 </p>
 
 <p align="center">

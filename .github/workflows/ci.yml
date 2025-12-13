@@ -72,18 +72,10 @@ jobs:
           bundler-cache: true
 
       - name: Run tests with coverage
-        run: |
-          COVERAGE=true bundle exec rspec
+        run: bundle exec rspec
         env:
           COVERAGE: true
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/coverage.xml
-          fail_ci_if_error: false
-          verbose: true
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
 
   # VSCode 플러그인 빌드
   vscode:

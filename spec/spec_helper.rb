@@ -9,12 +9,22 @@ if ENV["COVERAGE"]
 
   formatters = [SimpleCov::Formatter::HTMLFormatter]
 
-  # Only add Cobertura formatter if it loads successfully
-  begin
-    require "simplecov-cobertura"
-    formatters << SimpleCov::Formatter::CoberturaFormatter
-  rescue LoadError
-    # simplecov-cobertura not available
+  # Add Coveralls formatter for CI
+  if ENV["CI"]
+    begin
+      require "simplecov-lcov"
+      require "coveralls_reborn"
+
+      SimpleCov::Formatter::LcovFormatter.config do |c|
+        c.report_with_single_file = true
+        c.single_report_path = "coverage/lcov.info"
+      end
+
+      formatters << SimpleCov::Formatter::LcovFormatter
+      formatters << Coveralls::SimpleCov::Formatter
+    rescue LoadError
+      # coveralls not available
+    end
   end
 
   SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new(formatters)
