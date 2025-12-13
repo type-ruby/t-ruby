@@ -9,11 +9,11 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/CI-passing-brightgreen" alt="CI: passing" />
+  <a href="https://github.com/type-ruby/t-ruby/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/type-ruby/t-ruby/ci.yml?label=CI" alt="CI" /></a>
   <img src="https://img.shields.io/badge/ruby-3.0+-cc342d" alt="Ruby 3.0+" />
   <a href="https://rubygems.org/gems/t-ruby"><img src="https://img.shields.io/gem/v/t-ruby" alt="Gem Version" /></a>
   <img src="https://img.shields.io/gem/dt/t-ruby" alt="Downloads" />
-  <img src="https://img.shields.io/badge/coverage-90%25-brightgreen" alt="Coverage: 90%" />
+  <a href="https://codecov.io/gh/type-ruby/t-ruby"><img src="https://codecov.io/gh/type-ruby/t-ruby/branch/main/graph/badge.svg" alt="Coverage" /></a>
 </p>
 
 <p align="center">
