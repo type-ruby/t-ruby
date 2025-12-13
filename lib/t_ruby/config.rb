@@ -7,7 +7,7 @@ module TRuby
     DEFAULT_CONFIG = {
       "emit" => {
         "rb" => true,
-        "rbs" => false,
+        "rbs" => true,
         "dtrb" => false
       },
       "paths" => {

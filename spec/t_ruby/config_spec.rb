@@ -13,7 +13,7 @@ describe TRuby::Config do
           config = TRuby::Config.new
 
           expect(config).to be_a(TRuby::Config)
-          expect(config.emit).to eq({"rb" => true, "rbs" => false, "dtrb" => false})
+          expect(config.emit).to eq({"rb" => true, "rbs" => true, "dtrb" => false})
           expect(config.paths).to eq({"src" => "./src", "out" => "./build"})
           expect(config.strict).to eq({"rbs_compat" => true, "null_safety" => false, "inference" => "basic"})
         end
@@ -71,7 +71,7 @@ describe TRuby::Config do
     it "falls back to default config if specified file doesn't exist" do
       config = TRuby::Config.new("/nonexistent/path/config.yml")
 
-      expect(config.emit).to eq({"rb" => true, "rbs" => false, "dtrb" => false})
+      expect(config.emit).to eq({"rb" => true, "rbs" => true, "dtrb" => false})
       expect(config.out_dir).to eq("./build")
     end
 

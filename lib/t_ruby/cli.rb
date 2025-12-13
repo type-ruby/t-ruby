@@ -85,7 +85,7 @@ module TRuby
         File.write(config_file, <<~YAML)
           emit:
             rb: true
-            rbs: false
+            rbs: true
             dtrb: false
 
           paths:
