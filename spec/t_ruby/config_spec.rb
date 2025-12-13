@@ -367,6 +367,56 @@ describe TRuby::Config do
     end
   end
 
+  describe "version requirement" do
+    it "returns nil by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.version_requirement).to be_nil
+        end
+      end
+    end
+
+    it "returns configured version requirement" do
+      yaml = <<~YAML
+        version: ">=1.0.0"
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.version_requirement).to eq(">=1.0.0")
+      end
+    end
+
+    it "checks if current version satisfies requirement" do
+      yaml = <<~YAML
+        version: ">=0.0.1"
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.version_satisfied?).to be true
+      end
+    end
+
+    it "returns false when version requirement is not met" do
+      yaml = <<~YAML
+        version: ">=99.0.0"
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.version_satisfied?).to be false
+      end
+    end
+
+    it "returns true when no version requirement is specified" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.version_satisfied?).to be true
+        end
+      end
+    end
+  end
+
   describe "output.clean_before_build" do
     it "returns false by default" do
       Dir.mktmpdir do |tmpdir|

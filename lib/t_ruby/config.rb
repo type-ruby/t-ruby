@@ -47,7 +47,7 @@ module TRuby
     # Always excluded (not configurable)
     AUTO_EXCLUDE = [".git"].freeze
 
-    attr_reader :source, :output, :compiler, :watch
+    attr_reader :source, :output, :compiler, :watch, :version_requirement
 
     def initialize(config_path = nil)
       raw_config = load_raw_config(config_path)
@@ -57,6 +57,7 @@ module TRuby
       @output = config["output"]
       @compiler = config["compiler"]
       @watch = config["watch"]
+      @version_requirement = raw_config["version"]
     end
 
     # Get output directory for compiled Ruby files
@@ -154,6 +155,18 @@ module TRuby
     # @return [String, nil] command to run on success
     def watch_on_success
       @watch["on_success"]
+    end
+
+    # Check if current T-Ruby version satisfies the version requirement
+    # @return [Boolean] true if version is satisfied or no requirement specified
+    def version_satisfied?
+      return true if @version_requirement.nil?
+
+      requirement = Gem::Requirement.new(@version_requirement)
+      current = Gem::Version.new(TRuby::VERSION)
+      requirement.satisfied_by?(current)
+    rescue ArgumentError
+      false
     end
 
     # Validate the configuration
