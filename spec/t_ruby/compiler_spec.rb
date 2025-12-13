@@ -130,16 +130,22 @@ describe TRuby::Compiler do
         }.to raise_error(ArgumentError, /#{Regexp.escape(missing_file)}/)
       end
 
-      it "raises ArgumentError when file extension is not .trb" do
+      it "compiles .rb files (copies and generates rbs)" do
         Dir.mktmpdir do |tmpdir|
-          wrong_file = File.join(tmpdir, "test.rb")
-          File.write(wrong_file, "puts 'test'")
+          src_dir = File.join(tmpdir, "src")
+          out_dir = File.join(tmpdir, "build")
+          FileUtils.mkdir_p(src_dir)
+
+          rb_file = File.join(src_dir, "test.rb")
+          File.write(rb_file, "puts 'test'")
+
+          allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(out_dir)
 
           compiler = TRuby::Compiler.new(config)
+          output_path = compiler.compile(rb_file)
 
-          expect {
-            compiler.compile(wrong_file)
-          }.to raise_error(ArgumentError, /Expected .trb file/)
+          expect(output_path).to end_with(".rb")
+          expect(File.exist?(output_path)).to be true
         end
       end
 
@@ -152,7 +158,7 @@ describe TRuby::Compiler do
 
           expect {
             compiler.compile(txt_file)
-          }.to raise_error(ArgumentError, /Expected .trb file/)
+          }.to raise_error(ArgumentError, /Expected .trb or .rb file/)
         end
       end
 
@@ -165,7 +171,7 @@ describe TRuby::Compiler do
 
           expect {
             compiler.compile(rbs_file)
-          }.to raise_error(ArgumentError, /Expected .trb file/)
+          }.to raise_error(ArgumentError, /Expected .trb or .rb file/)
         end
       end
     end

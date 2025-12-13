@@ -47,7 +47,7 @@ module TRuby
       File.write(output_path, output)
 
       # Generate .rbs file if enabled in config
-      if @config.emit["rbs"]
+      if @config.compiler["generate_rbs"]
         if @use_ir && parser.ir_program
           generate_rbs_from_ir(base_filename, out_dir, parser.ir_program)
         else
@@ -55,8 +55,9 @@ module TRuby
         end
       end
 
-      # Generate .d.trb file if enabled in config
-      if @config.emit["dtrb"]
+      # Generate .d.trb file if enabled in config (legacy support)
+      # TODO: Add compiler.generate_dtrb option in future
+      if @config.compiler.key?("generate_dtrb") && @config.compiler["generate_dtrb"]
         generate_dtrb_file(input_path, out_dir)
       end
 
@@ -236,7 +237,7 @@ module TRuby
       FileUtils.cp(input_path, output_path)
 
       # Generate .rbs file if enabled in config
-      if @config.emit["rbs"]
+      if @config.compiler["generate_rbs"]
         generate_rbs_from_ruby(base_filename, out_dir, input_path)
       end
 
