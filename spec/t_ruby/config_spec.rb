@@ -231,6 +231,41 @@ describe TRuby::Config do
     end
   end
 
+  describe "compiler.checks.strict_nil" do
+    it "returns false by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.check_strict_nil?).to be false
+        end
+      end
+    end
+
+    it "returns true when enabled" do
+      yaml = <<~YAML
+        compiler:
+          checks:
+            strict_nil: true
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.check_strict_nil?).to be true
+      end
+    end
+
+    it "returns false when disabled" do
+      yaml = <<~YAML
+        compiler:
+          checks:
+            strict_nil: false
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.check_strict_nil?).to be false
+      end
+    end
+  end
+
   describe "output.clean_before_build" do
     it "returns false by default" do
       Dir.mktmpdir do |tmpdir|

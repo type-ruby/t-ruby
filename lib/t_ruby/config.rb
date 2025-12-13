@@ -126,6 +126,12 @@ module TRuby
       @compiler.dig("checks", "no_unused_vars") == true
     end
 
+    # Check if strict_nil check is enabled
+    # @return [Boolean] true if check is enabled
+    def check_strict_nil?
+      @compiler.dig("checks", "strict_nil") == true
+    end
+
     # Validate the configuration
     # @raise [ConfigError] if configuration is invalid
     def validate!
