@@ -152,10 +152,21 @@ trc --version
 
 ## Quick start
 
-### 1. Write `.trb`
+### 1. Initialize project
+
+```bash
+trc --init
+```
+
+This creates:
+- `trbconfig.yml` — project configuration
+- `src/` — source directory
+- `build/` — output directory
+
+### 2. Write `.trb`
 
 ```trb
-# hello.trb
+# src/hello.trb
 def greet(name: String): String
   "Hello, #{name}!"
 end
@@ -163,17 +174,67 @@ end
 puts greet("world")
 ```
 
-### 2. Compile
+### 3. Compile
 
 ```bash
-trc hello.trb
+trc src/hello.trb
 ```
 
-### 3. Run
+### 4. Run
 
 ```bash
 ruby build/hello.rb
 # => Hello, world!
+```
+
+### 5. Watch mode
+
+```bash
+trc -w           # Watch directories from trbconfig.yml (default: src/)
+trc -w lib/      # Watch specific directory
+```
+
+Files are automatically recompiled on change.
+
+---
+
+## Configuration
+
+`trc --init` generates a `trbconfig.yml` file with all available options:
+
+```yaml
+# T-Ruby configuration file
+# See: https://type-ruby.github.io/docs/getting-started/project-configuration
+
+source:
+  include:
+    - src
+  exclude: []
+  extensions:
+    - ".trb"
+    - ".rb"
+
+output:
+  ruby_dir: build
+  # rbs_dir: sig  # Optional: separate directory for .rbs files
+  preserve_structure: true
+  # clean_before_build: false
+
+compiler:
+  strictness: standard  # strict | standard | permissive
+  generate_rbs: true
+  target_ruby: "3.0"
+  # experimental: []
+  # checks:
+  #   no_implicit_any: false
+  #   no_unused_vars: false
+  #   strict_nil: false
+
+watch:
+  # paths: []  # Additional paths to watch
+  debounce: 100
+  # clear_screen: false
+  # on_success: "bundle exec rspec"
 ```
 
 ---

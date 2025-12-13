@@ -20,6 +20,28 @@
 - 버그 수정은 버그를 재현하는 테스트로 시작
 - 테스트 없는 프로덕션 코드 금지
 
+### 실제 동작 검증 필수
+
+- **단위 테스트만으로는 불충분**: "값을 읽는다", "객체가 생성된다" 수준의 테스트는 기능 검증이 아님
+- **End-to-End 테스트 필수**: 모든 기능은 실제 동작을 검증하는 e2e 테스트를 포함해야 함
+- **설정 옵션 테스트**: Config 값을 읽는 것뿐 아니라, 해당 설정이 실제로 동작에 영향을 미치는지 검증
+
+```ruby
+# ❌ 나쁜 예: 값만 확인
+it "returns 'strict' when set" do
+  config = create_config("compiler:\n  strictness: strict")
+  expect(config.strictness).to eq("strict")  # 값만 읽음
+end
+
+# ✅ 좋은 예: 실제 동작 검증
+it "strict mode rejects implicit any types" do
+  config = create_config("compiler:\n  strictness: strict")
+  compiler = TRuby::Compiler.new(config)
+  source = "def foo(x)\n  x\nend"  # 타입 없는 파라미터
+  expect { compiler.compile(source) }.to raise_error(/implicit any/)
+end
+```
+
 ---
 
 ## 2. 커버리지 기준

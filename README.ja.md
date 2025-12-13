@@ -147,10 +147,21 @@ trc --version
 
 ## クイックスタート
 
-### 1. `.trb` を書く
+### 1. プロジェクト初期化
+
+```bash
+trc --init
+```
+
+以下が生成されます：
+- `trbconfig.yml` — プロジェクト設定ファイル
+- `src/` — ソースディレクトリ
+- `build/` — 出力ディレクトリ
+
+### 2. `.trb` を書く
 
 ```trb
-# hello.trb
+# src/hello.trb
 def greet(name: String): String
   "Hello, #{name}!"
 end
@@ -158,17 +169,67 @@ end
 puts greet("world")
 ```
 
-### 2. コンパイル
+### 3. コンパイル
 
 ```bash
-trc hello.trb
+trc src/hello.trb
 ```
 
-### 3. 実行
+### 4. 実行
 
 ```bash
 ruby build/hello.rb
 # => Hello, world!
+```
+
+### 5. ウォッチモード
+
+```bash
+trc -w           # trbconfig.yml のソースディレクトリを監視（デフォルト: src/）
+trc -w lib/      # 特定のディレクトリを監視
+```
+
+ファイル変更時に自動で再コンパイルされます。
+
+---
+
+## 設定
+
+`trc --init` はすべての設定オプションを含む `trbconfig.yml` ファイルを生成します：
+
+```yaml
+# T-Ruby 設定ファイル
+# 参考: https://type-ruby.github.io/docs/getting-started/project-configuration
+
+source:
+  include:
+    - src
+  exclude: []
+  extensions:
+    - ".trb"
+    - ".rb"
+
+output:
+  ruby_dir: build
+  # rbs_dir: sig  # オプション: .rbs ファイル用の別ディレクトリ
+  preserve_structure: true
+  # clean_before_build: false
+
+compiler:
+  strictness: standard  # strict | standard | permissive
+  generate_rbs: true
+  target_ruby: "3.0"
+  # experimental: []
+  # checks:
+  #   no_implicit_any: false
+  #   no_unused_vars: false
+  #   strict_nil: false
+
+watch:
+  # paths: []  # 追加の監視パス
+  debounce: 100
+  # clear_screen: false
+  # on_success: "bundle exec rspec"
 ```
 
 ---
