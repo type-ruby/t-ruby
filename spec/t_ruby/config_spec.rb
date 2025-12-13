@@ -196,6 +196,41 @@ describe TRuby::Config do
     end
   end
 
+  describe "compiler.checks.no_unused_vars" do
+    it "returns false by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.check_no_unused_vars?).to be false
+        end
+      end
+    end
+
+    it "returns true when enabled" do
+      yaml = <<~YAML
+        compiler:
+          checks:
+            no_unused_vars: true
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.check_no_unused_vars?).to be true
+      end
+    end
+
+    it "returns false when disabled" do
+      yaml = <<~YAML
+        compiler:
+          checks:
+            no_unused_vars: false
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.check_no_unused_vars?).to be false
+      end
+    end
+  end
+
   describe "output.clean_before_build" do
     it "returns false by default" do
       Dir.mktmpdir do |tmpdir|
