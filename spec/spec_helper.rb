@@ -6,28 +6,17 @@ require "fileutils"
 # SimpleCov configuration for code coverage tracking
 if ENV["COVERAGE"]
   require "simplecov"
+  require "simplecov-lcov"
 
-  formatters = [SimpleCov::Formatter::HTMLFormatter]
-
-  # Add Coveralls formatter for CI
-  if ENV["CI"]
-    begin
-      require "simplecov-lcov"
-      require "coveralls_reborn"
-
-      SimpleCov::Formatter::LcovFormatter.config do |c|
-        c.report_with_single_file = true
-        c.single_report_path = "coverage/lcov.info"
-      end
-
-      formatters << SimpleCov::Formatter::LcovFormatter
-      formatters << Coveralls::SimpleCov::Formatter
-    rescue LoadError
-      # coveralls not available
-    end
+  SimpleCov::Formatter::LcovFormatter.config do |c|
+    c.report_with_single_file = true
+    c.single_report_path = "coverage/lcov.info"
   end
 
-  SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new(formatters)
+  SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new([
+    SimpleCov::Formatter::HTMLFormatter,
+    SimpleCov::Formatter::LcovFormatter
+  ])
 
   SimpleCov.start do
     add_filter "/spec/"
