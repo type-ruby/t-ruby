@@ -14,6 +14,39 @@ describe TRuby::Config do
     end
   end
 
+  describe "output.clean_before_build" do
+    it "returns false by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.clean_before_build?).to be false
+        end
+      end
+    end
+
+    it "returns true when set to true" do
+      yaml = <<~YAML
+        output:
+          clean_before_build: true
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.clean_before_build?).to be true
+      end
+    end
+
+    it "returns false when set to false" do
+      yaml = <<~YAML
+        output:
+          clean_before_build: false
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.clean_before_build?).to be false
+      end
+    end
+  end
+
   describe "output.preserve_structure" do
     it "returns true by default" do
       Dir.mktmpdir do |tmpdir|
