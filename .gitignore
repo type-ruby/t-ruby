@@ -23,6 +23,10 @@ editors/vscode/*.vsix
 .env*
 
 ignore/
+
+tmp/
+!tmp/.keep
+
 *.gem
 
 # WASM package build artifacts
