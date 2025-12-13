@@ -48,10 +48,12 @@ module TRuby
 
       # Generate .rbs file if enabled in config
       if @config.compiler["generate_rbs"]
+        rbs_dir = @config.rbs_dir
+        FileUtils.mkdir_p(rbs_dir)
         if @use_ir && parser.ir_program
-          generate_rbs_from_ir(base_filename, out_dir, parser.ir_program)
+          generate_rbs_from_ir(base_filename, rbs_dir, parser.ir_program)
         else
-          generate_rbs_file(base_filename, out_dir, parse_result)
+          generate_rbs_file(base_filename, rbs_dir, parse_result)
         end
       end
 
@@ -238,7 +240,9 @@ module TRuby
 
       # Generate .rbs file if enabled in config
       if @config.compiler["generate_rbs"]
-        generate_rbs_from_ruby(base_filename, out_dir, input_path)
+        rbs_dir = @config.rbs_dir
+        FileUtils.mkdir_p(rbs_dir)
+        generate_rbs_from_ruby(base_filename, rbs_dir, input_path)
       end
 
       output_path

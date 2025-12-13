@@ -60,6 +60,12 @@ module TRuby
       @output["ruby_dir"] || "build"
     end
 
+    # Get output directory for RBS files
+    # @return [String] RBS output directory (defaults to ruby_dir if not specified)
+    def rbs_dir
+      @output["rbs_dir"] || ruby_dir
+    end
+
     # Backwards compatible: alias for ruby_dir
     def out_dir
       ruby_dir

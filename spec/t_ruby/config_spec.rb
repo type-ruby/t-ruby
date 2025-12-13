@@ -14,6 +14,41 @@ describe TRuby::Config do
     end
   end
 
+  describe "output.rbs_dir" do
+    it "returns nil by default (uses ruby_dir)" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.output["rbs_dir"]).to be_nil
+          expect(config.rbs_dir).to eq("build")  # Falls back to ruby_dir
+        end
+      end
+    end
+
+    it "returns custom rbs_dir from config" do
+      yaml = <<~YAML
+        output:
+          ruby_dir: build
+          rbs_dir: sig
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.rbs_dir).to eq("sig")
+      end
+    end
+
+    it "uses ruby_dir when rbs_dir is not specified" do
+      yaml = <<~YAML
+        output:
+          ruby_dir: dist
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.rbs_dir).to eq("dist")
+      end
+    end
+  end
+
   describe "output.ruby_dir" do
     it "returns default ruby_dir 'build'" do
       Dir.mktmpdir do |tmpdir|
