@@ -1170,4 +1170,96 @@ describe TRuby::Config do
       expect(TRuby::Config::AUTO_EXCLUDE).to be_frozen
     end
   end
+
+  describe "environment variable expansion" do
+    it "expands ${VAR} syntax in string values" do
+      yaml = <<~YAML
+        output:
+          ruby_dir: ${TRC_OUTPUT_DIR}
+      YAML
+
+      ENV["TRC_OUTPUT_DIR"] = "custom_build"
+      begin
+        create_config(yaml) do |config|
+          expect(config.ruby_dir).to eq("custom_build")
+        end
+      ensure
+        ENV.delete("TRC_OUTPUT_DIR")
+      end
+    end
+
+    it "expands ${VAR:-default} syntax with default value" do
+      yaml = <<~YAML
+        output:
+          ruby_dir: ${TRC_OUTPUT_DIR:-fallback}
+      YAML
+
+      ENV.delete("TRC_OUTPUT_DIR")
+      create_config(yaml) do |config|
+        expect(config.ruby_dir).to eq("fallback")
+      end
+    end
+
+    it "uses env value when both env and default are available" do
+      yaml = <<~YAML
+        output:
+          ruby_dir: ${TRC_OUTPUT_DIR:-fallback}
+      YAML
+
+      ENV["TRC_OUTPUT_DIR"] = "from_env"
+      begin
+        create_config(yaml) do |config|
+          expect(config.ruby_dir).to eq("from_env")
+        end
+      ensure
+        ENV.delete("TRC_OUTPUT_DIR")
+      end
+    end
+
+    it "expands env vars in compiler.strictness" do
+      yaml = <<~YAML
+        compiler:
+          strictness: ${TRC_STRICTNESS:-standard}
+      YAML
+
+      ENV["TRC_STRICTNESS"] = "strict"
+      begin
+        create_config(yaml) do |config|
+          expect(config.strictness).to eq("strict")
+        end
+      ensure
+        ENV.delete("TRC_STRICTNESS")
+      end
+    end
+
+    it "expands env vars in nested values" do
+      yaml = <<~YAML
+        source:
+          include:
+            - ${TRC_SRC_DIR:-src}
+      YAML
+
+      ENV["TRC_SRC_DIR"] = "lib"
+      begin
+        create_config(yaml) do |config|
+          expect(config.source_include).to eq(["lib"])
+        end
+      ensure
+        ENV.delete("TRC_SRC_DIR")
+      end
+    end
+
+    it "leaves value unchanged when env var is not set and no default" do
+      yaml = <<~YAML
+        output:
+          ruby_dir: ${TRC_NONEXISTENT_VAR}
+      YAML
+
+      ENV.delete("TRC_NONEXISTENT_VAR")
+      create_config(yaml) do |config|
+        # Returns empty string when env var not set
+        expect(config.ruby_dir).to eq("")
+      end
+    end
+  end
 end

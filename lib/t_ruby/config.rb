@@ -253,12 +253,41 @@ module TRuby
     end
 
     def load_raw_config(config_path)
-      if config_path && File.exist?(config_path)
-        YAML.safe_load_file(config_path, permitted_classes: [Symbol]) || {}
-      elsif File.exist?("trbconfig.yml")
-        YAML.safe_load_file("trbconfig.yml", permitted_classes: [Symbol]) || {}
+      raw = if config_path && File.exist?(config_path)
+              YAML.safe_load_file(config_path, permitted_classes: [Symbol]) || {}
+            elsif File.exist?("trbconfig.yml")
+              YAML.safe_load_file("trbconfig.yml", permitted_classes: [Symbol]) || {}
+            else
+              {}
+            end
+      expand_env_vars(raw)
+    end
+
+    # Expand environment variables in config values
+    # Supports ${VAR} and ${VAR:-default} syntax
+    def expand_env_vars(obj)
+      case obj
+      when Hash
+        obj.transform_values { |v| expand_env_vars(v) }
+      when Array
+        obj.map { |v| expand_env_vars(v) }
+      when String
+        expand_env_string(obj)
       else
-        {}
+        obj
+      end
+    end
+
+    # Expand environment variables in a single string
+    def expand_env_string(str)
+      str.gsub(/\$\{([^}]+)\}/) do |_match|
+        var_expr = ::Regexp.last_match(1)
+        if var_expr.include?(":-")
+          var_name, default_value = var_expr.split(":-", 2)
+          ENV.fetch(var_name, default_value)
+        else
+          ENV.fetch(var_expr, "")
+        end
       end
     end
 
