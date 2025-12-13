@@ -7,7 +7,7 @@ require "tempfile"
 describe TRuby::Config do
   describe "initialization with default config" do
     it "initializes with default configuration when no config file exists" do
-      # Use a temporary directory that doesn't have a .trb.yml
+      # Use a temporary directory that doesn't have a trbconfig.yml
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
           config = TRuby::Config.new
@@ -75,10 +75,10 @@ describe TRuby::Config do
       expect(config.out_dir).to eq("./build")
     end
 
-    it "loads .trb.yml from current directory if it exists" do
+    it "loads trbconfig.yml from current directory if it exists" do
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
-          File.write(".trb.yml", <<~YAML)
+          File.write("trbconfig.yml", <<~YAML)
             emit:
               rb: false
               rbs: true
@@ -104,11 +104,11 @@ describe TRuby::Config do
       end
     end
 
-    it "prefers explicitly passed config path over .trb.yml" do
+    it "prefers explicitly passed config path over trbconfig.yml" do
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
-          # Create .trb.yml with one config
-          File.write(".trb.yml", <<~YAML)
+          # Create trbconfig.yml with one config
+          File.write("trbconfig.yml", <<~YAML)
             paths:
               out: ./default_build
           YAML

@@ -7,6 +7,7 @@ module TRuby
 
       Usage:
         trc <file.trb>           Compile a .trb file to .rb
+        trc --init               Initialize a new t-ruby project
         trc --watch, -w          Watch input files and recompile on change
         trc --decl <file.trb>    Generate .d.trb declaration file
         trc --lsp                Start LSP server (for IDE integration)
@@ -15,6 +16,7 @@ module TRuby
 
       Examples:
         trc hello.trb            Compile hello.trb to build/hello.rb
+        trc --init               Create trbconfig.yml and src/, build/ directories
         trc -w                   Watch all .trb files in current directory
         trc -w src/              Watch all .trb files in src/ directory
         trc --watch hello.trb    Watch specific file for changes
@@ -41,6 +43,11 @@ module TRuby
         return
       end
 
+      if @args.include?("--init")
+        init_project
+        return
+      end
+
       if @args.include?("--lsp")
         start_lsp_server
         return
@@ -62,6 +69,66 @@ module TRuby
     end
 
     private
+
+    def init_project
+      config_file = "trbconfig.yml"
+      src_dir = "src"
+      build_dir = "build"
+
+      created = []
+      skipped = []
+
+      # Create trbconfig.yml
+      if File.exist?(config_file)
+        skipped << config_file
+      else
+        File.write(config_file, <<~YAML)
+          emit:
+            rb: true
+            rbs: false
+            dtrb: false
+
+          paths:
+            src: "./#{src_dir}"
+            out: "./#{build_dir}"
+
+          strict:
+            rbs_compat: true
+            null_safety: false
+            inference: basic
+        YAML
+        created << config_file
+      end
+
+      # Create src/ directory
+      if Dir.exist?(src_dir)
+        skipped << "#{src_dir}/"
+      else
+        Dir.mkdir(src_dir)
+        created << "#{src_dir}/"
+      end
+
+      # Create build/ directory
+      if Dir.exist?(build_dir)
+        skipped << "#{build_dir}/"
+      else
+        Dir.mkdir(build_dir)
+        created << "#{build_dir}/"
+      end
+
+      # Output results
+      if created.any?
+        puts "Created: #{created.join(', ')}"
+      end
+      if skipped.any?
+        puts "Skipped (already exists): #{skipped.join(', ')}"
+      end
+      if created.empty? && skipped.any?
+        puts "Project already initialized."
+      else
+        puts "t-ruby project initialized successfully!"
+      end
+    end
 
     def start_lsp_server
       server = LSPServer.new

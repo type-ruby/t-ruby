@@ -9,7 +9,7 @@ M.config = {
     filetypes = { "truby", "trb" },
     root_dir = function(fname)
         local lspconfig = require("lspconfig")
-        return lspconfig.util.root_pattern(".trb.yml", ".git")(fname)
+        return lspconfig.util.root_pattern("trbconfig.yml", ".git")(fname)
             or lspconfig.util.find_git_ancestor(fname)
             or vim.fn.getcwd()
     end,

@@ -18,7 +18,7 @@ t-ruby is an experimental typed layer for Ruby, inspired by TypeScript. It compi
 
 - **Source files:** `.trb` - t-ruby source code with type annotations
 - **Compiler:** `trc` - CLI tool that compiles t-ruby to Ruby
-- **Config:** `.trb.yml` - YAML-based project configuration
+- **Config:** `trbconfig.yml` - YAML-based project configuration
 - **Type erasure:** Type annotations are removed when compiling to `.rb`
 - **RBS compatibility:** t-ruby's type system is a superset of RBS; advanced types are simplified when projected to `.rbs`
 

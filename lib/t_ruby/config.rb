@@ -43,8 +43,8 @@ module TRuby
     def load_config(config_path)
       if config_path && File.exist?(config_path)
         YAML.safe_load_file(config_path, permitted_classes: [Symbol])
-      elsif File.exist?(".trb.yml")
-        YAML.safe_load_file(".trb.yml", permitted_classes: [Symbol])
+      elsif File.exist?("trbconfig.yml")
+        YAML.safe_load_file("trbconfig.yml", permitted_classes: [Symbol])
       else
         DEFAULT_CONFIG.dup
       end

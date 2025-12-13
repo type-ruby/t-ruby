@@ -28,7 +28,7 @@ t-ruby는 Ruby 위에서 동작하는 **선택적 정적 타입 레이어(Option
 2. **점진적 도입 가능** — 부분적 `.trb` 도입 → 전체 프로젝트 전환이 가능합니다.
 3. **TypeScript 수준의 DX** — 타입 시스템, 인터페이스, 제네릭, 유니온/인터섹션, 추론 지원; IDE 친화적.
 4. **RBS 호환성** — t-ruby는 RBS 상위호환을 목표로 하며, 투영 시 RBS 범위로 단순화됩니다.
-5. **Ruby 문화 존중** — YAML 기반 설정 (`.trb.yml`); Ruby 개발자에게 자연스러운 문법.
+5. **Ruby 문화 존중** — YAML 기반 설정 (`trbconfig.yml`); Ruby 개발자에게 자연스러운 문법.
 
 ---
 
@@ -40,7 +40,7 @@ t-ruby는 Ruby 위에서 동작하는 **선택적 정적 타입 레이어(Option
 | `.rb` | 컴파일된 Ruby | Ruby 런타임용 실행 결과물 |
 | `.rbs` | Ruby 시그니처 | RBS 생태계 연동, 보수적 타입 투영 |
 | `.d.trb` | t-ruby 선언 | t-ruby 고급 타입 완전 보존 |
-| `.trb.yml` | 설정 파일 | t-ruby 컴파일 설정 |
+| `trbconfig.yml` | 설정 파일 | t-ruby 컴파일 설정 |
 
 ---
 

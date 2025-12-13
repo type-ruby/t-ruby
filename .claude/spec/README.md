@@ -28,7 +28,7 @@ The language maintains Ruby's syntax and spirit while introducing TypeScript's d
 2. **Gradual adoption** — Partial `.trb` adoption → full project migration is possible.
 3. **TypeScript-level DX** — Supports type system, interfaces, generics, unions/intersections, inference; IDE-friendly.
 4. **RBS compatibility** — t-ruby aims for RBS superset; types are simplified to RBS scope when projected.
-5. **Respects Ruby culture** — YAML-based config (`.trb.yml`); syntax feels natural to Ruby developers.
+5. **Respects Ruby culture** — YAML-based config (`trbconfig.yml`); syntax feels natural to Ruby developers.
 
 ---
 
@@ -40,7 +40,7 @@ The language maintains Ruby's syntax and spirit while introducing TypeScript's d
 | `.rb` | Compiled Ruby | Executable output for Ruby runtime |
 | `.rbs` | Ruby signature | RBS ecosystem integration, conservative type projection |
 | `.d.trb` | t-ruby declaration | Full t-ruby advanced types preserved |
-| `.trb.yml` | Config file | t-ruby compilation settings |
+| `trbconfig.yml` | Config file | t-ruby compilation settings |
 
 ---
 
