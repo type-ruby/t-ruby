@@ -124,6 +124,43 @@ describe TRuby::Config do
     end
   end
 
+  describe "compiler.experimental" do
+    it "returns empty array by default" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          config = TRuby::Config.new
+          expect(config.experimental_features).to eq([])
+        end
+      end
+    end
+
+    it "returns configured experimental features" do
+      yaml = <<~YAML
+        compiler:
+          experimental:
+            - decorators
+            - pattern_matching
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.experimental_features).to eq(["decorators", "pattern_matching"])
+      end
+    end
+
+    it "checks if a specific feature is enabled" do
+      yaml = <<~YAML
+        compiler:
+          experimental:
+            - decorators
+      YAML
+
+      create_config(yaml) do |config|
+        expect(config.experimental_enabled?("decorators")).to be true
+        expect(config.experimental_enabled?("pattern_matching")).to be false
+      end
+    end
+  end
+
   describe "output.clean_before_build" do
     it "returns false by default" do
       Dir.mktmpdir do |tmpdir|

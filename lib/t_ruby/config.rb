@@ -101,6 +101,19 @@ module TRuby
       (@compiler["target_ruby"] || "3.0").to_s
     end
 
+    # Get list of enabled experimental features
+    # @return [Array<String>] list of experimental feature names
+    def experimental_features
+      @compiler["experimental"] || []
+    end
+
+    # Check if a specific experimental feature is enabled
+    # @param feature [String] feature name to check
+    # @return [Boolean] true if feature is enabled
+    def experimental_enabled?(feature)
+      experimental_features.include?(feature)
+    end
+
     # Validate the configuration
     # @raise [ConfigError] if configuration is invalid
     def validate!
