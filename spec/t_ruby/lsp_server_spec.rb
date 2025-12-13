@@ -20,13 +20,12 @@ RSpec.describe TRuby::LSPServer do
       "jsonrpc" => "2.0",
       "id" => id,
       "method" => method,
-      "params" => params
+      "params" => params,
     }
     input.string = create_message(message)
     input.rewind
 
-    response = server.handle_message(server.read_message)
-    response
+    server.handle_message(server.read_message)
   end
 
   # Helper to send notification (no id)
@@ -34,7 +33,7 @@ RSpec.describe TRuby::LSPServer do
     message = {
       "jsonrpc" => "2.0",
       "method" => method,
-      "params" => params
+      "params" => params,
     }
     input.string = create_message(message)
     input.rewind
@@ -64,10 +63,10 @@ RSpec.describe TRuby::LSPServer do
   describe "initialize" do
     it "returns server capabilities" do
       response = send_request("initialize", {
-        "processId" => 1234,
-        "rootUri" => "file:///project",
-        "capabilities" => {}
-      })
+                                "processId" => 1234,
+                                "rootUri" => "file:///project",
+                                "capabilities" => {},
+                              })
 
       expect(response["result"]["capabilities"]).to include(
         "textDocumentSync" => hash_including("openClose" => true),
@@ -81,9 +80,9 @@ RSpec.describe TRuby::LSPServer do
       response = send_request("initialize", {})
 
       expect(response["result"]["serverInfo"]).to eq({
-        "name" => "t-ruby-lsp",
-        "version" => TRuby::LSPServer::VERSION
-      })
+                                                       "name" => "t-ruby-lsp",
+                                                       "version" => TRuby::LSPServer::VERSION,
+                                                     })
     end
   end
 
@@ -121,19 +120,19 @@ RSpec.describe TRuby::LSPServer do
 
     it "stores opened document" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "languageId" => "t-ruby",
-          "version" => 1,
-          "text" => "def hello(name: String): String\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "languageId" => "t-ruby",
+                            "version" => 1,
+                            "text" => "def hello(name: String): String\nend",
+                          },
+                        })
 
       # Verify document was stored by checking hover works
       response = send_request("textDocument/hover", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 0, "character" => 4 }
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 4 },
+                              })
 
       expect(response["result"]).not_to be_nil
     end
@@ -143,24 +142,24 @@ RSpec.describe TRuby::LSPServer do
     before do
       send_request("initialize", {})
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "def old(): void\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def old(): void\nend",
+                          },
+                        })
     end
 
     it "updates document content" do
       send_notification("textDocument/didChange", {
-        "textDocument" => { "uri" => "file:///test.trb", "version" => 2 },
-        "contentChanges" => [{ "text" => "def new_function(): String\nend" }]
-      })
+                          "textDocument" => { "uri" => "file:///test.trb", "version" => 2 },
+                          "contentChanges" => [{ "text" => "def new_function(): String\nend" }],
+                        })
 
       response = send_request("textDocument/hover", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 0, "character" => 4 }
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 4 },
+                              })
 
       expect(response["result"]["contents"]["value"]).to include("new_function")
     end
@@ -170,23 +169,23 @@ RSpec.describe TRuby::LSPServer do
     before do
       send_request("initialize", {})
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "def hello(): void\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def hello(): void\nend",
+                          },
+                        })
     end
 
     it "removes document from storage" do
       send_notification("textDocument/didClose", {
-        "textDocument" => { "uri" => "file:///test.trb" }
-      })
+                          "textDocument" => { "uri" => "file:///test.trb" },
+                        })
 
       response = send_request("textDocument/hover", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 0, "character" => 0 }
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 0 },
+                              })
 
       expect(response["result"]).to be_nil
     end
@@ -196,19 +195,19 @@ RSpec.describe TRuby::LSPServer do
     before do
       send_request("initialize", {})
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "type UserId = String\ndef get_user(id: ): UserId\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "type UserId = String\ndef get_user(id: ): UserId\nend",
+                          },
+                        })
     end
 
     it "provides built-in type completions after colon" do
       response = send_request("textDocument/completion", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 1, "character" => 17 } # After "id: "
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 1, "character" => 17 }, # After "id: "
+                              })
 
       items = response["result"]["items"]
       labels = items.map { |i| i["label"] }
@@ -218,9 +217,9 @@ RSpec.describe TRuby::LSPServer do
 
     it "includes type aliases in completions" do
       response = send_request("textDocument/completion", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 1, "character" => 17 }
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 1, "character" => 17 },
+                              })
 
       items = response["result"]["items"]
       labels = items.map { |i| i["label"] }
@@ -230,14 +229,14 @@ RSpec.describe TRuby::LSPServer do
 
     it "provides keyword completions at line start" do
       send_notification("textDocument/didChange", {
-        "textDocument" => { "uri" => "file:///test.trb", "version" => 2 },
-        "contentChanges" => [{ "text" => "" }]
-      })
+                          "textDocument" => { "uri" => "file:///test.trb", "version" => 2 },
+                          "contentChanges" => [{ "text" => "" }],
+                        })
 
       response = send_request("textDocument/completion", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 0, "character" => 0 }
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 0 },
+                              })
 
       items = response["result"]["items"]
       labels = items.map { |i| i["label"] }
@@ -253,17 +252,17 @@ RSpec.describe TRuby::LSPServer do
 
     it "shows hover info for built-in types" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "def test(name: String): Integer\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def test(name: String): Integer\nend",
+                          },
+                        })
 
       response = send_request("textDocument/hover", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 0, "character" => 16 } # On "String"
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 16 }, # On "String"
+                              })
 
       expect(response["result"]["contents"]["value"]).to include("String")
       expect(response["result"]["contents"]["value"]).to include("Built-in")
@@ -271,17 +270,17 @@ RSpec.describe TRuby::LSPServer do
 
     it "shows hover info for type aliases" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "type UserId = String\ndef get(id: UserId): String\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "type UserId = String\ndef get(id: UserId): String\nend",
+                          },
+                        })
 
       response = send_request("textDocument/hover", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 0, "character" => 6 } # On "UserId"
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 6 }, # On "UserId"
+                              })
 
       expect(response["result"]["contents"]["value"]).to include("Type Alias")
       expect(response["result"]["contents"]["value"]).to include("UserId")
@@ -289,17 +288,17 @@ RSpec.describe TRuby::LSPServer do
 
     it "shows hover info for functions" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "def greet(name: String): String\n  \"Hello\"\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def greet(name: String): String\n  \"Hello\"\nend",
+                          },
+                        })
 
       response = send_request("textDocument/hover", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 0, "character" => 5 } # On "greet"
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 5 }, # On "greet"
+                              })
 
       expect(response["result"]["contents"]["value"]).to include("Function")
       expect(response["result"]["contents"]["value"]).to include("greet")
@@ -307,17 +306,17 @@ RSpec.describe TRuby::LSPServer do
 
     it "shows hover info for interfaces" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "interface Printable\n  to_string: String\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "interface Printable\n  to_string: String\nend",
+                          },
+                        })
 
       response = send_request("textDocument/hover", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 0, "character" => 11 } # On "Printable"
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 11 }, # On "Printable"
+                              })
 
       expect(response["result"]["contents"]["value"]).to include("Interface")
       expect(response["result"]["contents"]["value"]).to include("Printable")
@@ -325,17 +324,17 @@ RSpec.describe TRuby::LSPServer do
 
     it "returns nil for unknown words" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "unknown_symbol"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "unknown_symbol",
+                          },
+                        })
 
       response = send_request("textDocument/hover", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 0, "character" => 5 }
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 5 },
+                              })
 
       expect(response["result"]).to be_nil
     end
@@ -348,17 +347,17 @@ RSpec.describe TRuby::LSPServer do
 
     it "finds type alias definition" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "type UserId = String\ndef get(id: UserId): String\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "type UserId = String\ndef get(id: UserId): String\nend",
+                          },
+                        })
 
       response = send_request("textDocument/definition", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 1, "character" => 13 } # On "UserId"
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 1, "character" => 13 }, # On "UserId"
+                              })
 
       expect(response["result"]["uri"]).to eq("file:///test.trb")
       expect(response["result"]["range"]["start"]["line"]).to eq(0)
@@ -366,17 +365,17 @@ RSpec.describe TRuby::LSPServer do
 
     it "finds interface definition" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "interface Readable\n  read: String\nend\ndef process(r: Readable): void\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "interface Readable\n  read: String\nend\ndef process(r: Readable): void\nend",
+                          },
+                        })
 
       response = send_request("textDocument/definition", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 3, "character" => 17 } # On "Readable"
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 3, "character" => 17 }, # On "Readable"
+                              })
 
       expect(response["result"]["uri"]).to eq("file:///test.trb")
       expect(response["result"]["range"]["start"]["line"]).to eq(0)
@@ -384,17 +383,17 @@ RSpec.describe TRuby::LSPServer do
 
     it "finds function definition" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "def helper(): String\n  \"help\"\nend\ndef main(): void\n  helper()\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def helper(): String\n  \"help\"\nend\ndef main(): void\n  helper()\nend",
+                          },
+                        })
 
       response = send_request("textDocument/definition", {
-        "textDocument" => { "uri" => "file:///test.trb" },
-        "position" => { "line" => 4, "character" => 3 } # On "helper"
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 4, "character" => 3 }, # On "helper"
+                              })
 
       expect(response["result"]["uri"]).to eq("file:///test.trb")
       expect(response["result"]["range"]["start"]["line"]).to eq(0)
@@ -408,12 +407,12 @@ RSpec.describe TRuby::LSPServer do
 
     it "publishes diagnostics on document open" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "def test(name: UnknownType): String\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def test(name: UnknownType): String\nend",
+                          },
+                        })
 
       # Check that diagnostics were published
       output.rewind
@@ -424,12 +423,12 @@ RSpec.describe TRuby::LSPServer do
 
     it "detects duplicate function definitions" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "def hello(): void\nend\ndef hello(): void\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def hello(): void\nend\ndef hello(): void\nend",
+                          },
+                        })
 
       output.rewind
       response_text = output.read
@@ -439,12 +438,12 @@ RSpec.describe TRuby::LSPServer do
 
     it "detects invalid parameter syntax" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "def test(: String): void\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def test(: String): void\nend",
+                          },
+                        })
 
       output.rewind
       response_text = output.read
@@ -454,12 +453,12 @@ RSpec.describe TRuby::LSPServer do
 
     it "clears diagnostics on document close" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "def hello(): void\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def hello(): void\nend",
+                          },
+                        })
 
       # Create a new output buffer to capture close notification
       new_output = StringIO.new
@@ -467,8 +466,8 @@ RSpec.describe TRuby::LSPServer do
       server.instance_variable_set(:@output, new_output)
 
       send_notification("textDocument/didClose", {
-        "textDocument" => { "uri" => "file:///test.trb" }
-      })
+                          "textDocument" => { "uri" => "file:///test.trb" },
+                        })
 
       new_output.rewind
       response_text = new_output.read
@@ -479,16 +478,16 @@ RSpec.describe TRuby::LSPServer do
 
     it "responds to pull-based diagnostic requests" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///test.trb",
-          "version" => 1,
-          "text" => "def test(name: UnknownType): String\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def test(name: UnknownType): String\nend",
+                          },
+                        })
 
       response = send_request("textDocument/diagnostic", {
-        "textDocument" => { "uri" => "file:///test.trb" }
-      })
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                              })
 
       expect(response["result"]["kind"]).to eq("full")
       expect(response["result"]["items"]).to be_an(Array)
@@ -497,16 +496,16 @@ RSpec.describe TRuby::LSPServer do
 
     it "returns empty diagnostics for valid code via pull request" do
       send_notification("textDocument/didOpen", {
-        "textDocument" => {
-          "uri" => "file:///valid.trb",
-          "version" => 1,
-          "text" => "def greet(name: String): String\n  name\nend"
-        }
-      })
+                          "textDocument" => {
+                            "uri" => "file:///valid.trb",
+                            "version" => 1,
+                            "text" => "def greet(name: String): String\n  name\nend",
+                          },
+                        })
 
       response = send_request("textDocument/diagnostic", {
-        "textDocument" => { "uri" => "file:///valid.trb" }
-      })
+                                "textDocument" => { "uri" => "file:///valid.trb" },
+                              })
 
       expect(response["result"]["kind"]).to eq("full")
       expect(response["result"]["items"]).to eq([])
@@ -514,8 +513,8 @@ RSpec.describe TRuby::LSPServer do
 
     it "returns empty diagnostics for unknown document" do
       response = send_request("textDocument/diagnostic", {
-        "textDocument" => { "uri" => "file:///unknown.trb" }
-      })
+                                "textDocument" => { "uri" => "file:///unknown.trb" },
+                              })
 
       expect(response["result"]["kind"]).to eq("full")
       expect(response["result"]["items"]).to eq([])

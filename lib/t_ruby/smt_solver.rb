@@ -193,9 +193,9 @@ module TRuby
         l = @left.simplify
         r = @right.simplify
 
-        return FALSE if l == FALSE || r == FALSE
-        return r if l == TRUE
-        return l if r == TRUE
+        return false if l == false || r == false
+        return r if l == true
+        return l if r == true
         return l if l == r
 
         And.new(l, r)
@@ -235,9 +235,9 @@ module TRuby
         l = @left.simplify
         r = @right.simplify
 
-        return TRUE if l == TRUE || r == TRUE
-        return r if l == FALSE
-        return l if r == FALSE
+        return true if l == true || r == true
+        return r if l == false
+        return l if r == false
         return l if l == r
 
         Or.new(l, r)
@@ -441,7 +441,8 @@ module TRuby
       end
 
       def simplify
-        return TRUE if @left == @right
+        return true if @left == @right
+
         self
       end
 
@@ -634,17 +635,17 @@ module TRuby
 
       # Type hierarchy (built-in)
       TYPE_HIERARCHY = {
-        "Integer" => ["Numeric", "Object"],
-        "Float" => ["Numeric", "Object"],
+        "Integer" => %w[Numeric Object],
+        "Float" => %w[Numeric Object],
         "Numeric" => ["Object"],
         "String" => ["Object"],
-        "Array" => ["Enumerable", "Object"],
-        "Hash" => ["Enumerable", "Object"],
+        "Array" => %w[Enumerable Object],
+        "Hash" => %w[Enumerable Object],
         "Enumerable" => ["Object"],
         "Boolean" => ["Object"],
         "Symbol" => ["Object"],
         "nil" => ["Object"],
-        "Object" => []
+        "Object" => [],
       }.freeze
 
       def initialize
@@ -694,7 +695,7 @@ module TRuby
         {
           success: @errors.empty?,
           solution: @solution,
-          errors: @errors
+          errors: @errors,
         }
       end
 
@@ -748,18 +749,21 @@ module TRuby
         # If left is type variable, bind it
         if left.is_a?(TypeVar)
           return nil if occurs_check(left, right)
+
           return { left.name => right }
         end
 
         # If right is type variable, bind it
         if right.is_a?(TypeVar)
           return nil if occurs_check(right, left)
+
           return { right.name => left }
         end
 
         # Both are concrete types
         if left.is_a?(ConcreteType) && right.is_a?(ConcreteType)
           return {} if left.name == right.name
+
           return nil
         end
 
@@ -768,6 +772,7 @@ module TRuby
 
       def occurs_check(var, type)
         return false unless type.respond_to?(:free_variables)
+
         type.free_variables.include?(var.name)
       end
 
@@ -800,7 +805,7 @@ module TRuby
       end
 
       def instantiate_remaining
-        @type_vars.each do |name, var|
+        @type_vars.each_key do |name|
           next if @solution[name]
 
           # Default to Object if no constraints
@@ -824,24 +829,23 @@ module TRuby
       # Infer types for a method
       def infer_method(method_ir)
         param_types = {}
-        return_type = nil
 
         # Create type variables for parameters without annotations
         method_ir.params.each do |param|
-          if param.type_annotation
-            param_types[param.name] = type_from_ir(param.type_annotation)
-          else
-            param_types[param.name] = @solver.fresh_var("P_#{param.name}")
-          end
+          param_types[param.name] = if param.type_annotation
+                                      type_from_ir(param.type_annotation)
+                                    else
+                                      @solver.fresh_var("P_#{param.name}")
+                                    end
           @type_env[param.name] = param_types[param.name]
         end
 
         # Create type variable for return type if not annotated
         return_type = if method_ir.return_type
-          type_from_ir(method_ir.return_type)
-        else
-          @solver.fresh_var("R_#{method_ir.name}")
-        end
+                        type_from_ir(method_ir.return_type)
+                      else
+                        @solver.fresh_var("R_#{method_ir.name}")
+                      end
 
         # Analyze body to generate constraints
         if method_ir.body
@@ -862,12 +866,12 @@ module TRuby
           {
             success: true,
             params: inferred_params,
-            return_type: inferred_return
+            return_type: inferred_return,
           }
         else
           {
             success: false,
-            errors: result[:errors]
+            errors: result[:errors],
           }
         end
       end
@@ -977,17 +981,17 @@ module TRuby
       def infer_method_call(call)
         # Get receiver type
         receiver_type = if call.receiver
-          infer_expression(call.receiver)
-        else
-          @type_env["self"] || ConcreteType.new("Object")
-        end
+                          infer_expression(call.receiver)
+                        else
+                          @type_env["self"] || ConcreteType.new("Object")
+                        end
 
         # Look up method return type
         return_type = lookup_method_type(receiver_type, call.method_name)
         return_type || @solver.fresh_var("M_#{call.method_name}")
       end
 
-      def lookup_method_type(receiver, method)
+      def lookup_method_type(_receiver, method)
         # Built-in method types
         method_types = {
           "to_s" => ConcreteType.new("String"),
@@ -996,7 +1000,7 @@ module TRuby
           "length" => ConcreteType.new("Integer"),
           "size" => ConcreteType.new("Integer"),
           "empty?" => ConcreteType.new("Boolean"),
-          "nil?" => ConcreteType.new("Boolean")
+          "nil?" => ConcreteType.new("Boolean"),
         }
 
         method_types[method.to_s]
@@ -1022,16 +1026,14 @@ module TRuby
       end
 
       def infer_array_literal(expr)
-        if expr.elements.empty?
-          ConcreteType.new("Array")
-        else
+        unless expr.elements.empty?
           element_type = @solver.fresh_var("E")
           expr.elements.each do |elem|
             elem_type = infer_expression(elem)
             @solver.add_subtype(elem_type, element_type)
           end
-          ConcreteType.new("Array")
         end
+        ConcreteType.new("Array")
       end
     end
 

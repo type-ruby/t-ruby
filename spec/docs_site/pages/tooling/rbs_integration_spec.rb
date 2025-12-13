@@ -21,7 +21,6 @@ RSpec.describe "한글 문서: Rbs Integration" do
   it_behaves_like "valid documentation page", "tooling/rbs-integration.md"
 
   describe "코드 예제" do
-
     # 예제 1: T-Ruby (라인 33)
     describe "예제 1: T-Ruby 코드" do
       let(:example) { examples[0] }

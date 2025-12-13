@@ -242,9 +242,9 @@ RSpec.describe "T-Ruby E2E Integration" do
 
       # Register a mock package in registry
       pm.registry.register(TRuby::PackageManifest.new(
-        name: "test-types",
-        version: "1.0.0"
-      ))
+                             name: "test-types",
+                             version: "1.0.0"
+                           ))
 
       pm.add("test-types", "^1.0.0")
 
@@ -258,9 +258,9 @@ RSpec.describe "T-Ruby E2E Integration" do
       # Register multiple versions
       %w[1.0.0 1.1.0 1.2.0 2.0.0].each do |version|
         registry.register(TRuby::PackageManifest.new(
-          name: "lib",
-          version: version
-        ))
+                            name: "lib",
+                            version: version
+                          ))
       end
 
       resolver = TRuby::DependencyResolver.new(registry)
@@ -283,14 +283,14 @@ RSpec.describe "T-Ruby E2E Integration" do
       server = TRuby::LSPServer.new
 
       init_result = server.handle_message({
-        "id" => 1,
-        "method" => "initialize",
-        "params" => {
-          "processId" => Process.pid,
-          "rootUri" => "file://#{tmpdir}",
-          "capabilities" => {}
-        }
-      })
+                                            "id" => 1,
+                                            "method" => "initialize",
+                                            "params" => {
+                                              "processId" => Process.pid,
+                                              "rootUri" => "file://#{tmpdir}",
+                                              "capabilities" => {},
+                                            },
+                                          })
 
       expect(init_result["result"]["capabilities"]).to be_a(Hash)
       expect(init_result["result"]["capabilities"]["textDocumentSync"]).not_to be_nil
@@ -300,36 +300,36 @@ RSpec.describe "T-Ruby E2E Integration" do
     it "provides hover information" do
       server = TRuby::LSPServer.new
       server.handle_message({
-        "id" => 1,
-        "method" => "initialize",
-        "params" => {
-          "processId" => Process.pid,
-          "rootUri" => "file://#{tmpdir}",
-          "capabilities" => {}
-        }
-      })
+                              "id" => 1,
+                              "method" => "initialize",
+                              "params" => {
+                                "processId" => Process.pid,
+                                "rootUri" => "file://#{tmpdir}",
+                                "capabilities" => {},
+                              },
+                            })
 
       # Open a document (notification - no id)
       server.handle_message({
-        "method" => "textDocument/didOpen",
-        "params" => {
-          "textDocument" => {
-            "uri" => "file://#{tmpdir}/test.trb",
-            "languageId" => "t-ruby",
-            "version" => 1,
-            "text" => "def hello(name: String): String\n  \"Hello\"\nend"
-          }
-        }
-      })
+                              "method" => "textDocument/didOpen",
+                              "params" => {
+                                "textDocument" => {
+                                  "uri" => "file://#{tmpdir}/test.trb",
+                                  "languageId" => "t-ruby",
+                                  "version" => 1,
+                                  "text" => "def hello(name: String): String\n  \"Hello\"\nend",
+                                },
+                              },
+                            })
 
       hover_result = server.handle_message({
-        "id" => 2,
-        "method" => "textDocument/hover",
-        "params" => {
-          "textDocument" => { "uri" => "file://#{tmpdir}/test.trb" },
-          "position" => { "line" => 0, "character" => 4 }
-        }
-      })
+                                             "id" => 2,
+                                             "method" => "textDocument/hover",
+                                             "params" => {
+                                               "textDocument" => { "uri" => "file://#{tmpdir}/test.trb" },
+                                               "position" => { "line" => 0, "character" => 4 },
+                                             },
+                                           })
 
       expect(hover_result).to be_a(Hash)
     end
@@ -443,7 +443,7 @@ RSpec.describe "T-Ruby E2E Integration" do
     it "provides helpful error messages for syntax errors" do
       # Parser is lenient and doesn't raise errors for incomplete constructs
       # Instead, it returns success with empty results for unparseable content
-      content = "def broken(x: String"  # Missing closing paren
+      content = "def broken(x: String" # Missing closing paren
 
       parser = TRuby::Parser.new(content)
       result = parser.parse
@@ -457,9 +457,9 @@ RSpec.describe "T-Ruby E2E Integration" do
       config = TRuby::Config.new
       compiler = TRuby::Compiler.new(config)
 
-      expect {
+      expect do
         compiler.compile("/nonexistent/file.trb")
-      }.to raise_error(ArgumentError, /File not found/)
+      end.to raise_error(ArgumentError, /File not found/)
     end
   end
 

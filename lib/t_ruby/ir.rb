@@ -314,7 +314,7 @@ module TRuby
       attr_accessor :kind, :condition, :body
 
       # kind: :while, :until, :loop
-      def initialize(kind:, condition: nil, body:, **opts)
+      def initialize(kind:, body:, condition: nil, **opts)
         super(**opts)
         @kind = kind
         @condition = condition
@@ -424,7 +424,7 @@ module TRuby
     class Lambda < Node
       attr_accessor :params, :body, :return_type
 
-      def initialize(params: [], body:, return_type: nil, **opts)
+      def initialize(body:, params: [], return_type: nil, **opts)
         super(**opts)
         @params = params
         @body = body
@@ -457,7 +457,7 @@ module TRuby
     class RescueClause < Node
       attr_accessor :exception_types, :variable, :body
 
-      def initialize(exception_types: [], variable: nil, body:, **opts)
+      def initialize(body:, exception_types: [], variable: nil, **opts)
         super(**opts)
         @exception_types = exception_types
         @variable = variable
@@ -523,11 +523,11 @@ module TRuby
       end
 
       def to_rbs
-        "#{@base}[#{@type_args.map(&:to_rbs).join(', ')}]"
+        "#{@base}[#{@type_args.map(&:to_rbs).join(", ")}]"
       end
 
       def to_trb
-        "#{@base}<#{@type_args.map(&:to_trb).join(', ')}>"
+        "#{@base}<#{@type_args.map(&:to_trb).join(", ")}>"
       end
     end
 
@@ -571,7 +571,7 @@ module TRuby
     class FunctionType < TypeNode
       attr_accessor :param_types, :return_type
 
-      def initialize(param_types: [], return_type:, **opts)
+      def initialize(return_type:, param_types: [], **opts)
         super(**opts)
         @param_types = param_types
         @return_type = return_type
@@ -598,11 +598,11 @@ module TRuby
       end
 
       def to_rbs
-        "[#{@element_types.map(&:to_rbs).join(', ')}]"
+        "[#{@element_types.map(&:to_rbs).join(", ")}]"
       end
 
       def to_trb
-        "[#{@element_types.map(&:to_trb).join(', ')}]"
+        "[#{@element_types.map(&:to_trb).join(", ")}]"
       end
     end
 
@@ -648,7 +648,7 @@ module TRuby
 
     class Visitor
       def visit(node)
-        method_name = "visit_#{node.class.name.split('::').last.gsub(/([A-Z])/, '_\1').downcase.sub(/^_/, '')}"
+        method_name = "visit_#{node.class.name.split("::").last.gsub(/([A-Z])/, '_\1').downcase.sub(/^_/, "")}"
         if respond_to?(method_name)
           send(method_name, node)
         else
@@ -676,11 +676,9 @@ module TRuby
 
       # Build IR from parser output
       def build(parse_result, source: nil)
-        declarations = []
-
         # Build type aliases
-        (parse_result[:type_aliases] || []).each do |alias_info|
-          declarations << build_type_alias(alias_info)
+        declarations = (parse_result[:type_aliases] || []).map do |alias_info|
+          build_type_alias(alias_info)
         end
 
         # Build interfaces
@@ -802,7 +800,7 @@ module TRuby
             depth -= 1
             current += char
           when ","
-            if depth == 0
+            if depth.zero?
               args << parse_type(current.strip)
               current = ""
             else
@@ -912,7 +910,7 @@ module TRuby
       private
 
       def emit(text)
-        @output << ("  " * @indent + text)
+        @output << (("  " * @indent) + text)
       end
 
       def emit_comment(text)
@@ -1008,7 +1006,7 @@ module TRuby
       private
 
       def emit(text)
-        @output << ("  " * @indent + text)
+        @output << (("  " * @indent) + text)
       end
     end
 
@@ -1141,12 +1139,11 @@ module TRuby
           when "+" then left + right
           when "-" then left - right
           when "*" then left * right
-          when "/" then right != 0 ? left / right : nil
-          when "%" then right != 0 ? left % right : nil
-          when "**" then left ** right
-          else nil
+          when "/" then right.zero? ? nil : left / right
+          when "%" then right.zero? ? nil : left % right
+          when "**" then left**right
           end
-        rescue
+        rescue StandardError
           nil
         end
       end
@@ -1176,7 +1173,7 @@ module TRuby
 
         private
 
-        def redundant_annotation?(param)
+        def redundant_annotation?(_param)
           # Consider annotation redundant if it matches the default/inferred type
           false
         end
@@ -1264,7 +1261,7 @@ module TRuby
         Passes::DeadCodeElimination,
         Passes::ConstantFolding,
         Passes::TypeAnnotationCleanup,
-        Passes::UnusedDeclarationRemoval
+        Passes::UnusedDeclarationRemoval,
       ].freeze
 
       attr_reader :passes, :stats
@@ -1291,7 +1288,7 @@ module TRuby
           end
 
           @stats[:total_changes] += changes_this_iteration
-          break if changes_this_iteration == 0
+          break if changes_this_iteration.zero?
         end
 
         { program: program, stats: @stats }

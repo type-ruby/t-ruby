@@ -45,6 +45,7 @@ module TRuby
 
     def valid_type?(name)
       return true if BUILT_IN_TYPES.include?(name)
+
       @aliases.key?(name)
     end
 

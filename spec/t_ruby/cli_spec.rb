@@ -131,8 +131,16 @@ describe TRuby::CLI do
       it "displays error message" do
         cli = TRuby::CLI.new(["/nonexistent/file.trb"])
 
-        output = capture_stderr { cli.run } rescue nil
-        stdout = capture_stdout { cli.run } rescue nil
+        output = begin
+          capture_stderr { cli.run }
+        rescue StandardError
+          nil
+        end
+        stdout = begin
+          capture_stdout { cli.run }
+        rescue StandardError
+          nil
+        end
 
         combined_output = (output || "") + (stdout || "")
         expect(combined_output).to include("Error:")
@@ -141,9 +149,9 @@ describe TRuby::CLI do
       it "exits with status 1" do
         cli = TRuby::CLI.new(["/nonexistent/file.trb"])
 
-        expect {
+        expect do
           cli.run
-        }.to raise_error(SystemExit) do |exit_error|
+        end.to raise_error(SystemExit) do |exit_error|
           expect(exit_error.status).to eq(1)
         end
       end
@@ -157,9 +165,9 @@ describe TRuby::CLI do
 
           cli = TRuby::CLI.new([input_file])
 
-          expect {
+          expect do
             cli.run
-          }.to output(/Compiled: .* -> /).to_stdout
+          end.to output(/Compiled: .* -> /).to_stdout
         end
       end
 
@@ -170,9 +178,9 @@ describe TRuby::CLI do
 
           cli = TRuby::CLI.new([input_file])
 
-          expect {
+          expect do
             cli.run
-          }.to raise_error(SystemExit) do |exit_error|
+          end.to raise_error(SystemExit) do |exit_error|
             expect(exit_error.status).to eq(1)
           end
         end
@@ -219,9 +227,9 @@ describe TRuby::CLI do
       it "catches ArgumentError from compiler" do
         cli = TRuby::CLI.new(["/nonexistent.trb"])
 
-        expect {
+        expect do
           cli.run
-        }.to raise_error(SystemExit) do |exit_error|
+        end.to raise_error(SystemExit) do |exit_error|
           expect(exit_error.status).to eq(1)
         end
       end
@@ -230,11 +238,9 @@ describe TRuby::CLI do
         cli = TRuby::CLI.new(["/nonexistent.trb"])
 
         output = capture_stdout do
-          begin
-            cli.run
-          rescue SystemExit
-            # Suppress exit
-          end
+          cli.run
+        rescue SystemExit
+          # Suppress exit
         end
 
         expect(output).to include("Error:")

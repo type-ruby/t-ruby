@@ -69,7 +69,7 @@ module TRuby
         next unless line.match?(/^\s*def\s+/)
 
         # Check for unclosed parenthesis
-        if line.match?(/def\s+\w+\([^)]*$/) && !@lines[idx + 1..].any? { |l| l.match?(/\)/) }
+        if line.match?(/def\s+\w+\([^)]*$/) && @lines[(idx + 1)..].none? { |l| l.match?(/\)/) }
           @errors << "Line #{idx + 1}: Potential unclosed parenthesis in function definition"
         end
 
@@ -84,6 +84,7 @@ module TRuby
     def check_method_signature_errors
       @lines.each_with_index do |line, idx|
         next unless line.match?(/^\s*def\s+/)
+
         check_single_method_signature(line, idx)
       end
     end
@@ -96,7 +97,7 @@ module TRuby
       end
 
       # Pattern 2: Check for text after closing paren without colon (e.g., "def test() something")
-      if match = line.match(/def\s+\w+\s*\([^)]*\)\s*([^:\s].+?)\s*$/)
+      if (match = line.match(/def\s+\w+\s*\([^)]*\)\s*([^:\s].+?)\s*$/))
         trailing = match[1].strip
         # Allow if it's just end-of-line content or a valid Ruby block start
         unless trailing.empty? || trailing.start_with?("#") || trailing == "end"
@@ -112,13 +113,13 @@ module TRuby
       end
 
       # Pattern 4: Extract and validate return type
-      if match = line.match(/def\s+\w+\s*\([^)]*\)\s*:\s*(.+?)\s*$/)
+      if (match = line.match(/def\s+\w+\s*\([^)]*\)\s*:\s*(.+?)\s*$/))
         return_type_str = match[1].strip
         validate_type_expression(return_type_str, idx, "return type")
       end
 
       # Pattern 5: Extract and validate parameter types
-      if match = line.match(/def\s+\w+\s*\(([^)]+)\)/)
+      if (match = line.match(/def\s+\w+\s*\(([^)]+)\)/))
         params_str = match[1]
         validate_parameter_types_expression(params_str, idx)
       end
@@ -189,7 +190,7 @@ module TRuby
       # Use TypeParser to validate
       result = @type_parser.parse(type_str)
       if result[:success]
-        remaining = type_str[result[:position] || 0..]&.strip
+        remaining = type_str[(result[:position] || 0)..]&.strip
         if remaining && !remaining.empty? && result[:remaining] && !result[:remaining].strip.empty?
           @errors << "Line #{line_idx + 1}: Unexpected token after #{context} '#{type_str}'"
         end
@@ -207,17 +208,17 @@ module TRuby
         next if param.empty?
 
         # Check for param: Type pattern
-        if match = param.match(/^(\w+)\s*:\s*(.+)$/)
-          param_name = match[1]
-          type_str = match[2].strip
+        next unless (match = param.match(/^(\w+)\s*:\s*(.+)$/))
 
-          if type_str.empty?
-            @errors << "Line #{line_idx + 1}: Expected type after colon for parameter '#{param_name}'"
-            next
-          end
+        param_name = match[1]
+        type_str = match[2].strip
 
-          validate_type_expression(type_str, line_idx, "parameter type for '#{param_name}'")
+        if type_str.empty?
+          @errors << "Line #{line_idx + 1}: Expected type after colon for parameter '#{param_name}'"
+          next
         end
+
+        validate_type_expression(type_str, line_idx, "parameter type for '#{param_name}'")
       end
     end
 
@@ -235,7 +236,7 @@ module TRuby
           depth -= 1
           current += char
         when ","
-          if depth == 0
+          if depth.zero?
             result << current.strip
             current = ""
           else
@@ -262,10 +263,8 @@ module TRuby
         return_type = match[2]&.strip
 
         # Check return type if it's a simple type name
-        if return_type && return_type.match?(/^\w+$/)
-          unless VALID_TYPES.include?(return_type) || @type_aliases.key?(return_type)
-            @errors << "Line #{idx + 1}: Unknown return type '#{return_type}'"
-          end
+        if return_type&.match?(/^\w+$/) && !(VALID_TYPES.include?(return_type) || @type_aliases.key?(return_type))
+          @errors << "Line #{idx + 1}: Unknown return type '#{return_type}'"
         end
 
         # Check parameter types
@@ -286,10 +285,10 @@ module TRuby
         next unless param_type
 
         # Only check simple type names against VALID_TYPES
-        if param_type.match?(/^\w+$/)
-          next if VALID_TYPES.include?(param_type) || @type_aliases.key?(param_type)
-          @errors << "Line #{line_idx + 1}: Unknown parameter type '#{param_type}'"
-        end
+        next unless param_type.match?(/^\w+$/)
+        next if VALID_TYPES.include?(param_type) || @type_aliases.key?(param_type)
+
+        @errors << "Line #{line_idx + 1}: Unknown parameter type '#{param_type}'"
       end
     end
 

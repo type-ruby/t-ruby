@@ -106,7 +106,7 @@ RSpec.describe TRuby::PackageManifest do
       name: "my-package",
       version: "1.0.0",
       description: "A test package",
-      dependencies: { "other-pkg" => "^1.0.0" }
+      dependencies: { "other-pkg" => "^1.0.0" },
     }
   end
 

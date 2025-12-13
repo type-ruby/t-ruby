@@ -52,9 +52,9 @@ describe TRuby::Config do
           strictness: invalid
       YAML
 
-      expect {
-        create_config(yaml) { |config| config.validate! }
-      }.to raise_error(TRuby::ConfigError)
+      expect do
+        create_config(yaml, &:validate!)
+      end.to raise_error(TRuby::ConfigError)
     end
   end
 
@@ -143,7 +143,7 @@ describe TRuby::Config do
       YAML
 
       create_config(yaml) do |config|
-        expect(config.experimental_features).to eq(["decorators", "pattern_matching"])
+        expect(config.experimental_features).to eq(%w[decorators pattern_matching])
       end
     end
 
@@ -285,7 +285,7 @@ describe TRuby::Config do
       YAML
 
       create_config(yaml) do |config|
-        expect(config.watch_paths).to eq(["config", "types"])
+        expect(config.watch_paths).to eq(%w[config types])
       end
     end
   end
@@ -489,7 +489,7 @@ describe TRuby::Config do
         Dir.chdir(tmpdir) do
           config = TRuby::Config.new
           expect(config.output["rbs_dir"]).to be_nil
-          expect(config.rbs_dir).to eq("build")  # Falls back to ruby_dir
+          expect(config.rbs_dir).to eq("build") # Falls back to ruby_dir
         end
       end
     end
@@ -752,7 +752,7 @@ describe TRuby::Config do
         YAML
 
         create_config(yaml) do |config|
-          expect(config.source["include"]).to eq(["src", "lib"])
+          expect(config.source["include"]).to eq(%w[src lib])
           expect(config.source["exclude"]).to eq(["**/*_test.trb"])
           expect(config.source["extensions"]).to eq([".trb", ".truby"])
         end
@@ -905,9 +905,9 @@ describe TRuby::Config do
           rbs: true
       YAML
 
-      expect {
+      expect do
         create_config(yaml) { |_| }
-      }.to output(/DEPRECATED|deprecated|legacy/i).to_stderr
+      end.to output(/DEPRECATED|deprecated|legacy/i).to_stderr
     end
   end
 

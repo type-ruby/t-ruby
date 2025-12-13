@@ -56,7 +56,7 @@ namespace :docs do
     verifier.print_results(all_results, verbose: ENV["VERBOSE"] == "true")
 
     summary = verifier.summary(all_results)
-    exit 1 if summary[:failed] > 0
+    exit 1 if summary[:failed].positive?
   end
 
   desc "Generate documentation coverage badge and report"

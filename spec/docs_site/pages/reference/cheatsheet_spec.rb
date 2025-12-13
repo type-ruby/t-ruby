@@ -21,7 +21,6 @@ RSpec.describe "한글 문서: Cheatsheet" do
   it_behaves_like "valid documentation page", "reference/cheatsheet.md"
 
   describe "코드 예제" do
-
     # 예제 1: T-Ruby (라인 31)
     describe "예제 1: T-Ruby 코드" do
       let(:example) { examples[0] }

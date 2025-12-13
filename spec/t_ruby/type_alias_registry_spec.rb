@@ -28,40 +28,40 @@ describe TRuby::TypeAliasRegistry do
     it "detects duplicate type alias definitions" do
       registry.register("UserId", "String")
 
-      expect {
+      expect do
         registry.register("UserId", "Integer")
-      }.to raise_error(TRuby::DuplicateTypeAliasError)
+      end.to raise_error(TRuby::DuplicateTypeAliasError)
     end
 
     it "detects immediate circular references (A -> B -> A)" do
       registry.register("A", "B")
 
-      expect {
+      expect do
         registry.register("B", "A")
-      }.to raise_error(TRuby::CircularTypeAliasError)
+      end.to raise_error(TRuby::CircularTypeAliasError)
     end
 
     it "detects longer circular references (A -> B -> C -> A)" do
       registry.register("A", "B")
       registry.register("B", "C")
 
-      expect {
+      expect do
         registry.register("C", "A")
-      }.to raise_error(TRuby::CircularTypeAliasError)
+      end.to raise_error(TRuby::CircularTypeAliasError)
     end
 
     it "detects self-referencing alias" do
-      expect {
+      expect do
         registry.register("A", "A")
-      }.to raise_error(TRuby::CircularTypeAliasError)
+      end.to raise_error(TRuby::CircularTypeAliasError)
     end
 
     it "detects reference to undefined type" do
       registry.register("UserId", "UndefinedType")
 
-      expect {
+      expect do
         registry.validate_all
-      }.to raise_error(TRuby::UndefinedTypeError)
+      end.to raise_error(TRuby::UndefinedTypeError)
     end
   end
 

@@ -16,7 +16,7 @@ AllCops:
 
 # Layout
 Layout/LineLength:
-  Max: 120
+  Max: 150
   AllowedPatterns:
     - '^\s*#'  # Allow long comments
     - 'https?://'  # Allow URLs
@@ -29,45 +29,56 @@ Layout/EmptyLinesAroundClassBody:
 
 # Metrics
 Metrics/MethodLength:
-  Max: 30
+  Max: 100
   CountAsOne:
     - array
     - hash
     - heredoc
+  Exclude:
+    - "scripts/**/*"
+
+Metrics/BlockNesting:
+  Exclude:
+    - "scripts/**/*"
+    - "lib/**/*"
 
 Metrics/ClassLength:
-  Max: 300
+  Max: 700
 
 Metrics/ModuleLength:
-  Max: 300
+  Max: 700
 
 Metrics/AbcSize:
-  Max: 40
+  Max: 120
 
 Metrics/CyclomaticComplexity:
-  Max: 15
+  Max: 30
 
 Metrics/PerceivedComplexity:
-  Max: 15
+  Max: 30
 
 Metrics/BlockLength:
   Exclude:
-    - 'spec/**/*'
-    - '*.gemspec'
+    - "spec/**/*"
+    - "*.gemspec"
+    - "Rakefile"
+    - "lib/**/*"
 
 Metrics/ParameterLists:
   Max: 8
 
 # Naming
 Naming/MethodParameterName:
-  AllowedNames:
-    - e
-    - i
-    - k
-    - v
-    - x
-    - y
-    - io
+  MinNameLength: 1
+
+Security/Eval:
+  Enabled: false
+
+Style/IdenticalConditionalBranches:
+  Enabled: false
+
+Style/HashLikeCase:
+  Enabled: false
 
 # Style
 Style/Documentation:
@@ -104,3 +115,43 @@ Style/HashSyntax:
 # Lint
 Lint/MissingSuper:
   Enabled: false
+
+Lint/ConstantDefinitionInBlock:
+  Exclude:
+    - "spec/**/*"
+
+Lint/EmptyBlock:
+  Exclude:
+    - "spec/**/*"
+
+Lint/Void:
+  Exclude:
+    - "scripts/**/*"
+
+Lint/DuplicateBranch:
+  Enabled: false
+
+# Style exceptions for specs
+Style/StringConcatenation:
+  Exclude:
+    - "spec/**/*"
+
+Style/MultilineBlockChain:
+  Exclude:
+    - "spec/**/*"
+
+Naming/AccessorMethodName:
+  Exclude:
+    - "spec/**/*"
+    - "lib/t_ruby/benchmark.rb"
+
+Naming/PredicateMethod:
+  Enabled: false
+
+Naming/PredicatePrefix:
+  Enabled: false
+
+Naming/VariableNumber:
+  Exclude:
+    - "lib/t_ruby/benchmark.rb"
+

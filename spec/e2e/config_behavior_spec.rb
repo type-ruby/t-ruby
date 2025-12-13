@@ -111,7 +111,7 @@ RSpec.describe "Config Options E2E Behavior" do
           compiler = TRuby::Compiler.new(config)
           compiler.compile(File.join(tmpdir, "src/models/user.trb"))
 
-          # Note: Current compiler puts files in root of build dir
+          # NOTE: Current compiler puts files in root of build dir
           # This test documents expected behavior, not current implementation
           expect(File.exist?(File.join(tmpdir, "build/user.rb"))).to be true
         end

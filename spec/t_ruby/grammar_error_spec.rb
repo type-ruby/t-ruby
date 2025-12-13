@@ -74,7 +74,9 @@ describe "T-Ruby Grammar Error Detection" do
           errors = handler.check
 
           expect(errors).not_to be_empty
-          expect(errors.any? { |e| e.include?("whitespace") || e.include?("invalid") || e.include?("syntax") || e.include?("Unexpected") }).to be true
+          expect(errors.any? do |e|
+            e.include?("whitespace") || e.include?("invalid") || e.include?("syntax") || e.include?("Unexpected")
+          end).to be true
         end
 
         # Empty return type after colon
@@ -84,7 +86,9 @@ describe "T-Ruby Grammar Error Detection" do
           errors = handler.check
 
           expect(errors).not_to be_empty
-          expect(errors.any? { |e| e.include?("missing") || e.include?("empty") || e.include?("type") || e.include?("Expected") }).to be true
+          expect(errors.any? do |e|
+            e.include?("missing") || e.include?("empty") || e.include?("type") || e.include?("Expected")
+          end).to be true
         end
 
         # Token after closing paren without colon
@@ -94,7 +98,9 @@ describe "T-Ruby Grammar Error Detection" do
           errors = handler.check
 
           expect(errors).not_to be_empty
-          expect(errors.any? { |e| e.include?("syntax") || e.include?("invalid") || e.include?("unexpected") || e.include?("Unexpected") }).to be true
+          expect(errors.any? do |e|
+            e.include?("syntax") || e.include?("invalid") || e.include?("unexpected") || e.include?("Unexpected")
+          end).to be true
         end
 
         # Incomplete generic type

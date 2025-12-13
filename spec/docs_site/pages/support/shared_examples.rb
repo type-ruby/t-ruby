@@ -63,7 +63,7 @@ RSpec.shared_examples "valid documentation page" do |relative_path|
 
       if parse_failures.any?
         messages = parse_failures.map { |f| "Line #{f[:line]}: #{f[:error]}" }
-        fail "T-Ruby 파싱 실패:\n#{messages.join("\n")}"
+        raise "T-Ruby 파싱 실패:\n#{messages.join("\n")}"
       end
     end
 
@@ -82,7 +82,7 @@ RSpec.shared_examples "valid documentation page" do |relative_path|
 
       if compile_failures.any?
         messages = compile_failures.map { |f| "Line #{f[:line]}: #{f[:error]}" }
-        fail "T-Ruby 컴파일 실패:\n#{messages.join("\n")}"
+        raise "T-Ruby 컴파일 실패:\n#{messages.join("\n")}"
       end
     end
 
@@ -99,7 +99,7 @@ RSpec.shared_examples "valid documentation page" do |relative_path|
 
       if syntax_failures.any?
         messages = syntax_failures.map { |f| "Line #{f[:line]}: #{f[:error]}" }
-        fail "Ruby 문법 오류:\n#{messages.join("\n")}"
+        raise "Ruby 문법 오류:\n#{messages.join("\n")}"
       end
     end
 
@@ -117,7 +117,7 @@ RSpec.shared_examples "valid documentation page" do |relative_path|
 
       if invalid_examples.any?
         messages = invalid_examples.map { |f| "Line #{f[:line]}: #{f[:error]}" }
-        fail "RBS 유효성 검사 실패:\n#{messages.join("\n")}"
+        raise "RBS 유효성 검사 실패:\n#{messages.join("\n")}"
       end
     end
   end
@@ -129,6 +129,6 @@ RSpec.shared_examples "code example" do |example_index, description|
     skip "예제를 찾을 수 없음" unless example
 
     result = verifier.verify_example(example)
-    expect(result).to be_pass, -> { "검증 실패: #{result.errors.join(', ')}" }
+    expect(result).to be_pass, -> { "검증 실패: #{result.errors.join(", ")}" }
   end
 end

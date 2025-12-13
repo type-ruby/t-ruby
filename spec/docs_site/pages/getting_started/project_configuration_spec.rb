@@ -21,7 +21,6 @@ RSpec.describe "한글 문서: Project Configuration" do
   it_behaves_like "valid documentation page", "getting-started/project-configuration.md"
 
   describe "코드 예제" do
-
     # 예제 1: Ruby (라인 241)
     describe "예제 1: Ruby 코드" do
       let(:example) { examples[0] }

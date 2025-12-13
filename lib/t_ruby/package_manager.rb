@@ -12,7 +12,7 @@ module TRuby
 
     attr_reader :major, :minor, :patch, :prerelease
 
-    VERSION_REGEX = /^(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/.freeze
+    VERSION_REGEX = /^(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/
 
     def initialize(version_string)
       match = VERSION_REGEX.match(version_string.to_s)
@@ -115,9 +115,8 @@ module TRuby
   class PackageManifest
     MANIFEST_FILE = ".trb-manifest.json"
 
-    attr_accessor :name, :version, :description, :author, :license
-    attr_accessor :types, :dependencies, :dev_dependencies
-    attr_accessor :repository, :keywords, :main
+    attr_accessor :name, :version, :description, :author, :license, :types, :dependencies, :dev_dependencies,
+                  :repository, :keywords, :main
 
     def initialize(data = {})
       @name = data[:name] || data["name"]
@@ -145,11 +144,11 @@ module TRuby
         devDependencies: @dev_dependencies,
         repository: @repository,
         keywords: @keywords,
-        main: @main
+        main: @main,
       }.compact
     end
 
-    def to_json(*args)
+    def to_json(*_args)
       JSON.pretty_generate(to_h)
     end
 
@@ -310,7 +309,7 @@ module TRuby
           name: pkg["name"],
           version: pkg["version"],
           downloads: pkg["downloads"],
-          summary: pkg["info"] || pkg["summary"]
+          summary: pkg["info"] || pkg["summary"],
         }
       end
     rescue StandardError => e
@@ -333,7 +332,7 @@ module TRuby
         source_code: response["source_code_uri"],
         documentation: response["documentation_uri"],
         licenses: response["licenses"],
-        dependencies: parse_dependencies(response["dependencies"])
+        dependencies: parse_dependencies(response["dependencies"]),
       }
     rescue StandardError => e
       warn "Failed to fetch package info: #{e.message}"
@@ -351,7 +350,7 @@ module TRuby
           number: v["number"],
           created_at: v["created_at"],
           prerelease: v["prerelease"],
-          sha: v["sha"]
+          sha: v["sha"],
         }
       end
     rescue StandardError => e
@@ -432,8 +431,6 @@ module TRuby
       case response
       when Net::HTTPSuccess
         JSON.parse(response.body)
-      else
-        nil
       end
     rescue StandardError
       nil
@@ -484,7 +481,7 @@ module TRuby
       result
     end
 
-    def extract_types(gem_path, target_dir)
+    def extract_types(_gem_path, target_dir)
       # In a real implementation, would extract .d.trb files from gem
       # For now, just create marker
       File.write(File.join(target_dir, ".extracted"), Time.now.iso8601)
@@ -508,7 +505,7 @@ module TRuby
       @packages[manifest.name] ||= {}
       @packages[manifest.name][manifest.version] = {
         dependencies: manifest.dependencies,
-        types: manifest.types
+        types: manifest.types,
       }
     end
 
@@ -524,6 +521,7 @@ module TRuby
       if version == "*"
         latest = get_versions(name).map { |v| SemanticVersion.parse(v) }.compact.max
         return nil unless latest
+
         version = latest.to_s
       end
 
@@ -549,7 +547,7 @@ module TRuby
       return nil unless pkg
 
       # Copy type definitions
-      types_pattern = pkg[:types] || "**/*.d.trb"
+      pkg[:types] || "**/*.d.trb"
       # In real implementation, would download from registry
 
       { name: name, version: version, path: target }
@@ -616,7 +614,7 @@ module TRuby
       result = @resolver.resolve(@manifest)
 
       if result[:conflicts].any?
-        raise "Dependency conflicts: #{result[:conflicts].join(', ')}"
+        raise "Dependency conflicts: #{result[:conflicts].join(", ")}"
       end
 
       installed = []
@@ -681,7 +679,7 @@ module TRuby
       {
         name: @manifest.name,
         version: @manifest.version,
-        status: :published
+        status: :published,
       }
     end
 
@@ -693,7 +691,7 @@ module TRuby
         package: @manifest.name,
         version: version,
         deprecated: true,
-        message: message
+        message: message,
       }
     end
 
@@ -709,7 +707,7 @@ module TRuby
       lockfile = {
         lockfileVersion: 1,
         packages: resolved,
-        generatedAt: Time.now.iso8601
+        generatedAt: Time.now.iso8601,
       }
 
       File.write(

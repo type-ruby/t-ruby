@@ -18,20 +18,20 @@ module TRuby
     private
 
     def parse_union
-      members = @type_string.split("|").map { |m| m.strip }.compact
+      members = @type_string.split("|").map(&:strip).compact
 
       {
         type: :union,
         members: members,
         has_duplicates: members.length != members.uniq.length,
-        unique_members: members.uniq
+        unique_members: members.uniq,
       }
     end
 
     def parse_simple
       {
         type: :simple,
-        value: @type_string
+        value: @type_string,
       }
     end
   end

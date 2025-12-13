@@ -21,21 +21,19 @@ RSpec.describe "Documentation Examples" do
 
       parse_failures = []
       trb_examples.each do |example|
-        begin
-          parser = TRuby::Parser.new(example.code)
-          parser.parse
-        rescue TRuby::ParseError => e
-          parse_failures << {
-            file: example.file_path,
-            line: example.line_number,
-            error: e.message,
-          }
-        end
+        parser = TRuby::Parser.new(example.code)
+        parser.parse
+      rescue TRuby::ParseError => e
+        parse_failures << {
+          file: example.file_path,
+          line: example.line_number,
+          error: e.message,
+        }
       end
 
       if parse_failures.any?
         messages = parse_failures.map { |f| "#{f[:file]}:#{f[:line]} - #{f[:error]}" }
-        fail "#{parse_failures.size} T-Ruby examples failed to parse:\n#{messages.join("\n")}"
+        raise "#{parse_failures.size} T-Ruby examples failed to parse:\n#{messages.join("\n")}"
       end
 
       expect(parse_failures).to be_empty
@@ -51,20 +49,18 @@ RSpec.describe "Documentation Examples" do
       compiler = TRuby::Compiler.new
 
       trb_examples.each do |example|
-        begin
-          compiler.compile_string(example.code)
-        rescue StandardError => e
-          compile_failures << {
-            file: example.file_path,
-            line: example.line_number,
-            error: e.message,
-          }
-        end
+        compiler.compile_string(example.code)
+      rescue StandardError => e
+        compile_failures << {
+          file: example.file_path,
+          line: example.line_number,
+          error: e.message,
+        }
       end
 
       if compile_failures.any?
         messages = compile_failures.map { |f| "#{f[:file]}:#{f[:line]} - #{f[:error]}" }
-        fail "#{compile_failures.size} T-Ruby examples failed to compile:\n#{messages.join("\n")}"
+        raise "#{compile_failures.size} T-Ruby examples failed to compile:\n#{messages.join("\n")}"
       end
 
       expect(compile_failures).to be_empty
@@ -80,20 +76,18 @@ RSpec.describe "Documentation Examples" do
 
       syntax_failures = []
       ruby_examples.each do |example|
-        begin
-          RubyVM::InstructionSequence.compile(example.code)
-        rescue SyntaxError => e
-          syntax_failures << {
-            file: example.file_path,
-            line: example.line_number,
-            error: e.message,
-          }
-        end
+        RubyVM::InstructionSequence.compile(example.code)
+      rescue SyntaxError => e
+        syntax_failures << {
+          file: example.file_path,
+          line: example.line_number,
+          error: e.message,
+        }
       end
 
       if syntax_failures.any?
         messages = syntax_failures.map { |f| "#{f[:file]}:#{f[:line]} - #{f[:error]}" }
-        fail "#{syntax_failures.size} Ruby examples have syntax errors:\n#{messages.join("\n")}"
+        raise "#{syntax_failures.size} Ruby examples have syntax errors:\n#{messages.join("\n")}"
       end
 
       expect(syntax_failures).to be_empty

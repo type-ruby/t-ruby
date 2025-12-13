@@ -21,7 +21,6 @@ RSpec.describe "한글 문서: First Trb File" do
   it_behaves_like "valid documentation page", "getting-started/first-trb-file.md"
 
   describe "코드 예제" do
-
     # 예제 1: T-Ruby (라인 27)
     describe "예제 1: T-Ruby 코드" do
       let(:example) { examples[0] }

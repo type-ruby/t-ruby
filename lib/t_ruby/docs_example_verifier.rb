@@ -173,12 +173,11 @@ module TRuby
 
     def verify_ruby_example(example)
       # For Ruby examples, just validate syntax
-      begin
-        RubyVM::InstructionSequence.compile(example.code)
-        pass_result(example)
-      rescue SyntaxError => e
-        fail_result(example, ["Ruby syntax error: #{e.message}"])
-      end
+
+      RubyVM::InstructionSequence.compile(example.code)
+      pass_result(example)
+    rescue SyntaxError => e
+      fail_result(example, ["Ruby syntax error: #{e.message}"])
     end
 
     def verify_rbs_example(example)

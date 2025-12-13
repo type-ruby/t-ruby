@@ -39,7 +39,7 @@ RSpec.describe "Watch Mode E2E Behavior" do
       YAML
 
       # config.watch_paths should return the additional paths
-      expect(config.watch_paths).to eq(["config", "types"])
+      expect(config.watch_paths).to eq(%w[config types])
     end
   end
 

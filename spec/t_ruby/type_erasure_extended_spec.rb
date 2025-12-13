@@ -35,10 +35,10 @@ describe TRuby::TypeErasure do
 
     context "mixed content" do
       it "handles type alias followed by function" do
-        source = 'type UserId = String' + "\n" +
-                 'def create(id: UserId): Boolean' + "\n" +
-                 '  true' + "\n" +
-                 'end'
+        source = "type UserId = String" + "\n" \
+                                          "def create(id: UserId): Boolean" + "\n  " \
+                                                                              "true" + "\n" \
+                                                                                       "end"
         eraser = TRuby::TypeErasure.new(source)
 
         result = eraser.erase
@@ -47,10 +47,10 @@ describe TRuby::TypeErasure do
       end
 
       it "preserves function with type alias reference" do
-        source = 'type Result = Boolean' + "\n" +
-                 'def success(): Result' + "\n" +
-                 '  true' + "\n" +
-                 'end'
+        source = "type Result = Boolean" + "\n" \
+                                           "def success(): Result" + "\n  " \
+                                                                     "true" + "\n" \
+                                                                              "end"
         eraser = TRuby::TypeErasure.new(source)
 
         result = eraser.erase

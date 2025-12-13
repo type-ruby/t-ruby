@@ -232,10 +232,10 @@ describe TRuby::Parser do
       result = parser.parse
       expect(result[:interfaces].length).to eq(3)
       expect(result[:interfaces].map { |i| i[:name] }).to eq([
-        "Rails",
-        "Rails::Application",
-        "ActiveRecord::Base"
-      ])
+                                                               "Rails",
+                                                               "Rails::Application",
+                                                               "ActiveRecord::Base",
+                                                             ])
     end
   end
 end

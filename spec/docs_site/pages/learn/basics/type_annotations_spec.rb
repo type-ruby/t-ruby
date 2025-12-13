@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require_relative "../support/shared_examples"
+require_relative "../../support/shared_examples"
 
 RSpec.describe "한글 문서: Type Annotations" do
   include_context "docs site paths"
@@ -21,7 +21,6 @@ RSpec.describe "한글 문서: Type Annotations" do
   it_behaves_like "valid documentation page", "learn/basics/type-annotations.md"
 
   describe "코드 예제" do
-
     # 예제 1: T-Ruby (라인 22)
     describe "예제 1: T-Ruby 코드" do
       let(:example) { examples[0] }

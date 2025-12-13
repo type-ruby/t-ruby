@@ -2,7 +2,7 @@
 
 module TRuby
   class CLI
-    HELP_TEXT = <<~HELP
+    HELP_TEXT = <<~HELP.freeze
       t-ruby compiler (trc) v#{VERSION}
 
       Usage:
@@ -145,10 +145,10 @@ module TRuby
 
       # Output results
       if created.any?
-        puts "Created: #{created.join(', ')}"
+        puts "Created: #{created.join(", ")}"
       end
       if skipped.any?
-        puts "Skipped (already exists): #{skipped.join(', ')}"
+        puts "Skipped (already exists): #{skipped.join(", ")}"
       end
       if created.empty? && skipped.any?
         puts "Project already initialized."

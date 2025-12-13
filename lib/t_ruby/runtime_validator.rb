@@ -3,8 +3,7 @@
 module TRuby
   # Configuration for runtime validation
   class ValidationConfig
-    attr_accessor :validate_all, :validate_public_only, :raise_on_error
-    attr_accessor :log_violations, :strict_mode
+    attr_accessor :validate_all, :validate_public_only, :raise_on_error, :log_violations, :strict_mode
 
     def initialize
       @validate_all = true
@@ -39,7 +38,7 @@ module TRuby
       "Time" => ".is_a?(Time)",
       "Date" => ".is_a?(Date)",
       "IO" => ".is_a?(IO)",
-      "File" => ".is_a?(File)"
+      "File" => ".is_a?(File)",
     }.freeze
 
     def initialize(config = nil)
@@ -128,7 +127,7 @@ module TRuby
     def generate_union_check(var_name, union_type)
       types = union_type.split("|").map(&:strip)
       checks = types.map { |t| generate_type_check(var_name, t) }
-      "(#{checks.join(' || ')})"
+      "(#{checks.join(" || ")})"
     end
 
     # Generate generic type check
@@ -141,16 +140,19 @@ module TRuby
 
       case container_type
       when "Array"
-        "#{var_name}.is_a?(Array) && #{var_name}.all? { |_e| #{generate_type_check('_e', element_type)} }"
+        "#{var_name}.is_a?(Array) && #{var_name}.all? { |_e| #{generate_type_check("_e", element_type)} }"
       when "Hash"
         if element_type.include?(",")
           key_type, value_type = element_type.split(",").map(&:strip)
-          "#{var_name}.is_a?(Hash) && #{var_name}.all? { |_k, _v| #{generate_type_check('_k', key_type)} && #{generate_type_check('_v', value_type)} }"
+          "#{var_name}.is_a?(Hash) && #{var_name}.all? { |_k, _v| #{generate_type_check("_k",
+                                                                                        key_type)} && #{generate_type_check(
+                                                                                          "_v", value_type
+                                                                                        )} }"
         else
           "#{var_name}.is_a?(Hash)"
         end
       when "Set"
-        "#{var_name}.is_a?(Set) && #{var_name}.all? { |_e| #{generate_type_check('_e', element_type)} }"
+        "#{var_name}.is_a?(Set) && #{var_name}.all? { |_e| #{generate_type_check("_e", element_type)} }"
       else
         # Generic with unknown container - just check container type
         "#{var_name}.is_a?(#{container_type})"
@@ -161,7 +163,7 @@ module TRuby
     def generate_intersection_check(var_name, intersection_type)
       types = intersection_type.split("&").map(&:strip)
       checks = types.map { |t| generate_type_check(var_name, t) }
-      "(#{checks.join(' && ')})"
+      "(#{checks.join(" && ")})"
     end
 
     # Generate return value validation wrapper
@@ -169,7 +171,7 @@ module TRuby
       {
         type: :return,
         check: generate_type_check("_result", return_type),
-        return_type: return_type
+        return_type: return_type,
       }
     end
 
@@ -186,7 +188,7 @@ module TRuby
         @function_validations[func[:name]] = generate_function_validation(func)
       end
 
-      lines.each_with_index do |line, idx|
+      lines.each_with_index do |line, _idx|
         # Check for function definition
         if line.match?(/^\s*def\s+(\w+)/)
           match = line.match(/^(\s*)def\s+(\w+)/)
@@ -201,7 +203,7 @@ module TRuby
             param_validations = validations.select { |v| v.is_a?(String) }
 
             param_validations.each do |validation|
-              output_lines << "#{' ' * (function_indent + 2)}#{validation}"
+              output_lines << "#{" " * (function_indent + 2)}#{validation}"
             end
           end
 
@@ -233,34 +235,34 @@ module TRuby
       RUBY
 
       module_code += <<~RUBY
-            case expected_type
-            when "String"
-              raise TypeError, "\#{param_name} must be String, got \#{value.class}" unless value.is_a?(String)
-            when "Integer"
-              raise TypeError, "\#{param_name} must be Integer, got \#{value.class}" unless value.is_a?(Integer)
-            when "Float"
-              raise TypeError, "\#{param_name} must be Float, got \#{value.class}" unless value.is_a?(Float)
-            when "Boolean"
-              raise TypeError, "\#{param_name} must be Boolean, got \#{value.class}" unless value == true || value == false
-            when "Symbol"
-              raise TypeError, "\#{param_name} must be Symbol, got \#{value.class}" unless value.is_a?(Symbol)
-            when "Array"
-              raise TypeError, "\#{param_name} must be Array, got \#{value.class}" unless value.is_a?(Array)
-            when "Hash"
-              raise TypeError, "\#{param_name} must be Hash, got \#{value.class}" unless value.is_a?(Hash)
-            when "nil"
-              raise TypeError, "\#{param_name} must be nil, got \#{value.class}" unless value.nil?
-            else
-              # Custom type check
-              begin
-                type_class = Object.const_get(expected_type)
-                raise TypeError, "\#{param_name} must be \#{expected_type}, got \#{value.class}" unless value.is_a?(type_class)
-              rescue NameError
-                # Unknown type, skip validation
-              end
+          case expected_type
+          when "String"
+            raise TypeError, "\#{param_name} must be String, got \#{value.class}" unless value.is_a?(String)
+          when "Integer"
+            raise TypeError, "\#{param_name} must be Integer, got \#{value.class}" unless value.is_a?(Integer)
+          when "Float"
+            raise TypeError, "\#{param_name} must be Float, got \#{value.class}" unless value.is_a?(Float)
+          when "Boolean"
+            raise TypeError, "\#{param_name} must be Boolean, got \#{value.class}" unless value == true || value == false
+          when "Symbol"
+            raise TypeError, "\#{param_name} must be Symbol, got \#{value.class}" unless value.is_a?(Symbol)
+          when "Array"
+            raise TypeError, "\#{param_name} must be Array, got \#{value.class}" unless value.is_a?(Array)
+          when "Hash"
+            raise TypeError, "\#{param_name} must be Hash, got \#{value.class}" unless value.is_a?(Hash)
+          when "nil"
+            raise TypeError, "\#{param_name} must be nil, got \#{value.class}" unless value.nil?
+          else
+            # Custom type check
+            begin
+              type_class = Object.const_get(expected_type)
+              raise TypeError, "\#{param_name} must be \#{expected_type}, got \#{value.class}" unless value.is_a?(type_class)
+            rescue NameError
+              # Unknown type, skip validation
             end
-            true
           end
+          true
+        end
       RUBY
 
       # Generate validation methods for each function
@@ -274,6 +276,7 @@ module TRuby
 
         func[:params].each do |param|
           next unless param[:type]
+
           module_code += "    validate_type(#{param[:name]}, #{param[:type].inspect}, #{param[:name].inspect})\n"
         end
 
@@ -288,6 +291,7 @@ module TRuby
     def should_validate?(visibility)
       return true if @config.validate_all
       return visibility == :public if @config.validate_public_only
+
       false
     end
   end

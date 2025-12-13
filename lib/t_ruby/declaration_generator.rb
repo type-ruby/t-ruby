@@ -195,7 +195,7 @@ module TRuby
       {
         type_aliases: @type_aliases,
         interfaces: @interfaces,
-        functions: @functions
+        functions: @functions,
       }
     end
 
@@ -230,13 +230,13 @@ module TRuby
 
       @search_paths.each do |path|
         full_path = File.join(path, file_name)
-        if File.exist?(full_path) && !@loaded_files.include?(full_path)
-          parser = DeclarationParser.new
-          parser.parse_file(full_path)
-          @loaded_declarations.merge(parser)
-          @loaded_files.add(full_path)
-          return true
-        end
+        next unless File.exist?(full_path) && !@loaded_files.include?(full_path)
+
+        parser = DeclarationParser.new
+        parser.parse_file(full_path)
+        @loaded_declarations.merge(parser)
+        @loaded_files.add(full_path)
+        return true
       end
 
       false

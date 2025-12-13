@@ -148,16 +148,16 @@ module TRuby
         markdown += "Pass rate: #{file_summary[:pass_rate]}% (#{file_summary[:passed]}/#{file_summary[:total]})\n\n"
 
         failed_results = file_results.select(&:fail?)
-        if failed_results.any?
-          markdown += "**Failed examples:**\n\n"
-          failed_results.each do |result|
-            markdown += "- Line #{result.line_number}:\n"
-            result.errors.each do |error|
-              markdown += "  - #{error}\n"
-            end
+        next unless failed_results.any?
+
+        markdown += "**Failed examples:**\n\n"
+        failed_results.each do |result|
+          markdown += "- Line #{result.line_number}:\n"
+          result.errors.each do |error|
+            markdown += "  - #{error}\n"
           end
-          markdown += "\n"
         end
+        markdown += "\n"
       end
 
       File.write(output_path, markdown)

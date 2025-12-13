@@ -55,7 +55,7 @@ module TRuby
         type: :success,
         functions: functions,
         type_aliases: type_aliases,
-        interfaces: interfaces
+        interfaces: interfaces,
       }
 
       # Build IR if combinator is enabled
@@ -97,14 +97,14 @@ module TRuby
           return {
             name: alias_name,
             definition: definition,
-            ir_type: type_result[:type]
+            ir_type: type_result[:type],
           }
         end
       end
 
       {
         name: alias_name,
-        definition: definition
+        definition: definition,
       }
     end
 
@@ -126,7 +126,7 @@ module TRuby
       result = {
         name: function_name,
         params: params,
-        return_type: return_type_str
+        return_type: return_type_str,
       }
 
       # Parse return type with combinator if available
@@ -195,7 +195,7 @@ module TRuby
           depth -= 1
           current += char
         when ","
-          if depth == 0
+          if depth.zero?
             result << current.strip
             current = ""
           else
@@ -219,7 +219,7 @@ module TRuby
 
       result = {
         name: param_name,
-        type: type_str
+        type: type_str,
       }
 
       # Parse type with combinator if available
@@ -249,7 +249,7 @@ module TRuby
           if member_match
             member = {
               name: member_match[1],
-              type: member_match[2].strip
+              type: member_match[2].strip,
             }
 
             # Parse member type with combinator

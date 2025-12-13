@@ -33,7 +33,7 @@ RSpec.describe "t-ruby.github.io Documentation Site" do
         failure_messages = failed.map do |r|
           "#{r.file_path}:#{r.line_number}\n  #{r.errors.join("\n  ")}"
         end
-        fail "#{failed.size} examples failed:\n#{failure_messages.join("\n\n")}"
+        raise "#{failed.size} examples failed:\n#{failure_messages.join("\n\n")}"
       end
 
       expect(failed).to be_empty
@@ -68,7 +68,7 @@ RSpec.describe "t-ruby.github.io Documentation Site" do
         failure_messages = failed.map do |r|
           "#{r.file_path}:#{r.line_number}\n  #{r.errors.join("\n  ")}"
         end
-        fail "#{failed.size} examples failed:\n#{failure_messages.join("\n\n")}"
+        raise "#{failed.size} examples failed:\n#{failure_messages.join("\n\n")}"
       end
 
       expect(failed).to be_empty
@@ -105,7 +105,7 @@ RSpec.describe "t-ruby.github.io Documentation Site" do
         failure_messages = failed.map do |r|
           "#{r.file_path}:#{r.line_number}\n  #{r.errors.join("\n  ")}"
         end
-        fail "#{failed.size} examples failed:\n#{failure_messages.join("\n\n")}"
+        raise "#{failed.size} examples failed:\n#{failure_messages.join("\n\n")}"
       end
 
       expect(failed).to be_empty

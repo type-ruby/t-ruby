@@ -2,7 +2,7 @@
   "name": "t-ruby",
   "displayName": "T-Ruby",
   "description": "T-Ruby language support with type annotations for Ruby",
-  "version": "0.1.7",
+  "version": "0.1.11",
   "publisher": "t-ruby",
   "engines": {
     "vscode": "^1.75.0"
@@ -105,6 +105,7 @@
     "@typescript-eslint/parser": "^6.0.0",
     "@vscode/test-electron": "^2.3.9",
     "eslint": "^8.45.0",
+    "@types/glob": "^8.1.0",
     "glob": "^10.3.10",
     "mocha": "^10.3.0",
     "typescript": "^5.2.0"

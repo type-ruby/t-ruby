@@ -14,7 +14,7 @@ module TRuby
       yellow: "\e[33m",
       blue: "\e[34m",
       cyan: "\e[36m",
-      gray: "\e[90m"
+      gray: "\e[90m",
     }.freeze
 
     attr_reader :incremental_compiler, :stats
@@ -47,7 +47,7 @@ module TRuby
       @stats = {
         total_compilations: 0,
         incremental_hits: 0,
-        total_time: 0.0
+        total_time: 0.0,
       }
     end
 
@@ -92,8 +92,8 @@ module TRuby
 
     def handle_changes(modified, added, removed)
       changed_files = (modified + added)
-        .select { |f| f.end_with?(".trb") || f.end_with?(".rb") }
-        .reject { |f| @config.excluded?(f) }
+                      .select { |f| f.end_with?(".trb") || f.end_with?(".rb") }
+                      .reject { |f| @config.excluded?(f) }
       return if changed_files.empty? && removed.empty?
 
       puts
@@ -279,7 +279,7 @@ module TRuby
         file: file,
         line: line,
         col: col,
-        message: message
+        message: message,
       }
     end
 
@@ -287,7 +287,10 @@ module TRuby
       errors.each do |error|
         puts
         # TypeScript-style error format: file:line:col - error TSXXXX: message
-        location = "#{colorize(:cyan, relative_path(error[:file]))}:#{colorize(:yellow, error[:line])}:#{colorize(:yellow, error[:col])}"
+        location = "#{colorize(:cyan,
+                               relative_path(error[:file]))}:#{colorize(:yellow,
+                                                                        error[:line])}:#{colorize(:yellow,
+                                                                                                  error[:col])}"
         puts "#{location} - #{colorize(:red, "error")} #{colorize(:gray, "TRB0001")}: #{error[:message]}"
       end
     end
@@ -298,7 +301,8 @@ module TRuby
     end
 
     def print_file_change_message
-      puts "#{colorize(:gray, timestamp)} #{colorize(:bold, "File change detected. Starting incremental compilation...")}"
+      puts "#{colorize(:gray,
+                       timestamp)} #{colorize(:bold, "File change detected. Starting incremental compilation...")}"
       puts
     end
 
@@ -306,12 +310,11 @@ module TRuby
       puts
       if @error_count.zero?
         msg = "Found #{colorize(:green, "0 errors")}. Watching for file changes."
-        puts "#{colorize(:gray, timestamp)} #{msg}"
       else
         error_word = @error_count == 1 ? "error" : "errors"
         msg = "Found #{colorize(:red, "#{@error_count} #{error_word}")}. Watching for file changes."
-        puts "#{colorize(:gray, timestamp)} #{msg}"
       end
+      puts "#{colorize(:gray, timestamp)} #{msg}"
     end
 
     def print_watching_message
@@ -323,11 +326,12 @@ module TRuby
       puts "#{colorize(:gray, timestamp)} #{colorize(:bold, "Watch Mode Statistics:")}"
       puts "  Total compilations: #{@stats[:total_compilations]}"
       puts "  Incremental cache hits: #{@stats[:incremental_hits]}"
-      hit_rate = if @stats[:total_compilations] + @stats[:incremental_hits] > 0
-        (@stats[:incremental_hits].to_f / (@stats[:total_compilations] + @stats[:incremental_hits]) * 100).round(1)
-      else
-        0
-      end
+      total = @stats[:total_compilations] + @stats[:incremental_hits]
+      hit_rate = if total.positive?
+                   (@stats[:incremental_hits].to_f / total * 100).round(1)
+                 else
+                   0
+                 end
       puts "  Cache hit rate: #{hit_rate}%"
       puts "  Total compile time: #{@stats[:total_time].round(2)}s"
     end

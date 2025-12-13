@@ -17,13 +17,13 @@ module TRuby
     private
 
     def parse_intersection
-      members = @type_string.split("&").map { |m| m.strip }.compact
+      members = @type_string.split("&").map(&:strip).compact
 
       {
         type: :intersection,
         members: members,
         has_duplicates: members.length != members.uniq.length,
-        unique_members: members.uniq
+        unique_members: members.uniq,
       }
     end
   end

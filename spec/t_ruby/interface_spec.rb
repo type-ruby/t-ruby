@@ -5,9 +5,9 @@ require "spec_helper"
 describe TRuby::Parser do
   describe "parsing interface definitions" do
     it "parses simple interface with single member" do
-      source = 'interface User' + "\n" +
-               '  name: String' + "\n" +
-               'end'
+      source = "interface User" + "\n  " \
+                                  "name: String" + "\n" \
+                                                   "end"
       parser = TRuby::Parser.new(source)
 
       result = parser.parse
@@ -16,10 +16,10 @@ describe TRuby::Parser do
     end
 
     it "parses interface with multiple members" do
-      source = 'interface User' + "\n" +
-               '  name: String' + "\n" +
-               '  age: Integer' + "\n" +
-               'end'
+      source = "interface User" + "\n  " \
+                                  "name: String" + "\n  " \
+                                                   "age: Integer" + "\n" \
+                                                                    "end"
       parser = TRuby::Parser.new(source)
 
       result = parser.parse
@@ -28,10 +28,10 @@ describe TRuby::Parser do
     end
 
     it "parses interface member types correctly" do
-      source = 'interface User' + "\n" +
-               '  name: String' + "\n" +
-               '  active: Boolean' + "\n" +
-               'end'
+      source = "interface User" + "\n  " \
+                                  "name: String" + "\n  " \
+                                                   "active: Boolean" + "\n" \
+                                                                       "end"
       parser = TRuby::Parser.new(source)
 
       result = parser.parse
@@ -41,8 +41,8 @@ describe TRuby::Parser do
     end
 
     it "handles empty interface" do
-      source = 'interface Empty' + "\n" +
-               'end'
+      source = "interface Empty" + "\n" \
+                                   "end"
       parser = TRuby::Parser.new(source)
 
       result = parser.parse
@@ -55,12 +55,12 @@ end
 describe TRuby::ErrorHandler do
   describe "interface validation" do
     it "detects duplicate interface definitions" do
-      source = 'interface User' + "\n" +
-               '  name: String' + "\n" +
-               'end' + "\n" +
-               'interface User' + "\n" +
-               '  age: Integer' + "\n" +
-               'end'
+      source = "interface User" + "\n  " \
+                                  "name: String" + "\n" \
+                                                   "end" + "\n" \
+                                                           "interface User" + "\n  " \
+                                                                              "age: Integer" + "\n" \
+                                                                                               "end"
       handler = TRuby::ErrorHandler.new(source)
 
       errors = handler.check
@@ -68,10 +68,10 @@ describe TRuby::ErrorHandler do
     end
 
     it "accepts valid interface definitions" do
-      source = 'interface User' + "\n" +
-               '  name: String' + "\n" +
-               '  age: Integer' + "\n" +
-               'end'
+      source = "interface User" + "\n  " \
+                                  "name: String" + "\n  " \
+                                                   "age: Integer" + "\n" \
+                                                                    "end"
       handler = TRuby::ErrorHandler.new(source)
 
       errors = handler.check

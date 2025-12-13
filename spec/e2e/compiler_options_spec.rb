@@ -61,9 +61,9 @@ RSpec.describe "Compiler Options E2E Behavior" do
         TRB
 
         compiler = TRuby::Compiler.new(config)
-        expect {
+        expect do
           compiler.compile(File.join(tmpdir, "src/no_return.trb"))
-        }.to raise_error(/return type/)
+        end.to raise_error(/return type/)
       end
     end
 
@@ -86,9 +86,9 @@ RSpec.describe "Compiler Options E2E Behavior" do
         TRB
 
         compiler = TRuby::Compiler.new(config)
-        expect {
+        expect do
           compiler.compile(File.join(tmpdir, "src/flexible.trb"))
-        }.not_to raise_error
+        end.not_to raise_error
       end
     end
 
@@ -120,20 +120,20 @@ RSpec.describe "Compiler Options E2E Behavior" do
         TRB
 
         compiler = TRuby::Compiler.new(config)
-        expect {
+        expect do
           compiler.compile(File.join(tmpdir, "src/loose.trb"))
-        }.not_to raise_error
+        end.not_to raise_error
       end
     end
 
     it "rejects invalid strictness values" do
-      expect {
+      expect do
         config = create_project_config(<<~YAML)
           compiler:
             strictness: invalid_value
         YAML
         config.validate!
-      }.to raise_error(TRuby::ConfigError, /Invalid compiler.strictness/)
+      end.to raise_error(TRuby::ConfigError, /Invalid compiler.strictness/)
     end
   end
 
@@ -178,9 +178,9 @@ RSpec.describe "Compiler Options E2E Behavior" do
       TRB
 
       compiler = TRuby::Compiler.new(config)
-      expect {
+      expect do
         compiler.compile(File.join(tmpdir, "src/implicit_any.trb"))
-      }.to raise_error(/implicit any|type annotation required/i)
+      end.to raise_error(/implicit any|type annotation required/i)
     end
 
     it "allows untyped parameters when disabled (default)" do
@@ -202,9 +202,9 @@ RSpec.describe "Compiler Options E2E Behavior" do
       TRB
 
       compiler = TRuby::Compiler.new(config)
-      expect {
+      expect do
         compiler.compile(File.join(tmpdir, "src/allow_any.trb"))
-      }.not_to raise_error
+      end.not_to raise_error
     end
   end
 
@@ -244,9 +244,9 @@ RSpec.describe "Compiler Options E2E Behavior" do
 
       compiler = TRuby::Compiler.new(config)
       # Should warn or error about unused variable
-      expect {
+      expect do
         compiler.compile(File.join(tmpdir, "src/unused.trb"))
-      }.to raise_error(/unused.*unused/i)
+      end.to raise_error(/unused.*unused/i)
     end
   end
 
@@ -290,9 +290,9 @@ RSpec.describe "Compiler Options E2E Behavior" do
       TRB
 
       compiler = TRuby::Compiler.new(config)
-      expect {
+      expect do
         compiler.compile(File.join(tmpdir, "src/nil_unsafe.trb"))
-      }.to raise_error(/nil|null/i)
+      end.to raise_error(/nil|null/i)
     end
   end
 
@@ -329,7 +329,7 @@ RSpec.describe "Compiler Options E2E Behavior" do
             - pattern_matching_types
       YAML
 
-      expect(config.experimental_features).to eq(["decorators", "pattern_matching_types"])
+      expect(config.experimental_features).to eq(%w[decorators pattern_matching_types])
       expect(config.experimental_enabled?("decorators")).to be true
       expect(config.experimental_enabled?("pattern_matching_types")).to be true
       expect(config.experimental_enabled?("nonexistent")).to be false

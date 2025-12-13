@@ -10,7 +10,7 @@ module TRuby
       result = @source.dup
 
       # Remove type alias definitions: type AliasName = TypeDefinition
-      result = result.gsub(/^\s*type\s+\w+\s*=\s*.+?$\n?/, '')
+      result = result.gsub(/^\s*type\s+\w+\s*=\s*.+?$\n?/, "")
 
       # Remove parameter type annotations: (name: Type) -> (name)
       # Matches: parameter_name: TypeName
@@ -18,9 +18,7 @@ module TRuby
 
       # Remove return type annotations: ): TypeName -> )
       # Matches: ): TypeName or ): TypeName (with spaces/EOF)
-      result = result.gsub(/\)\s*:\s*\w+(\s|$)/, ')\1')
-
-      result
+      result.gsub(/\)\s*:\s*\w+(\s|$)/, ')\1')
     end
   end
 end

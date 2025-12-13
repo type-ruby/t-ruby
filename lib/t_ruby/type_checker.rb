@@ -30,7 +30,7 @@ module TRuby
         location: @location,
         expected: @expected,
         actual: @actual,
-        suggestion: @suggestion
+        suggestion: @suggestion,
       }
     end
   end
@@ -42,17 +42,17 @@ module TRuby
 
     def initialize
       @subtypes = {
-        "Integer" => ["Numeric", "Object"],
-        "Float" => ["Numeric", "Object"],
+        "Integer" => %w[Numeric Object],
+        "Float" => %w[Numeric Object],
         "Numeric" => ["Object"],
         "String" => ["Object"],
         "Symbol" => ["Object"],
-        "Array" => ["Enumerable", "Object"],
-        "Hash" => ["Enumerable", "Object"],
-        "Set" => ["Enumerable", "Object"],
+        "Array" => %w[Enumerable Object],
+        "Hash" => %w[Enumerable Object],
+        "Set" => %w[Enumerable Object],
         "Boolean" => ["Object"],
         "nil" => ["Object"],
-        "Object" => []
+        "Object" => [],
       }
     end
 
@@ -206,7 +206,7 @@ module TRuby
       {
         success: @errors.empty?,
         errors: @errors,
-        warnings: @warnings
+        warnings: @warnings,
       }
     end
 
@@ -220,10 +220,10 @@ module TRuby
           params: method_ir.params.map do |p|
             {
               name: p.name,
-              type: result[:params][p.name] || infer_param_type(p)
+              type: result[:params][p.name] || infer_param_type(p),
             }
           end,
-          return_type: result[:return_type]
+          return_type: result[:return_type],
         }
       else
         # Add errors from SMT solver
@@ -305,7 +305,7 @@ module TRuby
     def register_function(name, params:, return_type:)
       @function_signatures[name] = {
         params: params,
-        return_type: return_type
+        return_type: return_type,
       }
     end
 
@@ -345,15 +345,15 @@ module TRuby
 
         next unless arg_type
 
-        unless type_compatible?(arg_type, param[:type])
-          add_error(
-            message: "Type mismatch in argument '#{param[:name]}' of #{function_name}",
-            expected: param[:type],
-            actual: arg_type,
-            suggestion: suggest_conversion(arg_type, param[:type]),
-            location: location
-          )
-        end
+        next if type_compatible?(arg_type, param[:type])
+
+        add_error(
+          message: "Type mismatch in argument '#{param[:name]}' of #{function_name}",
+          expected: param[:type],
+          actual: arg_type,
+          suggestion: suggest_conversion(arg_type, param[:type]),
+          location: location
+        )
       end
 
       signature[:return_type]
@@ -384,16 +384,14 @@ module TRuby
     def check_assignment(variable, value, declared_type: nil, location: nil)
       value_type = infer_type(value)
 
-      if declared_type
-        unless type_compatible?(value_type, declared_type)
-          add_error(
-            message: "Cannot assign #{value_type} to variable of type #{declared_type}",
-            expected: declared_type,
-            actual: value_type,
-            location: location
-          )
-          return false
-        end
+      if declared_type && !type_compatible?(value_type, declared_type)
+        add_error(
+          message: "Cannot assign #{value_type} to variable of type #{declared_type}",
+          expected: declared_type,
+          actual: value_type,
+          location: location
+        )
+        return false
       end
 
       @current_scope.define(variable, declared_type || value_type)
@@ -408,7 +406,7 @@ module TRuby
         "Array" => %w[length size first last empty? count],
         "Hash" => %w[keys values size empty? length],
         "Integer" => %w[abs to_s to_f even? odd? positive? negative?],
-        "Float" => %w[abs to_s to_i ceil floor round]
+        "Float" => %w[abs to_s to_i ceil floor round],
       }
 
       properties = known_properties[receiver_type]
@@ -451,6 +449,7 @@ module TRuby
 
         # Result type depends on operands
         return "Float" if left_type == "Float" || right_type == "Float"
+
         return "Integer"
       end
 
@@ -490,14 +489,14 @@ module TRuby
         else_scope&.narrow(var, remove_nil_from_type(@current_scope.lookup(var) || "Object"))
       end
 
-      if condition.match?(/!(\w+)\.nil\?/)
-        match = condition.match(/!(\w+)\.nil\?/)
-        var = match[1]
+      return unless condition.match?(/!(\w+)\.nil\?/)
 
-        # Variable is not nil in then branch
-        then_scope.narrow(var, remove_nil_from_type(@current_scope.lookup(var) || "Object"))
-        else_scope&.narrow(var, "nil")
-      end
+      match = condition.match(/!(\w+)\.nil\?/)
+      var = match[1]
+
+      # Variable is not nil in then branch
+      then_scope.narrow(var, remove_nil_from_type(@current_scope.lookup(var) || "Object"))
+      else_scope&.narrow(var, "nil")
     end
 
     # Check a complete function
@@ -528,7 +527,7 @@ module TRuby
 
       # Return statement
       if line.match?(/^return\s+(.+)/)
-        match = line.match(/^return\s+(.+)/)
+        line.match(/^return\s+(.+)/)
         # Would need current function context for proper checking
         return
       end
@@ -573,8 +572,10 @@ module TRuby
 
     # Check if a type name is known
     def known_type?(type_name)
-      return true if %w[String Integer Float Boolean Array Hash Symbol void nil Object Numeric Enumerable].include?(type_name)
+      return true if %w[String Integer Float Boolean Array Hash Symbol void nil Object Numeric
+                        Enumerable].include?(type_name)
       return true if @type_aliases.key?(type_name)
+
       false
     end
 
@@ -611,7 +612,7 @@ module TRuby
       {
         success: @errors.empty?,
         errors: @errors,
-        warnings: @warnings
+        warnings: @warnings,
       }
     end
 
@@ -685,14 +686,14 @@ module TRuby
 
     def suggest_conversion(from_type, to_type)
       conversions = {
-        ["Integer", "String"] => "Use .to_s to convert to String",
-        ["Float", "String"] => "Use .to_s to convert to String",
-        ["String", "Integer"] => "Use .to_i to convert to Integer",
-        ["String", "Float"] => "Use .to_f to convert to Float",
-        ["Integer", "Float"] => "Use .to_f to convert to Float",
-        ["Float", "Integer"] => "Use .to_i to convert to Integer (may lose precision)",
-        ["Symbol", "String"] => "Use .to_s to convert to String",
-        ["String", "Symbol"] => "Use .to_sym to convert to Symbol"
+        %w[Integer String] => "Use .to_s to convert to String",
+        %w[Float String] => "Use .to_s to convert to String",
+        %w[String Integer] => "Use .to_i to convert to Integer",
+        %w[String Float] => "Use .to_f to convert to Float",
+        %w[Integer Float] => "Use .to_f to convert to Float",
+        %w[Float Integer] => "Use .to_i to convert to Integer (may lose precision)",
+        %w[Symbol String] => "Use .to_s to convert to String",
+        %w[String Symbol] => "Use .to_sym to convert to Symbol",
       }
 
       conversions[[from_type, to_type]]
@@ -700,22 +701,22 @@ module TRuby
 
     def infer_property_type(receiver_type, property)
       property_types = {
-        ["String", "length"] => "Integer",
-        ["String", "size"] => "Integer",
+        %w[String length] => "Integer",
+        %w[String size] => "Integer",
         ["String", "empty?"] => "Boolean",
-        ["String", "chars"] => "Array<String>",
-        ["Array", "length"] => "Integer",
-        ["Array", "size"] => "Integer",
+        %w[String chars] => "Array<String>",
+        %w[Array length] => "Integer",
+        %w[Array size] => "Integer",
         ["Array", "empty?"] => "Boolean",
-        ["Array", "first"] => nil, # Depends on element type
-        ["Array", "last"] => nil,
-        ["Hash", "keys"] => "Array",
-        ["Hash", "values"] => "Array",
-        ["Hash", "size"] => "Integer",
-        ["Integer", "abs"] => "Integer",
-        ["Integer", "to_s"] => "String",
-        ["Float", "abs"] => "Float",
-        ["Float", "to_i"] => "Integer"
+        %w[Array first] => nil, # Depends on element type
+        %w[Array last] => nil,
+        %w[Hash keys] => "Array",
+        %w[Hash values] => "Array",
+        %w[Hash size] => "Integer",
+        %w[Integer abs] => "Integer",
+        %w[Integer to_s] => "String",
+        %w[Float abs] => "Float",
+        %w[Float to_i] => "Integer",
       }
 
       property_types[[receiver_type, property]]

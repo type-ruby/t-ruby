@@ -41,7 +41,7 @@ describe TRuby::CLI do
 
     it "creates src/ directory" do
       Dir.chdir(tmpdir) do
-        expect { TRuby::CLI.run(["--init"]) }.to output(/Created:.*src\//).to_stdout
+        expect { TRuby::CLI.run(["--init"]) }.to output(%r{Created:.*src/}).to_stdout
 
         expect(Dir.exist?("src")).to be true
       end
@@ -49,7 +49,7 @@ describe TRuby::CLI do
 
     it "creates build/ directory" do
       Dir.chdir(tmpdir) do
-        expect { TRuby::CLI.run(["--init"]) }.to output(/Created:.*build\//).to_stdout
+        expect { TRuby::CLI.run(["--init"]) }.to output(%r{Created:.*build/}).to_stdout
 
         expect(Dir.exist?("build")).to be true
       end
@@ -71,8 +71,8 @@ describe TRuby::CLI do
         Dir.mkdir("src")
         Dir.mkdir("build")
 
-        expect { TRuby::CLI.run(["--init"]) }.to output(/Skipped.*src\//).to_stdout
-        expect { TRuby::CLI.run(["--init"]) }.to output(/Skipped.*build\//).to_stdout
+        expect { TRuby::CLI.run(["--init"]) }.to output(%r{Skipped.*src/}).to_stdout
+        expect { TRuby::CLI.run(["--init"]) }.to output(%r{Skipped.*build/}).to_stdout
       end
     end
 
@@ -117,13 +117,11 @@ describe TRuby::CLI do
         File.write("lib/test.trb", "puts 'hello'")
 
         # Compile with custom config
-        expect {
-          begin
-            TRuby::CLI.run(["--config", "configs/custom.yml", "lib/test.trb"])
-          rescue SystemExit => e
-            raise "CLI exited with status #{e.status}" if e.status != 0
-          end
-        }.to output(/Compiled:/).to_stdout
+        expect do
+          TRuby::CLI.run(["--config", "configs/custom.yml", "lib/test.trb"])
+        rescue SystemExit => e
+          raise "CLI exited with status #{e.status}" if e.status != 0
+        end.to output(/Compiled:/).to_stdout
 
         # Should output to 'out' directory from custom config
         expect(File.exist?("out/test.rb")).to be true
@@ -147,13 +145,11 @@ describe TRuby::CLI do
         File.write("lib/test.trb", "puts 'hello'")
 
         # Compile with custom config using shorthand
-        expect {
-          begin
-            TRuby::CLI.run(["-c", "configs/custom.yml", "lib/test.trb"])
-          rescue SystemExit => e
-            raise "CLI exited with status #{e.status}" if e.status != 0
-          end
-        }.to output(/Compiled:/).to_stdout
+        expect do
+          TRuby::CLI.run(["-c", "configs/custom.yml", "lib/test.trb"])
+        rescue SystemExit => e
+          raise "CLI exited with status #{e.status}" if e.status != 0
+        end.to output(/Compiled:/).to_stdout
 
         # Should output to 'dist' directory from custom config
         expect(File.exist?("dist/test.rb")).to be true

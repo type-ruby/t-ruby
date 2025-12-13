@@ -101,8 +101,8 @@ describe TRuby::ErrorHandler do
     end
 
     it "reports line numbers if detected" do
-      source = 'def test(x: String)' + "\n" +
-               'def test(x: Integer)' + "\n"
+      source = "def test(x: String)" + "\n" \
+                                       "def test(x: Integer)" + "\n"
       handler = TRuby::ErrorHandler.new(source)
 
       errors = handler.check

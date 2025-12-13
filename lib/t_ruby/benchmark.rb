@@ -60,11 +60,11 @@ module TRuby
     # Export results to JSON
     def export_json(path = "benchmark_results.json")
       File.write(path, JSON.pretty_generate({
-        timestamp: Time.now.iso8601,
-        ruby_version: RUBY_VERSION,
-        platform: RUBY_PLATFORM,
-        results: @results
-      }))
+                                              timestamp: Time.now.iso8601,
+                                              ruby_version: RUBY_VERSION,
+                                              platform: RUBY_PLATFORM,
+                                              results: @results,
+                                            }))
     end
 
     # Export results to Markdown
@@ -86,7 +86,7 @@ module TRuby
         benchmarks.each do |name, data|
           time_ms = (data[:avg_time] * 1000).round(2)
           memory_kb = (data[:memory] || 0).round(2)
-          ips = data[:avg_time] > 0 ? (1.0 / data[:avg_time]).round(2) : 0
+          ips = data[:avg_time].positive? ? (1.0 / data[:avg_time]).round(2) : 0
           md << "| #{name} | #{time_ms} | #{memory_kb} | #{ips} |"
         end
         md << ""
@@ -116,7 +116,7 @@ module TRuby
             current: data[:avg_time],
             previous: prev_data[:avg_time],
             diff_percent: diff,
-            improved: diff < 0
+            improved: diff.negative?,
           }
         end
       end
@@ -255,7 +255,7 @@ module TRuby
         print_result(:incremental_single, results[:incremental_single])
 
         # Calculate speedup
-        if results[:full_compile][:avg_time] > 0
+        if results[:full_compile][:avg_time].positive?
           speedup = results[:full_compile][:avg_time] / results[:incremental_single][:avg_time]
           puts "  Incremental speedup: #{speedup.round(2)}x"
         end
@@ -317,7 +317,7 @@ module TRuby
         print_result(:parallel_4, results[:parallel_4])
 
         # Print speedups
-        if results[:sequential][:avg_time] > 0
+        if results[:sequential][:avg_time].positive?
           puts "  Parallel(2) speedup: #{(results[:sequential][:avg_time] / results[:parallel_2][:avg_time]).round(2)}x"
           puts "  Parallel(4) speedup: #{(results[:sequential][:avg_time] / results[:parallel_4][:avg_time]).round(2)}x"
         end
@@ -332,7 +332,7 @@ module TRuby
 
       # Baseline memory
       GC.start
-      baseline = get_memory_usage
+      get_memory_usage
 
       # Parser memory
       content = generate_test_content(0)
@@ -374,20 +374,20 @@ module TRuby
           small_file: generate_test_content(0, lines: 10),
           medium_file: generate_test_content(0, lines: 100),
           large_file: generate_test_content(0, lines: 500),
-          complex_types: generate_complex_types_content
+          complex_types: generate_complex_types_content,
         }
       when :type_checking
         {
           simple_types: generate_simple_types_content,
           generic_types: generate_generic_types_content,
           union_types: generate_union_types_content,
-          interface_types: generate_interface_types_content
+          interface_types: generate_interface_types_content,
         }
       when :compilation
         {
           minimal: "def hello: void; end",
           with_types: generate_test_content(0, lines: 50),
-          with_interfaces: generate_interface_types_content
+          with_interfaces: generate_interface_types_content,
         }
       else
         {}
@@ -396,7 +396,7 @@ module TRuby
 
     def generate_test_content(seed, lines: 50, modified: false)
       content = []
-      content << "# Test file #{seed}#{modified ? ' (modified)' : ''}"
+      content << "# Test file #{seed}#{" (modified)" if modified}"
       content << ""
       content << "type CustomType#{seed} = String | Integer | nil"
       content << ""
@@ -522,7 +522,7 @@ module TRuby
         min_time: min,
         max_time: max,
         std_dev: std_dev,
-        iterations: times.length
+        iterations: times.length,
       }
     end
 
@@ -571,7 +571,7 @@ module TRuby
       iterations.times do
         start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         yield
-        times << Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+        times << (Process.clock_gettime(Process::CLOCK_MONOTONIC) - start)
       end
 
       avg = times.sum / times.length

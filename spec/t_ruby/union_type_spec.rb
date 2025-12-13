@@ -9,7 +9,7 @@ describe TRuby::UnionTypeParser do
       result = parser.parse
 
       expect(result[:type]).to eq(:union)
-      expect(result[:members]).to eq(["String", "Integer"])
+      expect(result[:members]).to eq(%w[String Integer])
     end
 
     it "parses union with three or more types" do
@@ -31,7 +31,7 @@ describe TRuby::UnionTypeParser do
       parser = TRuby::UnionTypeParser.new("String  |  Integer  |  Boolean")
       result = parser.parse
 
-      expect(result[:members]).to eq(["String", "Integer", "Boolean"])
+      expect(result[:members]).to eq(%w[String Integer Boolean])
     end
 
     it "identifies single types as non-union" do
@@ -55,7 +55,7 @@ describe TRuby::UnionTypeParser do
       parser = TRuby::UnionTypeParser.new("String | Integer | String")
       result = parser.parse
 
-      expect(result[:unique_members]).to eq(["String", "Integer"])
+      expect(result[:unique_members]).to eq(%w[String Integer])
     end
   end
 end

@@ -42,7 +42,7 @@ module TRuby
       installed_gems = parse_gemfile_lock
       type_packages = {}
 
-      installed_gems.each do |gem_name, version|
+      installed_gems.each_key do |gem_name|
         type_gem = find_type_gem(gem_name)
         type_packages[gem_name] = type_gem if type_gem
       end
@@ -93,7 +93,7 @@ module TRuby
         types_group: TYPES_GROUP.to_s,
         type_gems: list_type_gems,
         local_types: list_local_types,
-        generated_at: Time.now.iso8601
+        generated_at: Time.now.iso8601,
       }
 
       manifest_path = File.join(@project_dir, ".trb-bundle.json")
@@ -128,15 +128,15 @@ module TRuby
 
         next unless base_version && type_version
 
-        unless versions_compatible?(base_version, type_version)
-          issues << {
-            gem: base_gem,
-            gem_version: base_version,
-            type_gem: type_info[:name],
-            type_version: type_version,
-            message: "Version mismatch: #{base_gem}@#{base_version} vs #{type_info[:name]}@#{type_version}"
-          }
-        end
+        next if versions_compatible?(base_version, type_version)
+
+        issues << {
+          gem: base_gem,
+          gem_version: base_version,
+          type_gem: type_info[:name],
+          type_version: type_version,
+          message: "Version mismatch: #{base_gem}@#{base_version} vs #{type_info[:name]}@#{type_version}",
+        }
       end
 
       issues
@@ -201,21 +201,21 @@ module TRuby
 
       # Create a sample .d.trb file
       sample_path = File.join(types_dir, "custom.d.trb")
-      unless File.exist?(sample_path)
-        File.write(sample_path, <<~TRB)
-          # Custom type definitions for your project
-          # These types are available throughout your T-Ruby code
+      return if File.exist?(sample_path)
 
-          # Example type alias
-          # type UserId = String
+      File.write(sample_path, <<~TRB)
+        # Custom type definitions for your project
+        # These types are available throughout your T-Ruby code
 
-          # Example interface
-          # interface Serializable
-          #   to_json: String
-          #   from_json: (String) -> self
-          # end
-        TRB
-      end
+        # Example type alias
+        # type UserId = String
+
+        # Example interface
+        # interface Serializable
+        #   to_json: String
+        #   from_json: (String) -> self
+        # end
+      TRB
     end
 
     def append_to_gemfile(gem_name, version, group:)
@@ -276,7 +276,7 @@ module TRuby
       # This is a simplified check - in production would query RubyGems API
       {
         name: type_gem_name,
-        available: check_gem_availability(type_gem_name)
+        available: check_gem_availability(type_gem_name),
       }
     end
 
@@ -305,7 +305,7 @@ module TRuby
           name: name,
           base_gem: base_gem,
           version: version,
-          path: find_gem_path(name, version)
+          path: find_gem_path(name, version),
         }
       end
     end
@@ -315,7 +315,7 @@ module TRuby
       possible_paths = [
         File.join(ENV["GEM_HOME"] || "", "gems", "#{gem_name}-#{version}"),
         File.join(Dir.home, ".gem", "ruby", "*", "gems", "#{gem_name}-#{version}"),
-        File.join(@project_dir, "vendor", "bundle", "**", "gems", "#{gem_name}-#{version}")
+        File.join(@project_dir, "vendor", "bundle", "**", "gems", "#{gem_name}-#{version}"),
       ]
 
       possible_paths.each do |pattern|
@@ -398,7 +398,7 @@ module TRuby
         {
           name: gem_info[:name],
           base_gem: gem_info[:base_gem],
-          version: gem_info[:version]
+          version: gem_info[:version],
         }
       end
     end
@@ -553,11 +553,9 @@ module TRuby
       migrated = []
 
       # Read existing T-Ruby manifest
-      if @manifest
-        @manifest.dependencies.each do |name, version|
-          result = @bundler.add_type_gem(name, version: version)
-          migrated << result
-        end
+      @manifest&.dependencies&.each do |name, version|
+        result = @bundler.add_type_gem(name, version: version)
+        migrated << result
       end
 
       # Generate new bundle manifest

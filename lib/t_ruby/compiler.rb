@@ -42,7 +42,7 @@ module TRuby
       FileUtils.mkdir_p(out_dir)
 
       base_filename = File.basename(input_path, ".trb")
-      output_path = File.join(out_dir, base_filename + ".rb")
+      output_path = File.join(out_dir, "#{base_filename}.rb")
 
       File.write(output_path, output)
 
@@ -98,19 +98,19 @@ module TRuby
       {
         ruby: ruby_output,
         rbs: rbs_output,
-        errors: []
+        errors: [],
       }
     rescue ParseError => e
       {
         ruby: "",
         rbs: "",
-        errors: [e.message]
+        errors: [e.message],
       }
     rescue StandardError => e
       {
         ruby: "",
         rbs: "",
-        errors: ["Compilation error: #{e.message}"]
+        errors: ["Compilation error: #{e.message}"],
       }
     end
 
@@ -202,7 +202,7 @@ module TRuby
       generator = IR::RBSGenerator.new
       rbs_content = generator.generate(ir_program)
 
-      rbs_path = File.join(out_dir, base_filename + ".rbs")
+      rbs_path = File.join(out_dir, "#{base_filename}.rbs")
       File.write(rbs_path, rbs_content) unless rbs_content.strip.empty?
     end
 
@@ -214,7 +214,7 @@ module TRuby
         parse_result[:type_aliases] || []
       )
 
-      rbs_path = File.join(out_dir, base_filename + ".rbs")
+      rbs_path = File.join(out_dir, "#{base_filename}.rbs")
       File.write(rbs_path, rbs_content) unless rbs_content.empty?
     end
 
@@ -233,7 +233,7 @@ module TRuby
       FileUtils.mkdir_p(out_dir)
 
       base_filename = File.basename(input_path, ".rb")
-      output_path = File.join(out_dir, base_filename + ".rb")
+      output_path = File.join(out_dir, "#{base_filename}.rb")
 
       # Copy the .rb file to output directory
       FileUtils.cp(input_path, output_path)
@@ -250,7 +250,7 @@ module TRuby
 
     # Generate RBS from Ruby file using rbs prototype
     def generate_rbs_from_ruby(base_filename, out_dir, input_path)
-      rbs_path = File.join(out_dir, base_filename + ".rbs")
+      rbs_path = File.join(out_dir, "#{base_filename}.rbs")
       result = `rbs prototype rb #{input_path} 2>/dev/null`
       File.write(rbs_path, result) unless result.strip.empty?
     end
@@ -273,20 +273,20 @@ module TRuby
       result = source.dup
 
       # Collect type alias names to remove
-      type_alias_names = program.declarations
-        .select { |d| d.is_a?(IR::TypeAlias) }
-        .map(&:name)
+      program.declarations
+             .select { |d| d.is_a?(IR::TypeAlias) }
+             .map(&:name)
 
       # Collect interface names to remove
-      interface_names = program.declarations
-        .select { |d| d.is_a?(IR::Interface) }
-        .map(&:name)
+      program.declarations
+             .select { |d| d.is_a?(IR::Interface) }
+             .map(&:name)
 
       # Remove type alias definitions
-      result = result.gsub(/^\s*type\s+\w+\s*=\s*.+?$\n?/, '')
+      result = result.gsub(/^\s*type\s+\w+\s*=\s*.+?$\n?/, "")
 
       # Remove interface definitions (multi-line)
-      result = result.gsub(/^\s*interface\s+\w+.*?^\s*end\s*$/m, '')
+      result = result.gsub(/^\s*interface\s+\w+.*?^\s*end\s*$/m, "")
 
       # Remove parameter type annotations using IR info
       # Enhanced: Handle complex types (generics, unions, etc.)
@@ -296,9 +296,7 @@ module TRuby
       result = erase_return_types(result)
 
       # Clean up extra blank lines
-      result = result.gsub(/\n{3,}/, "\n\n")
-
-      result
+      result.gsub(/\n{3,}/, "\n\n")
     end
 
     private
@@ -308,11 +306,11 @@ module TRuby
       result = source.dup
 
       # Match function definitions and remove type annotations from parameters
-      result.gsub!(/^(\s*def\s+\w+\s*\()([^)]+)(\)\s*)(?::\s*[^\n]+)?(\s*$)/) do |match|
-        indent = $1
-        params = $2
-        close_paren = $3
-        ending = $4
+      result.gsub!(/^(\s*def\s+\w+\s*\()([^)]+)(\)\s*)(?::\s*[^\n]+)?(\s*$)/) do |_match|
+        indent = ::Regexp.last_match(1)
+        params = ::Regexp.last_match(2)
+        close_paren = ::Regexp.last_match(3)
+        ending = ::Regexp.last_match(4)
 
         # Remove type annotations from each parameter
         cleaned_params = remove_param_types(params)
@@ -340,7 +338,7 @@ module TRuby
           depth -= 1
           current += char
         when ","
-          if depth == 0
+          if depth.zero?
             params << clean_param(current.strip)
             current = ""
           else
@@ -358,7 +356,7 @@ module TRuby
     # Clean a single parameter (remove type annotation)
     def clean_param(param)
       # Match: name: Type or name
-      if match = param.match(/^(\w+)\s*:/)
+      if (match = param.match(/^(\w+)\s*:/))
         match[1]
       else
         param
@@ -370,7 +368,7 @@ module TRuby
       result = source.dup
 
       # Remove return type: ): Type or ): Type<Foo> etc.
-      result.gsub!(/\)\s*:\s*[^\n]+?(?=\s*$)/m) do |match|
+      result.gsub!(/\)\s*:\s*[^\n]+?(?=\s*$)/m) do |_match|
         ")"
       end
 

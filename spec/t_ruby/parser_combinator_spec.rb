@@ -100,7 +100,7 @@ RSpec.describe TRuby::ParserCombinator do
         parser = literal("a") >> literal("b")
         result = parser.parse("ab")
         expect(result.success?).to be true
-        expect(result.value).to eq(["a", "b"])
+        expect(result.value).to eq(%w[a b])
       end
 
       it "fails if first fails" do
@@ -143,7 +143,7 @@ RSpec.describe TRuby::ParserCombinator do
         parser = literal("a").many
         result = parser.parse("aaab")
         expect(result.success?).to be true
-        expect(result.value).to eq(["a", "a", "a"])
+        expect(result.value).to eq(%w[a a a])
       end
     end
 
@@ -158,7 +158,7 @@ RSpec.describe TRuby::ParserCombinator do
         parser = literal("a").many1
         result = parser.parse("aaab")
         expect(result.success?).to be true
-        expect(result.value).to eq(["a", "a", "a"])
+        expect(result.value).to eq(%w[a a a])
       end
     end
 
@@ -183,7 +183,7 @@ RSpec.describe TRuby::ParserCombinator do
         parser = digit.sep_by(char(","))
         result = parser.parse("1,2,3")
         expect(result.success?).to be true
-        expect(result.value).to eq(["1", "2", "3"])
+        expect(result.value).to eq(%w[1 2 3])
       end
 
       it "returns empty array when no items" do
@@ -295,7 +295,7 @@ RSpec.describe TRuby::ParserCombinator do
       it "enables recursive parsers" do
         # Simple recursive expression: nested parens
         expr = nil
-        expr = lazy { char("(") >> expr.optional << char(")") | char("x") }
+        expr = lazy { (char("(") >> expr.optional << char(")")) | char("x") }
 
         expect(expr.parse("x").success?).to be true
         expect(expr.parse("()").success?).to be true

@@ -204,7 +204,7 @@ RSpec.describe TRuby::ParallelProcessor do
   describe "#process_files" do
     it "processes files in parallel" do
       files = ["a.trb", "b.trb", "c.trb"]
-      results = processor.process_files(files) { |f| f.upcase }
+      results = processor.process_files(files, &:upcase)
 
       expect(results).to contain_exactly("A.TRB", "B.TRB", "C.TRB")
     end
@@ -216,7 +216,7 @@ RSpec.describe TRuby::ParallelProcessor do
 
   describe "#process_with_queue" do
     it "processes using work queue" do
-      files = ["x", "y", "z"]
+      files = %w[x y z]
       results = processor.process_with_queue(files) { |f| f * 2 }
 
       expect(results).to contain_exactly("xx", "yy", "zz")

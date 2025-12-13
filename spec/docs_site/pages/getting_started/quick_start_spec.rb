@@ -21,7 +21,6 @@ RSpec.describe "한글 문서: Quick Start" do
   it_behaves_like "valid documentation page", "getting-started/quick-start.md"
 
   describe "코드 예제" do
-
     # 예제 1: T-Ruby (라인 20)
     describe "예제 1: T-Ruby 코드" do
       let(:example) { examples[0] }

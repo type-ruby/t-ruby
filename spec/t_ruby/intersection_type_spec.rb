@@ -9,7 +9,7 @@ describe TRuby::IntersectionTypeParser do
       result = parser.parse
 
       expect(result[:type]).to eq(:intersection)
-      expect(result[:members]).to eq(["Readable", "Writable"])
+      expect(result[:members]).to eq(%w[Readable Writable])
     end
 
     it "parses intersection with three or more types" do
@@ -24,7 +24,7 @@ describe TRuby::IntersectionTypeParser do
       parser = TRuby::IntersectionTypeParser.new("Readable  &  Writable  &  Closeable")
       result = parser.parse
 
-      expect(result[:members]).to eq(["Readable", "Writable", "Closeable"])
+      expect(result[:members]).to eq(%w[Readable Writable Closeable])
     end
 
     it "identifies non-intersection types" do

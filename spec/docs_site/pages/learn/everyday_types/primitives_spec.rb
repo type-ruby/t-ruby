@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require_relative "../support/shared_examples"
+require_relative "../../support/shared_examples"
 
 RSpec.describe "한글 문서: Primitives" do
   include_context "docs site paths"
@@ -21,7 +21,6 @@ RSpec.describe "한글 문서: Primitives" do
   it_behaves_like "valid documentation page", "learn/everyday-types/primitives.md"
 
   describe "코드 예제" do
-
     # 예제 1: T-Ruby (라인 35)
     describe "예제 1: T-Ruby 코드" do
       let(:example) { examples[0] }

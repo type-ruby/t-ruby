@@ -119,9 +119,9 @@ RSpec.describe TRuby::RuntimeValidator do
         name: "greet",
         params: [
           { name: "name", type: "String" },
-          { name: "age", type: "Integer" }
+          { name: "age", type: "Integer" },
         ],
-        return_type: "String"
+        return_type: "String",
       }
 
       validations = validator.generate_function_validation(func_info)
@@ -133,9 +133,9 @@ RSpec.describe TRuby::RuntimeValidator do
         name: "foo",
         params: [
           { name: "x", type: nil },
-          { name: "y", type: "String" }
+          { name: "y", type: "String" },
         ],
-        return_type: nil
+        return_type: nil,
       }
 
       validations = validator.generate_function_validation(func_info)
@@ -156,9 +156,9 @@ RSpec.describe TRuby::RuntimeValidator do
           {
             name: "greet",
             params: [{ name: "name", type: "String" }],
-            return_type: "String"
-          }
-        ]
+            return_type: "String",
+          },
+        ],
       }
 
       transformed = validator.transform(source, parse_result)
@@ -174,10 +174,10 @@ RSpec.describe TRuby::RuntimeValidator do
           name: "add",
           params: [
             { name: "a", type: "Integer" },
-            { name: "b", type: "Integer" }
+            { name: "b", type: "Integer" },
           ],
-          return_type: "Integer"
-        }
+          return_type: "Integer",
+        },
       ]
 
       module_code = validator.generate_validation_module(functions)

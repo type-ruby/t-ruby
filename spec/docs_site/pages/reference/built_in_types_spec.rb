@@ -21,7 +21,6 @@ RSpec.describe "한글 문서: Built In Types" do
   it_behaves_like "valid documentation page", "reference/built-in-types.md"
 
   describe "코드 예제" do
-
     # 예제 1: T-Ruby (라인 22)
     describe "예제 1: T-Ruby 코드" do
       let(:example) { examples[0] }

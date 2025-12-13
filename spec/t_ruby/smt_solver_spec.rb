@@ -28,7 +28,7 @@ RSpec.describe TRuby::SMT do
 
       it "simplifies double negation" do
         v = var("x")
-        double_neg = !!v
+        double_neg = !v.nil?
         expect(double_neg.simplify).to eq(v)
       end
 
@@ -148,7 +148,7 @@ RSpec.describe TRuby::SMT do
         x = var("x")
         y = var("y")
         cnf = (x | y).to_cnf
-        expect(cnf).to eq([["x", "y"]])
+        expect(cnf).to eq([%w[x y]])
       end
     end
   end
@@ -248,7 +248,7 @@ RSpec.describe TRuby::SMT do
     end
 
     it "solves disjunction" do
-      cnf = [["x", "y"]]
+      cnf = [%w[x y]]
       result = solver.solve(cnf)
 
       expect(result).not_to be_nil
@@ -411,7 +411,7 @@ RSpec.describe TRuby::SMT do
             TRuby::IR::Parameter.new(
               name: "name",
               type_annotation: TRuby::IR::SimpleType.new(name: "String")
-            )
+            ),
           ],
           return_type: TRuby::IR::SimpleType.new(name: "String")
         )
@@ -431,7 +431,7 @@ RSpec.describe TRuby::SMT do
             TRuby::IR::Parameter.new(
               name: "y",
               type_annotation: TRuby::IR::SimpleType.new(name: "Integer")
-            )
+            ),
           ],
           return_type: nil
         )
@@ -520,7 +520,7 @@ RSpec.describe TRuby::SMT do
             TRuby::IR::Parameter.new(
               name: "b",
               type_annotation: TRuby::IR::SimpleType.new(name: "Integer")
-            )
+            ),
           ],
           return_type: nil,
           body: TRuby::IR::Block.new(statements: [ret])

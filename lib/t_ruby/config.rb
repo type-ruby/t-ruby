@@ -14,13 +14,13 @@ module TRuby
       "source" => {
         "include" => ["src"],
         "exclude" => [],
-        "extensions" => [".trb"]
+        "extensions" => [".trb"],
       },
       "output" => {
         "ruby_dir" => "build",
         "rbs_dir" => nil,
         "preserve_structure" => true,
-        "clean_before_build" => false
+        "clean_before_build" => false,
       },
       "compiler" => {
         "strictness" => "standard",
@@ -30,15 +30,15 @@ module TRuby
         "checks" => {
           "no_implicit_any" => false,
           "no_unused_vars" => false,
-          "strict_nil" => false
-        }
+          "strict_nil" => false,
+        },
       },
       "watch" => {
         "paths" => [],
         "debounce" => 100,
         "clear_screen" => false,
-        "on_success" => nil
-      }
+        "on_success" => nil,
+      },
     }.freeze
 
     # Legacy keys for migration detection
@@ -249,7 +249,7 @@ module TRuby
       value = strictness
       return if VALID_STRICTNESS.include?(value)
 
-      raise ConfigError, "Invalid compiler.strictness: '#{value}'. Must be one of: #{VALID_STRICTNESS.join(', ')}"
+      raise ConfigError, "Invalid compiler.strictness: '#{value}'. Must be one of: #{VALID_STRICTNESS.join(", ")}"
     end
 
     def load_raw_config(config_path)
@@ -308,8 +308,8 @@ module TRuby
       result = deep_dup(DEFAULT_CONFIG)
 
       # Migrate emit -> compiler.generate_rbs
-      if raw_config["emit"]
-        result["compiler"]["generate_rbs"] = raw_config["emit"]["rbs"] if raw_config["emit"].key?("rbs")
+      if raw_config["emit"]&.key?("rbs")
+        result["compiler"]["generate_rbs"] = raw_config["emit"]["rbs"]
       end
 
       # Migrate paths -> source.include and output.ruby_dir
@@ -344,8 +344,12 @@ module TRuby
     end
 
     def deep_dup(hash)
-      hash.each_with_object({}) do |(key, value), result|
-        result[key] = value.is_a?(Hash) ? deep_dup(value) : (value.is_a?(Array) ? value.dup : value)
+      hash.transform_values do |value|
+        if value.is_a?(Hash)
+          deep_dup(value)
+        else
+          (value.is_a?(Array) ? value.dup : value)
+        end
       end
     end
 

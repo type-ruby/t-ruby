@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require_relative "../support/shared_examples"
+require_relative "../../support/shared_examples"
 
 RSpec.describe "한글 문서: Blocks Procs Lambdas" do
   include_context "docs site paths"
@@ -21,7 +21,6 @@ RSpec.describe "한글 문서: Blocks Procs Lambdas" do
   it_behaves_like "valid documentation page", "learn/functions/blocks-procs-lambdas.md"
 
   describe "코드 예제" do
-
     # 예제 1: T-Ruby (라인 24)
     describe "예제 1: T-Ruby 코드" do
       let(:example) { examples[0] }

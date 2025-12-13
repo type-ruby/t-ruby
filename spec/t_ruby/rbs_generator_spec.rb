@@ -10,7 +10,7 @@ describe TRuby::RBSGenerator do
       func = {
         name: "greet",
         params: [{ name: "name", type: "String" }],
-        return_type: "String"
+        return_type: "String",
       }
 
       rbs = generator.generate_function_signature(func)
@@ -22,7 +22,7 @@ describe TRuby::RBSGenerator do
       func = {
         name: "hello",
         params: [],
-        return_type: "String"
+        return_type: "String",
       }
 
       rbs = generator.generate_function_signature(func)
@@ -34,9 +34,9 @@ describe TRuby::RBSGenerator do
         name: "add",
         params: [
           { name: "a", type: "Integer" },
-          { name: "b", type: "Integer" }
+          { name: "b", type: "Integer" },
         ],
-        return_type: "Integer"
+        return_type: "Integer",
       }
 
       rbs = generator.generate_function_signature(func)
@@ -48,7 +48,7 @@ describe TRuby::RBSGenerator do
       func = {
         name: "log",
         params: [{ name: "msg", type: "String" }],
-        return_type: "void"
+        return_type: "void",
       }
 
       rbs = generator.generate_function_signature(func)
@@ -59,7 +59,7 @@ describe TRuby::RBSGenerator do
       func = {
         name: "process",
         params: [{ name: "value", type: nil }],
-        return_type: nil
+        return_type: nil,
       }
 
       rbs = generator.generate_function_signature(func)
@@ -79,7 +79,7 @@ describe TRuby::RBSGenerator do
     it "generates multiple type aliases" do
       aliases = [
         { name: "UserId", definition: "String" },
-        { name: "Count", definition: "Integer" }
+        { name: "Count", definition: "Integer" },
       ]
 
       rbs = generator.generate_type_aliases(aliases)
@@ -94,8 +94,8 @@ describe TRuby::RBSGenerator do
         {
           name: "greet",
           params: [{ name: "name", type: "String" }],
-          return_type: "String"
-        }
+          return_type: "String",
+        },
       ]
       type_aliases = [{ name: "UserId", definition: "String" }]
 
@@ -114,8 +114,8 @@ describe TRuby::RBSGenerator do
         {
           name: "create",
           params: [{ name: "name", type: "String" }],
-          return_type: "Boolean"
-        }
+          return_type: "Boolean",
+        },
       ]
 
       rbs = generator.generate(functions, [])
@@ -129,7 +129,7 @@ describe TRuby::RBSGenerator do
       func = {
         name: "test_method",
         params: [{ name: "x", type: "Integer" }],
-        return_type: "String"
+        return_type: "String",
       }
 
       rbs = generator.generate_function_signature(func)
@@ -141,7 +141,7 @@ describe TRuby::RBSGenerator do
       func = {
         name: "process_items",
         params: [{ name: "items", type: "Array" }],
-        return_type: "Array"
+        return_type: "Array",
       }
 
       rbs = generator.generate_function_signature(func)
@@ -152,7 +152,7 @@ describe TRuby::RBSGenerator do
       func = {
         name: "get_data",
         params: [{ name: "key", type: "String" }],
-        return_type: "Hash"
+        return_type: "Hash",
       }
 
       rbs = generator.generate_function_signature(func)

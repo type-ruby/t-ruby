@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require_relative "../support/shared_examples"
+require_relative "../../support/shared_examples"
 
 RSpec.describe "한글 문서: Parameter Return Types" do
   include_context "docs site paths"
@@ -21,7 +21,6 @@ RSpec.describe "한글 문서: Parameter Return Types" do
   it_behaves_like "valid documentation page", "learn/functions/parameter-return-types.md"
 
   describe "코드 예제" do
-
     # 예제 1: T-Ruby (라인 20)
     describe "예제 1: T-Ruby 코드" do
       let(:example) { examples[0] }

@@ -10,13 +10,13 @@ module TRuby
 
     # LSP Error codes
     module ErrorCodes
-      PARSE_ERROR = -32700
-      INVALID_REQUEST = -32600
-      METHOD_NOT_FOUND = -32601
-      INVALID_PARAMS = -32602
-      INTERNAL_ERROR = -32603
-      SERVER_NOT_INITIALIZED = -32002
-      UNKNOWN_ERROR_CODE = -32001
+      PARSE_ERROR = -32_700
+      INVALID_REQUEST = -32_600
+      METHOD_NOT_FOUND = -32_601
+      INVALID_PARAMS = -32_602
+      INTERNAL_ERROR = -32_603
+      SERVER_NOT_INITIALIZED = -32_002
+      UNKNOWN_ERROR_CODE = -32_001
     end
 
     # LSP Completion item kinds
@@ -152,7 +152,7 @@ module TRuby
       end
 
       content_length = headers["Content-Length"]&.to_i
-      return nil unless content_length && content_length > 0
+      return nil unless content_length&.positive?
 
       # Read content
       content = @input.read(content_length)
@@ -178,7 +178,7 @@ module TRuby
       notification = {
         "jsonrpc" => "2.0",
         "method" => method,
-        "params" => params
+        "params" => params,
       }
       send_response(notification)
     end
@@ -210,7 +210,7 @@ module TRuby
 
     private
 
-    def dispatch_method(method, params, id)
+    def dispatch_method(method, params, _id)
       case method
       when "initialize"
         handle_initialize(params)
@@ -253,31 +253,31 @@ module TRuby
           "textDocumentSync" => {
             "openClose" => true,
             "change" => 1, # Full sync
-            "save" => { "includeText" => true }
+            "save" => { "includeText" => true },
           },
           "completionProvider" => {
             "triggerCharacters" => [":", "<", "|", "&"],
-            "resolveProvider" => false
+            "resolveProvider" => false,
           },
           "hoverProvider" => true,
           "definitionProvider" => true,
           "diagnosticProvider" => {
             "interFileDependencies" => false,
-            "workspaceDiagnostics" => false
+            "workspaceDiagnostics" => false,
           },
           "semanticTokensProvider" => {
             "legend" => {
               "tokenTypes" => SEMANTIC_TOKEN_TYPES,
-              "tokenModifiers" => SEMANTIC_TOKEN_MODIFIERS
+              "tokenModifiers" => SEMANTIC_TOKEN_MODIFIERS,
             },
             "full" => true,
-            "range" => false
-          }
+            "range" => false,
+          },
         },
         "serverInfo" => {
           "name" => "t-ruby-lsp",
-          "version" => VERSION
-        }
+          "version" => VERSION,
+        },
       }
     end
 
@@ -304,7 +304,7 @@ module TRuby
 
       @documents[uri] = {
         text: text,
-        version: text_document["version"]
+        version: text_document["version"],
       }
 
       # Parse and send diagnostics
@@ -321,7 +321,7 @@ module TRuby
       if changes && !changes.empty?
         @documents[uri] = {
           text: changes.last["text"],
-          version: text_document["version"]
+          version: text_document["version"],
         }
 
         # Re-parse and send diagnostics
@@ -336,9 +336,9 @@ module TRuby
 
       # Clear diagnostics
       send_notification("textDocument/publishDiagnostics", {
-        "uri" => uri,
-        "diagnostics" => []
-      })
+                          "uri" => uri,
+                          "diagnostics" => [],
+                        })
       nil
     end
 
@@ -363,9 +363,9 @@ module TRuby
       diagnostics = analyze_document(text)
 
       send_notification("textDocument/publishDiagnostics", {
-        "uri" => uri,
-        "diagnostics" => diagnostics
-      })
+                          "uri" => uri,
+                          "diagnostics" => diagnostics,
+                        })
     end
 
     def analyze_document(text)
@@ -377,12 +377,12 @@ module TRuby
 
       errors.each do |error|
         # Parse line number from error message
-        if error =~ /^Line (\d+):\s*(.+)$/
-          line_num = Regexp.last_match(1).to_i - 1 # LSP uses 0-based line numbers
-          message = Regexp.last_match(2)
+        next unless error =~ /^Line (\d+):\s*(.+)$/
 
-          diagnostics << create_diagnostic(line_num, message, DiagnosticSeverity::ERROR)
-        end
+        line_num = Regexp.last_match(1).to_i - 1 # LSP uses 0-based line numbers
+        message = Regexp.last_match(2)
+
+        diagnostics << create_diagnostic(line_num, message, DiagnosticSeverity::ERROR)
       end
 
       # Additional validation using Parser
@@ -428,25 +428,23 @@ module TRuby
         next unless line_num
 
         # Validate return type
-        if func[:return_type]
-          unless valid_type?(func[:return_type])
-            diagnostics << create_diagnostic(
-              line_num,
-              "Unknown return type '#{func[:return_type]}'",
-              DiagnosticSeverity::WARNING
-            )
-          end
+        if func[:return_type] && !valid_type?(func[:return_type])
+          diagnostics << create_diagnostic(
+            line_num,
+            "Unknown return type '#{func[:return_type]}'",
+            DiagnosticSeverity::WARNING
+          )
         end
 
         # Validate parameter types
         func[:params]&.each do |param|
-          if param[:type] && !valid_type?(param[:type])
-            diagnostics << create_diagnostic(
-              line_num,
-              "Unknown parameter type '#{param[:type]}' for '#{param[:name]}'",
-              DiagnosticSeverity::WARNING
-            )
-          end
+          next unless param[:type] && !valid_type?(param[:type])
+
+          diagnostics << create_diagnostic(
+            line_num,
+            "Unknown parameter type '#{param[:type]}' for '#{param[:name]}'",
+            DiagnosticSeverity::WARNING
+          )
         end
       end
     end
@@ -484,11 +482,11 @@ module TRuby
       {
         "range" => {
           "start" => { "line" => line, "character" => 0 },
-          "end" => { "line" => line, "character" => 1000 }
+          "end" => { "line" => line, "character" => 1000 },
         },
         "severity" => severity,
         "source" => "t-ruby",
-        "message" => message
+        "message" => message,
       }
     end
 
@@ -512,28 +510,29 @@ module TRuby
       completions = []
 
       # Context-aware completion
-      if prefix =~ /:\s*$/
+      case prefix
+      when /:\s*$/
         # After colon - suggest types
         completions.concat(type_completions)
-      elsif prefix =~ /\|\s*$/
+      when /\|\s*$/
         # After pipe - suggest types for union
         completions.concat(type_completions)
-      elsif prefix =~ /&\s*$/
+      when /&\s*$/
         # After ampersand - suggest types for intersection
         completions.concat(type_completions)
-      elsif prefix =~ /<\s*$/
+      when /<\s*$/
         # Inside generic - suggest types
         completions.concat(type_completions)
-      elsif prefix =~ /^\s*$/
+      when /^\s*$/
         # Start of line - suggest keywords
         completions.concat(keyword_completions)
-      elsif prefix =~ /^\s*def\s+\w*$/
+      when /^\s*def\s+\w*$/
         # Function definition - no completion needed
         completions = []
-      elsif prefix =~ /^\s*type\s+\w*$/
+      when /^\s*type\s+\w*$/
         # Type alias definition - no completion needed
         completions = []
-      elsif prefix =~ /^\s*interface\s+\w*$/
+      when /^\s*interface\s+\w*$/
         # Interface definition - no completion needed
         completions = []
       else
@@ -554,7 +553,7 @@ module TRuby
           "label" => type,
           "kind" => CompletionItemKind::CLASS,
           "detail" => "Built-in type",
-          "documentation" => "T-Ruby built-in type: #{type}"
+          "documentation" => "T-Ruby built-in type: #{type}",
         }
       end
     end
@@ -565,7 +564,7 @@ module TRuby
           "label" => keyword,
           "kind" => CompletionItemKind::KEYWORD,
           "detail" => "Keyword",
-          "documentation" => keyword_documentation(keyword)
+          "documentation" => keyword_documentation(keyword),
         }
       end
     end
@@ -586,17 +585,16 @@ module TRuby
     end
 
     def document_type_completions(text)
-      completions = []
       parser = Parser.new(text)
       result = parser.parse
 
       # Add type aliases from the document
-      (result[:type_aliases] || []).each do |alias_info|
-        completions << {
+      completions = (result[:type_aliases] || []).map do |alias_info|
+        {
           "label" => alias_info[:name],
           "kind" => CompletionItemKind::CLASS,
           "detail" => "Type alias",
-          "documentation" => "type #{alias_info[:name]} = #{alias_info[:definition]}"
+          "documentation" => "type #{alias_info[:name]} = #{alias_info[:definition]}",
         }
       end
 
@@ -606,7 +604,7 @@ module TRuby
           "label" => interface_info[:name],
           "kind" => CompletionItemKind::INTERFACE,
           "detail" => "Interface",
-          "documentation" => "interface #{interface_info[:name]}"
+          "documentation" => "interface #{interface_info[:name]}",
         }
       end
 
@@ -637,9 +635,9 @@ module TRuby
       {
         "contents" => {
           "kind" => "markdown",
-          "value" => hover_info
+          "value" => hover_info,
         },
-        "range" => word_range(position["line"], line, char_pos, word)
+        "range" => word_range(position["line"], line, char_pos, word),
       }
     end
 
@@ -651,14 +649,10 @@ module TRuby
       end_pos = char_pos
 
       # Move start back to word start
-      while start_pos > 0 && line[start_pos - 1] =~ /[\w<>]/
-        start_pos -= 1
-      end
+      start_pos -= 1 while start_pos.positive? && line[start_pos - 1] =~ /[\w<>]/
 
       # Move end forward to word end
-      while end_pos < line.length && line[end_pos] =~ /[\w<>]/
-        end_pos += 1
-      end
+      end_pos += 1 while end_pos < line.length && line[end_pos] =~ /[\w<>]/
 
       return nil if start_pos == end_pos
 
@@ -671,7 +665,7 @@ module TRuby
 
       {
         "start" => { "line" => line_num, "character" => start_pos },
-        "end" => { "line" => line_num, "character" => end_pos }
+        "end" => { "line" => line_num, "character" => end_pos },
       }
     end
 
@@ -701,11 +695,11 @@ module TRuby
 
       # Check if it's a function
       (result[:functions] || []).each do |func|
-        if func[:name] == word
-          params = func[:params].map { |p| "#{p[:name]}: #{p[:type] || 'untyped'}" }.join(", ")
-          return_type = func[:return_type] || "void"
-          return "**Function**\n\n```ruby\ndef #{func[:name]}(#{params}): #{return_type}\n```"
-        end
+        next unless func[:name] == word
+
+        params = func[:params].map { |p| "#{p[:name]}: #{p[:type] || "untyped"}" }.join(", ")
+        return_type = func[:return_type] || "void"
+        return "**Function**\n\n```ruby\ndef #{func[:name]}(#{params}): #{return_type}\n```"
       end
 
       nil
@@ -745,34 +739,30 @@ module TRuby
             "uri" => uri,
             "range" => {
               "start" => { "line" => idx, "character" => 0 },
-              "end" => { "line" => idx, "character" => line.length }
-            }
+              "end" => { "line" => idx, "character" => line.length },
+            },
           }
         end
-      end
 
-      # Search for interface definition
-      lines.each_with_index do |line, idx|
+        # Search for interface definition
         if line.match?(/^\s*interface\s+#{Regexp.escape(word)}\s*$/)
           return {
             "uri" => uri,
             "range" => {
               "start" => { "line" => idx, "character" => 0 },
-              "end" => { "line" => idx, "character" => line.length }
-            }
+              "end" => { "line" => idx, "character" => line.length },
+            },
           }
         end
-      end
 
-      # Search for function definition
-      lines.each_with_index do |line, idx|
+        # Search for function definition
         if line.match?(/^\s*def\s+#{Regexp.escape(word)}\s*\(/)
           return {
             "uri" => uri,
             "range" => {
               "start" => { "line" => idx, "character" => 0 },
-              "end" => { "line" => idx, "character" => line.length }
-            }
+              "end" => { "line" => idx, "character" => line.length },
+            },
           }
         end
       end
@@ -794,13 +784,12 @@ module TRuby
     end
 
     def generate_semantic_tokens(text)
-      tokens = []
       lines = text.split("\n")
 
       # Parse the document to get IR
       parser = Parser.new(text, use_combinator: true)
       parse_result = parser.parse
-      ir_program = parser.ir_program
+      parser.ir_program
 
       # Collect all tokens from parsing
       raw_tokens = []
@@ -808,25 +797,25 @@ module TRuby
       # Process type aliases
       (parse_result[:type_aliases] || []).each do |alias_info|
         lines.each_with_index do |line, line_idx|
-          if match = line.match(/^\s*type\s+(#{Regexp.escape(alias_info[:name])})\s*=/)
-            # 'type' keyword
-            type_pos = line.index("type")
-            raw_tokens << [line_idx, type_pos, 4, SemanticTokenTypes::KEYWORD, SemanticTokenModifiers::DECLARATION]
+          next unless (match = line.match(/^\s*type\s+(#{Regexp.escape(alias_info[:name])})\s*=/))
 
-            # Type name
-            name_pos = match.begin(1)
-            raw_tokens << [line_idx, name_pos, alias_info[:name].length, SemanticTokenTypes::TYPE, SemanticTokenModifiers::DEFINITION]
+          # 'type' keyword
+          type_pos = line.index("type")
+          raw_tokens << [line_idx, type_pos, 4, SemanticTokenTypes::KEYWORD, SemanticTokenModifiers::DECLARATION]
 
-            # Type definition (after =)
-            add_type_tokens(raw_tokens, line, line_idx, alias_info[:definition])
-          end
+          # Type name
+          name_pos = match.begin(1)
+          raw_tokens << [line_idx, name_pos, alias_info[:name].length, SemanticTokenTypes::TYPE, SemanticTokenModifiers::DEFINITION]
+
+          # Type definition (after =)
+          add_type_tokens(raw_tokens, line, line_idx, alias_info[:definition])
         end
       end
 
       # Process interfaces
       (parse_result[:interfaces] || []).each do |interface_info|
         lines.each_with_index do |line, line_idx|
-          if match = line.match(/^\s*interface\s+(#{Regexp.escape(interface_info[:name])})/)
+          if (match = line.match(/^\s*interface\s+(#{Regexp.escape(interface_info[:name])})/))
             # 'interface' keyword
             interface_pos = line.index("interface")
             raw_tokens << [line_idx, interface_pos, 9, SemanticTokenTypes::KEYWORD, SemanticTokenModifiers::DECLARATION]
@@ -838,13 +827,13 @@ module TRuby
 
           # Interface members
           interface_info[:members]&.each do |member|
-            if match = line.match(/^\s*(#{Regexp.escape(member[:name])})\s*:\s*/)
-              prop_pos = match.begin(1)
-              raw_tokens << [line_idx, prop_pos, member[:name].length, SemanticTokenTypes::PROPERTY, 0]
+            next unless (match = line.match(/^\s*(#{Regexp.escape(member[:name])})\s*:\s*/))
 
-              # Member type
-              add_type_tokens(raw_tokens, line, line_idx, member[:type])
-            end
+            prop_pos = match.begin(1)
+            raw_tokens << [line_idx, prop_pos, member[:name].length, SemanticTokenTypes::PROPERTY, 0]
+
+            # Member type
+            add_type_tokens(raw_tokens, line, line_idx, member[:type])
           end
         end
       end
@@ -852,39 +841,39 @@ module TRuby
       # Process functions
       (parse_result[:functions] || []).each do |func|
         lines.each_with_index do |line, line_idx|
-          if match = line.match(/^\s*def\s+(#{Regexp.escape(func[:name])})\s*\(/)
-            # 'def' keyword
-            def_pos = line.index("def")
-            raw_tokens << [line_idx, def_pos, 3, SemanticTokenTypes::KEYWORD, 0]
+          next unless (match = line.match(/^\s*def\s+(#{Regexp.escape(func[:name])})\s*\(/))
 
-            # Function name
-            name_pos = match.begin(1)
-            raw_tokens << [line_idx, name_pos, func[:name].length, SemanticTokenTypes::FUNCTION, SemanticTokenModifiers::DEFINITION]
+          # 'def' keyword
+          def_pos = line.index("def")
+          raw_tokens << [line_idx, def_pos, 3, SemanticTokenTypes::KEYWORD, 0]
 
-            # Parameters
-            func[:params]&.each do |param|
-              if param_match = line.match(/\b(#{Regexp.escape(param[:name])})\s*(?::\s*)?/)
-                param_pos = param_match.begin(1)
-                raw_tokens << [line_idx, param_pos, param[:name].length, SemanticTokenTypes::PARAMETER, 0]
+          # Function name
+          name_pos = match.begin(1)
+          raw_tokens << [line_idx, name_pos, func[:name].length, SemanticTokenTypes::FUNCTION, SemanticTokenModifiers::DEFINITION]
 
-                # Parameter type if present
-                if param[:type]
-                  add_type_tokens(raw_tokens, line, line_idx, param[:type])
-                end
-              end
+          # Parameters
+          func[:params]&.each do |param|
+            next unless (param_match = line.match(/\b(#{Regexp.escape(param[:name])})\s*(?::\s*)?/))
+
+            param_pos = param_match.begin(1)
+            raw_tokens << [line_idx, param_pos, param[:name].length, SemanticTokenTypes::PARAMETER, 0]
+
+            # Parameter type if present
+            if param[:type]
+              add_type_tokens(raw_tokens, line, line_idx, param[:type])
             end
+          end
 
-            # Return type
-            if func[:return_type]
-              add_type_tokens(raw_tokens, line, line_idx, func[:return_type])
-            end
+          # Return type
+          if func[:return_type]
+            add_type_tokens(raw_tokens, line, line_idx, func[:return_type])
           end
         end
       end
 
       # Process 'end' keywords
       lines.each_with_index do |line, line_idx|
-        if match = line.match(/^\s*(end)\s*$/)
+        if (match = line.match(/^\s*(end)\s*$/))
           end_pos = match.begin(1)
           raw_tokens << [line_idx, end_pos, 3, SemanticTokenTypes::KEYWORD, 0]
         end
@@ -912,7 +901,7 @@ module TRuby
 
       # Handle generic types like Array<String>
       if type_str.include?("<")
-        if match = type_str.match(/^(\w+)<(.+)>$/)
+        if (match = type_str.match(/^(\w+)<(.+)>$/))
           base = match[1]
           base_pos = line.index(base, pos)
           if base_pos
@@ -923,8 +912,9 @@ module TRuby
           # (simplified - just mark them as types)
           args = match[2]
           args.split(/[,\s]+/).each do |arg|
-            arg = arg.strip.gsub(/[<>]/, '')
+            arg = arg.strip.gsub(/[<>]/, "")
             next if arg.empty?
+
             arg_pos = line.index(arg, pos)
             if arg_pos
               modifier = BUILT_IN_TYPES.include?(arg) ? SemanticTokenModifiers::DEFAULT_LIBRARY : 0
@@ -972,7 +962,7 @@ module TRuby
         line, char, length, token_type, modifiers = token
 
         delta_line = line - prev_line
-        delta_char = delta_line == 0 ? char - prev_char : char
+        delta_char = delta_line.zero? ? char - prev_char : char
 
         encoded << delta_line
         encoded << delta_char
@@ -993,7 +983,7 @@ module TRuby
       {
         "jsonrpc" => "2.0",
         "id" => id,
-        "result" => result
+        "result" => result,
       }
     end
 
@@ -1003,8 +993,8 @@ module TRuby
         "id" => id,
         "error" => {
           "code" => code,
-          "message" => message
-        }
+          "message" => message,
+        },
       }
     end
   end

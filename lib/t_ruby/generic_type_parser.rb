@@ -30,7 +30,7 @@ module TRuby
       {
         type: :generic,
         base: base_name,
-        params: params
+        params: params,
       }
     end
 
@@ -50,7 +50,7 @@ module TRuby
           depth -= 1
           current += char
         when ","
-          if depth == 0
+          if depth.zero?
             params << current.strip
             current = ""
           else
@@ -61,7 +61,7 @@ module TRuby
         end
       end
 
-      params << current.strip if current.length > 0
+      params << current.strip if current.length.positive?
       params
     end
   end

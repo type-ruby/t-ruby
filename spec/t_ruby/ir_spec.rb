@@ -114,7 +114,7 @@ RSpec.describe TRuby::IR do
           type: :success,
           type_aliases: [{ name: "UserId", definition: "String" }],
           interfaces: [],
-          functions: []
+          functions: [],
         }
 
         program = builder.build(parse_result)
@@ -129,7 +129,7 @@ RSpec.describe TRuby::IR do
           type: :success,
           type_aliases: [{ name: "UserId", definition: "String" }],
           interfaces: [],
-          functions: []
+          functions: [],
         }
 
         program = builder.build(parse_result)
@@ -145,7 +145,7 @@ RSpec.describe TRuby::IR do
           type: :success,
           type_aliases: [{ name: "StringOrNil", definition: "String | nil" }],
           interfaces: [],
-          functions: []
+          functions: [],
         }
 
         program = builder.build(parse_result)
@@ -160,7 +160,7 @@ RSpec.describe TRuby::IR do
           type: :success,
           type_aliases: [{ name: "StringArray", definition: "Array<String>" }],
           interfaces: [],
-          functions: []
+          functions: [],
         }
 
         program = builder.build(parse_result)
@@ -176,7 +176,7 @@ RSpec.describe TRuby::IR do
           type: :success,
           type_aliases: [{ name: "Matrix", definition: "Array<Array<Integer>>" }],
           interfaces: [],
-          functions: []
+          functions: [],
         }
 
         program = builder.build(parse_result)
@@ -193,10 +193,10 @@ RSpec.describe TRuby::IR do
           interfaces: [{
             name: "Serializable",
             members: [
-              { name: "to_json", type: "String" }
-            ]
+              { name: "to_json", type: "String" },
+            ],
           }],
-          functions: []
+          functions: [],
         }
 
         program = builder.build(parse_result)
@@ -216,10 +216,10 @@ RSpec.describe TRuby::IR do
           functions: [{
             name: "greet",
             params: [
-              { name: "name", type: "String" }
+              { name: "name", type: "String" },
             ],
-            return_type: "String"
-          }]
+            return_type: "String",
+          }],
         }
 
         program = builder.build(parse_result)
@@ -237,7 +237,7 @@ RSpec.describe TRuby::IR do
           type: :success,
           type_aliases: [{ name: "Callback", definition: "(String) -> Integer" }],
           interfaces: [],
-          functions: []
+          functions: [],
         }
 
         program = builder.build(parse_result)
@@ -253,7 +253,7 @@ RSpec.describe TRuby::IR do
           type: :success,
           type_aliases: [{ name: "MaybeString", definition: "String?" }],
           interfaces: [],
-          functions: []
+          functions: [],
         }
 
         program = builder.build(parse_result)
@@ -333,7 +333,7 @@ RSpec.describe TRuby::IR do
           TRuby::IR::InterfaceMember.new(
             name: "to_json",
             type_signature: TRuby::IR::SimpleType.new(name: "String")
-          )
+          ),
         ]
       )
       program = TRuby::IR::Program.new(declarations: [interface])
@@ -352,7 +352,7 @@ RSpec.describe TRuby::IR do
           TRuby::IR::Parameter.new(
             name: "name",
             type_annotation: TRuby::IR::SimpleType.new(name: "String")
-          )
+          ),
         ],
         return_type: TRuby::IR::SimpleType.new(name: "String")
       )
@@ -373,7 +373,7 @@ RSpec.describe TRuby::IR do
         TRuby::IR::Assignment.new(
           target: "x",
           value: TRuby::IR::Literal.new(value: 2, literal_type: :integer)
-        )
+        ),
       ]
 
       block = TRuby::IR::Block.new(statements: statements)
@@ -460,7 +460,7 @@ RSpec.describe TRuby::IR do
         TRuby::IR::Assignment.new(
           target: "x",
           value: TRuby::IR::Literal.new(value: 1, literal_type: :integer)
-        )
+        ),
       ]
 
       block = TRuby::IR::Block.new(statements: statements)

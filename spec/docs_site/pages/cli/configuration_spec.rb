@@ -21,7 +21,6 @@ RSpec.describe "한글 문서: Configuration" do
   it_behaves_like "valid documentation page", "cli/configuration.md"
 
   describe "코드 예제" do
-
     # 예제 1: T-Ruby (라인 259)
     describe "예제 1: T-Ruby 코드" do
       let(:example) { examples[0] }

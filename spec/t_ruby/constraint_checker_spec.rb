@@ -86,16 +86,16 @@ RSpec.describe TRuby::ConstraintChecker do
   describe "#validate" do
     before do
       checker.register("PositiveInt", base_type: "Integer", constraints: [
-        TRuby::NumericRangeConstraint.new(base_type: "Integer", min: 1)
-      ])
+                         TRuby::NumericRangeConstraint.new(base_type: "Integer", min: 1),
+                       ])
 
       checker.register("Percentage", base_type: "Integer", constraints: [
-        TRuby::NumericRangeConstraint.new(base_type: "Integer", min: 0, max: 100)
-      ])
+                         TRuby::NumericRangeConstraint.new(base_type: "Integer", min: 0, max: 100),
+                       ])
 
       checker.register("ShortString", base_type: "String", constraints: [
-        TRuby::LengthConstraint.new(base_type: "String", max_length: 10)
-      ])
+                         TRuby::LengthConstraint.new(base_type: "String", max_length: 10),
+                       ])
     end
 
     it "validates positive integer" do
@@ -140,8 +140,8 @@ RSpec.describe TRuby::ConstraintChecker do
   describe "#generate_validation_code" do
     before do
       checker.register("PositiveInt", base_type: "Integer", constraints: [
-        TRuby::NumericRangeConstraint.new(base_type: "Integer", min: 1)
-      ])
+                         TRuby::NumericRangeConstraint.new(base_type: "Integer", min: 1),
+                       ])
     end
 
     it "generates validation code" do
@@ -260,8 +260,8 @@ RSpec.describe TRuby::ConstrainedTypeRegistry do
   describe "#validate" do
     before do
       registry.register("PositiveInt", base_type: "Integer", constraints: [
-        TRuby::NumericRangeConstraint.new(base_type: "Integer", min: 1)
-      ])
+                          TRuby::NumericRangeConstraint.new(base_type: "Integer", min: 1),
+                        ])
     end
 
     it "validates against registered type" do
@@ -273,8 +273,8 @@ RSpec.describe TRuby::ConstrainedTypeRegistry do
   describe "#validation_code" do
     before do
       registry.register("PositiveInt", base_type: "Integer", constraints: [
-        TRuby::NumericRangeConstraint.new(base_type: "Integer", min: 1)
-      ])
+                          TRuby::NumericRangeConstraint.new(base_type: "Integer", min: 1),
+                        ])
     end
 
     it "generates validation code" do

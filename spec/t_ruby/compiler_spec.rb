@@ -23,10 +23,10 @@ describe TRuby::Compiler do
           File.write(input_file, "puts 'Hello, world!'")
 
           # Create a custom config with output in tmpdir
-          config_data = {
-            "emit" => {"rb" => true, "rbs" => false, "dtrb" => false},
-            "paths" => {"src" => "./src", "out" => tmpdir},
-            "strict" => {"rbs_compat" => true, "null_safety" => false, "inference" => "basic"}
+          {
+            "emit" => { "rb" => true, "rbs" => false, "dtrb" => false },
+            "paths" => { "src" => "./src", "out" => tmpdir },
+            "strict" => { "rbs_compat" => true, "null_safety" => false, "inference" => "basic" },
           }
           allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
           allow_any_instance_of(TRuby::Config).to receive(:src_dir).and_return("./src")
@@ -73,11 +73,11 @@ describe TRuby::Compiler do
         Dir.mktmpdir do |tmpdir|
           input_file = File.join(tmpdir, "script.trb")
           # Write content with string interpolation
-          File.write(input_file, 'def greet(person)' + "\n" +
-                                 '  puts "Hello, #{person}!"' + "\n" +
-                                 'end' + "\n" +
-                                 "\n" +
-                                 'greet("world")' + "\n")
+          File.write(input_file, "def greet(person)" + "\n  " \
+                                                       'puts "Hello, #{person}!"' + "\n" \
+                                                                                    "end" + "\n" \
+                                                                                            "\n" \
+                                                                                            'greet("world")' + "\n")
 
           allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
 
@@ -116,18 +116,18 @@ describe TRuby::Compiler do
       it "raises ArgumentError when file doesn't exist" do
         compiler = TRuby::Compiler.new(config)
 
-        expect {
+        expect do
           compiler.compile("/nonexistent/path/file.trb")
-        }.to raise_error(ArgumentError, /File not found/)
+        end.to raise_error(ArgumentError, /File not found/)
       end
 
       it "raises ArgumentError with descriptive message for missing file" do
         missing_file = "/path/to/missing.trb"
         compiler = TRuby::Compiler.new(config)
 
-        expect {
+        expect do
           compiler.compile(missing_file)
-        }.to raise_error(ArgumentError, /#{Regexp.escape(missing_file)}/)
+        end.to raise_error(ArgumentError, /#{Regexp.escape(missing_file)}/)
       end
 
       it "compiles .rb files (copies and generates rbs)" do
@@ -156,9 +156,9 @@ describe TRuby::Compiler do
 
           compiler = TRuby::Compiler.new(config)
 
-          expect {
+          expect do
             compiler.compile(txt_file)
-          }.to raise_error(ArgumentError, /Expected .trb or .rb file/)
+          end.to raise_error(ArgumentError, /Expected .trb or .rb file/)
         end
       end
 
@@ -169,9 +169,9 @@ describe TRuby::Compiler do
 
           compiler = TRuby::Compiler.new(config)
 
-          expect {
+          expect do
             compiler.compile(rbs_file)
-          }.to raise_error(ArgumentError, /Expected .trb or .rb file/)
+          end.to raise_error(ArgumentError, /Expected .trb or .rb file/)
         end
       end
     end
@@ -239,7 +239,7 @@ describe TRuby::Compiler do
     context "with large files" do
       it "handles larger .trb files" do
         Dir.mktmpdir do |tmpdir|
-          large_content = "puts 'line'\n" * 10000
+          large_content = "puts 'line'\n" * 10_000
           input_file = File.join(tmpdir, "large.trb")
           File.write(input_file, large_content)
 

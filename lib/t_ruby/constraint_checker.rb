@@ -42,7 +42,7 @@ module TRuby
     end
 
     def satisfied?(value_type)
-      @left_type == value_type || @right_type == value_type
+      [@left_type, @right_type].include?(value_type)
     end
   end
 
@@ -62,6 +62,7 @@ module TRuby
       return false unless value.is_a?(Numeric)
       return false if @min && value < @min
       return false if @max && value > @max
+
       true
     end
 
@@ -78,6 +79,7 @@ module TRuby
       return "#{@min}..#{@max}" if @min && @max
       return ">= #{@min}" if @min
       return "<= #{@max}" if @max
+
       ""
     end
   end
@@ -94,6 +96,7 @@ module TRuby
 
     def satisfied?(value)
       return false unless value.is_a?(String)
+
       @pattern.match?(value)
     end
 
@@ -145,10 +148,12 @@ module TRuby
 
     def satisfied?(value)
       return false unless value.respond_to?(:length)
+
       len = value.length
       return len == @exact_length if @exact_length
       return false if @min_length && len < @min_length
       return false if @max_length && len > @max_length
+
       true
     end
 
@@ -167,6 +172,7 @@ module TRuby
 
     def build_condition
       return "length == #{@exact_length}" if @exact_length
+
       parts = []
       parts << "length >= #{@min_length}" if @min_length
       parts << "length <= #{@max_length}" if @max_length
@@ -187,7 +193,7 @@ module TRuby
     def register(name, base_type:, constraints: [])
       @constraints[name] = {
         base_type: base_type,
-        constraints: constraints
+        constraints: constraints,
       }
     end
 
@@ -213,7 +219,7 @@ module TRuby
         return {
           name: name,
           base_type: base_type,
-          constraints: [BoundsConstraint.new(subtype: name, supertype: base_type)]
+          constraints: [BoundsConstraint.new(subtype: name, supertype: base_type)],
         }
       end
 
@@ -325,8 +331,8 @@ module TRuby
       end
 
       # Pattern: /regex/
-      if condition.match?(/^\/(.+)\/$/)
-        match = condition.match(/^\/(.+)\/$/)
+      if condition.match?(%r{^/(.+)/$})
+        match = condition.match(%r{^/(.+)/$})
         constraints << PatternConstraint.new(base_type: base_type, pattern: match[1])
       end
 
@@ -353,7 +359,7 @@ module TRuby
       # Predicate: positive?, negative?, empty?, etc.
       if condition.match?(/^(\w+)\?$/)
         match = condition.match(/^(\w+)\?$/)
-        constraints << PredicateConstraint.new(base_type: base_type, predicate: "#{match[1]}?".to_sym)
+        constraints << PredicateConstraint.new(base_type: base_type, predicate: :"#{match[1]}?")
       end
 
       constraints
@@ -367,7 +373,7 @@ module TRuby
       when "Numeric" then value.is_a?(Numeric)
       when "Array" then value.is_a?(Array)
       when "Hash" then value.is_a?(Hash)
-      when "Boolean" then value == true || value == false
+      when "Boolean" then [true, false].include?(value)
       when "Symbol" then value.is_a?(Symbol)
       else true # Unknown types pass through
       end
@@ -388,7 +394,7 @@ module TRuby
       @types[name] = {
         base_type: base_type,
         constraints: constraints,
-        defined_at: caller_locations(1, 1).first
+        defined_at: caller_locations(1, 1).first,
       }
       @checker.register(name, base_type: base_type, constraints: constraints)
     end

@@ -32,7 +32,7 @@ module TRuby
         key: @key,
         value: @value,
         created_at: @created_at.to_i,
-        hits: @hits
+        hits: @hits,
       }
     end
   end
@@ -96,6 +96,7 @@ module TRuby
     def hit_rate
       total = @hits + @misses
       return 0.0 if total.zero?
+
       @hits.to_f / total
     end
 
@@ -105,7 +106,7 @@ module TRuby
         max_size: @max_size,
         hits: @hits,
         misses: @misses,
-        hit_rate: hit_rate
+        hit_rate: hit_rate,
       }
     end
 
@@ -160,7 +161,7 @@ module TRuby
 
     def delete(key)
       path = cache_path(key)
-      File.delete(path) if File.exist?(path)
+      FileUtils.rm_f(path)
     end
 
     def clear
@@ -260,7 +261,7 @@ module TRuby
   # Declaration file cache
   class DeclarationCache
     def initialize(cache_dir: ".t-ruby-cache/declarations")
-      @file_cache = FileCache.new(cache_dir: cache_dir, max_age: 86400) # 24 hours
+      @file_cache = FileCache.new(cache_dir: cache_dir, max_age: 86_400) # 24 hours
       @memory_cache = MemoryCache.new(max_size: 200)
     end
 
@@ -368,6 +369,7 @@ module TRuby
 
     def file_hash(file_path)
       return nil unless File.exist?(file_path)
+
       Digest::SHA256.hexdigest(File.read(file_path))
     end
   end
@@ -412,7 +414,11 @@ module TRuby
       threads = @thread_count.times.map do
         Thread.new do
           loop do
-            file = queue.pop(true) rescue break
+            file = begin
+              queue.pop(true)
+            rescue StandardError
+              break
+            end
             result = block.call(file)
             mutex.synchronize { results << result }
           end
@@ -428,7 +434,7 @@ module TRuby
     def determine_thread_count
       # Use number of CPU cores, max 8
       [Etc.nprocessors, 8].min
-    rescue
+    rescue StandardError
       4
     end
 
@@ -443,8 +449,8 @@ module TRuby
 
     def initialize(type_checker: nil)
       @type_checker = type_checker || TypeChecker.new
-      @file_types = {}  # file_path => { types: [], functions: [], interfaces: [] }
-      @global_registry = {}  # name => { file: path, kind: :type/:func/:interface, definition: ... }
+      @file_types = {} # file_path => { types: [], functions: [], interfaces: [] }
+      @global_registry = {} # name => { file: path, kind: :type/:func/:interface, definition: ... }
       @errors = []
       @warnings = []
     end
@@ -489,7 +495,7 @@ module TRuby
       {
         success: @errors.empty?,
         errors: @errors,
-        warnings: @warnings
+        warnings: @warnings,
       }
     end
 
@@ -502,24 +508,20 @@ module TRuby
         when IR::MethodDef
           # Check parameter types
           decl.params.each do |param|
-            if param.type_annotation
-              unless type_exists?(param.type_annotation)
-                file_errors << {
-                  file: file_path,
-                  message: "Unknown type '#{type_name(param.type_annotation)}' in parameter '#{param.name}'"
-                }
-              end
-            end
+            next unless param.type_annotation && !type_exists?(param.type_annotation)
+
+            file_errors << {
+              file: file_path,
+              message: "Unknown type '#{type_name(param.type_annotation)}' in parameter '#{param.name}'",
+            }
           end
 
           # Check return type
-          if decl.return_type
-            unless type_exists?(decl.return_type)
-              file_errors << {
-                file: file_path,
-                message: "Unknown return type '#{type_name(decl.return_type)}' in function '#{decl.name}'"
-              }
-            end
+          if decl.return_type && !type_exists?(decl.return_type)
+            file_errors << {
+              file: file_path,
+              message: "Unknown return type '#{type_name(decl.return_type)}' in function '#{decl.name}'",
+            }
           end
         end
       end
@@ -552,7 +554,7 @@ module TRuby
         # Duplicate definition from different file
         @warnings << {
           message: "#{kind.to_s.capitalize} '#{name}' defined in multiple files",
-          files: [@global_registry[name][:file], file_path]
+          files: [@global_registry[name][:file], file_path],
         }
       end
 
@@ -568,7 +570,7 @@ module TRuby
         duplicates.each do |name|
           @errors << {
             file: file,
-            message: "Duplicate definition of '#{name}'"
+            message: "Duplicate definition of '#{name}'",
           }
         end
       end
@@ -580,12 +582,12 @@ module TRuby
         info[:types].each do |type_info|
           referenced_types = extract_type_references(type_info[:definition])
           referenced_types.each do |ref|
-            unless type_exists_by_name?(ref)
-              @errors << {
-                file: file_path,
-                message: "Unresolved type reference '#{ref}' in type alias '#{type_info[:name]}'"
-              }
-            end
+            next if type_exists_by_name?(ref)
+
+            @errors << {
+              file: file_path,
+              message: "Unresolved type reference '#{ref}' in type alias '#{type_info[:name]}'",
+            }
           end
         end
       end
@@ -608,13 +610,15 @@ module TRuby
       when IR::NullableType
         type_exists?(type_node.inner_type)
       else
-        true  # Assume valid for unknown types
+        true # Assume valid for unknown types
       end
     end
 
     def type_exists_by_name?(name)
-      return true if %w[String Integer Float Boolean Array Hash Symbol void nil Object Numeric Enumerable].include?(name)
+      return true if %w[String Integer Float Boolean Array Hash Symbol void nil Object Numeric
+                        Enumerable].include?(name)
       return true if @global_registry[name]
+
       false
     end
 
@@ -655,7 +659,7 @@ module TRuby
 
     def initialize(compiler, cache: nil, enable_cross_file: true)
       super(compiler, cache: cache)
-      @ir_cache = {}  # file_path => IR::Program
+      @ir_cache = {} # file_path => IR::Program
       @cross_file_checker = CrossFileTypeChecker.new if enable_cross_file
     end
 
@@ -685,11 +689,9 @@ module TRuby
 
       # First pass: compile and register all files
       file_paths.each do |file_path|
-        begin
-          results[file_path] = compile_with_ir(file_path)
-        rescue => e
-          errors << { file: file_path, error: e.message }
-        end
+        results[file_path] = compile_with_ir(file_path)
+      rescue StandardError => e
+        errors << { file: file_path, error: e.message }
       end
 
       # Second pass: cross-file type checking
@@ -701,7 +703,7 @@ module TRuby
       {
         results: results,
         errors: errors,
-        success: errors.empty?
+        success: errors.empty?,
       }
     end
 
@@ -721,6 +723,7 @@ module TRuby
 
     def file_hash(file_path)
       return nil unless File.exist?(file_path)
+
       Digest::SHA256.hexdigest(File.read(file_path))
     end
   end
@@ -751,7 +754,7 @@ module TRuby
       @timings.sort_by { |_, v| -v }.each do |name, time|
         calls = @call_counts[name]
         avg = time / calls
-        puts "#{name}: #{format('%.3f', time)}s total, #{calls} calls, #{format('%.3f', avg * 1000)}ms avg"
+        puts "#{name}: #{format("%.3f", time)}s total, #{calls} calls, #{format("%.3f", avg * 1000)}ms avg"
       end
     end
 
@@ -766,7 +769,7 @@ module TRuby
           name: name,
           total_time: time,
           call_count: @call_counts[name],
-          avg_time: time / @call_counts[name]
+          avg_time: time / @call_counts[name],
         }
       end
     end

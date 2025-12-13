@@ -145,14 +145,14 @@ RSpec.describe TRuby::TypeChecker do
         "add",
         params: [
           { name: "a", type: "Integer" },
-          { name: "b", type: "Integer" }
+          { name: "b", type: "Integer" },
         ],
         return_type: "Integer"
       )
     end
 
     it "validates correct argument types" do
-      checker.check_call("add", ["1", "2"])
+      checker.check_call("add", %w[1 2])
       expect(checker.errors).to be_empty
     end
 

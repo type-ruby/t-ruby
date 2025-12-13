@@ -63,7 +63,7 @@ module TRuby
       # Hash literals
       /^\{.*\}$/ => "Hash",
       # Regex literals
-      /^\/.*\/$/ => "Regexp"
+      %r{^/.*/$} => "Regexp",
     }.freeze
 
     # Method return type patterns
@@ -131,7 +131,7 @@ module TRuby
       "equal?" => "Boolean",
       "inspect" => "String",
       "dup" => nil,
-      "clone" => nil
+      "clone" => nil,
     }.freeze
 
     # Operator return types
@@ -161,7 +161,7 @@ module TRuby
       "^" => "Integer",
       "~" => "Integer",
       "<<" => "Integer",
-      ">>" => "Integer"
+      ">>" => "Integer",
     }.freeze
 
     def initialize
@@ -277,15 +277,15 @@ module TRuby
         next unless arg_type
 
         # Extract generic parameter from function param type
-        if param[:type].match?(/^(\w+)<(\w+)>$/)
-          match = param[:type].match(/^(\w+)<(\w+)>$/)
-          generic_name = match[2]
+        next unless param[:type].match?(/^(\w+)<(\w+)>$/)
 
-          # If arg type is concrete, bind it
-          if arg_type.type.match?(/^(\w+)<(\w+)>$/)
-            arg_match = arg_type.type.match(/^(\w+)<(\w+)>$/)
-            generic_bindings[generic_name] = arg_match[2]
-          end
+        match = param[:type].match(/^(\w+)<(\w+)>$/)
+        generic_name = match[2]
+
+        # If arg type is concrete, bind it
+        if arg_type.type.match?(/^(\w+)<(\w+)>$/)
+          arg_match = arg_type.type.match(/^(\w+)<(\w+)>$/)
+          generic_bindings[generic_name] = arg_match[2]
         end
       end
 
@@ -425,7 +425,7 @@ module TRuby
         end
 
         # Arithmetic operation
-        if line.match?(/#{param_name}\s*[+\-*\/%]/)
+        if line.match?(%r{#{param_name}\s*[+\-*/%]})
           usages << { type: :arithmetic, line: idx + 1 }
         end
 
@@ -469,15 +469,13 @@ module TRuby
                               .max_by { |_, v| v.length }
                               &.first
 
-      if most_common
-        InferredType.new(
-          type: most_common,
-          confidence: InferredType::MEDIUM,
-          source: :usage_analysis
-        )
-      else
-        nil
-      end
+      return unless most_common
+
+      InferredType.new(
+        type: most_common,
+        confidence: InferredType::MEDIUM,
+        source: :usage_analysis
+      )
     end
 
     def infer_type_from_method(method_name)
@@ -526,7 +524,7 @@ module TRuby
       end
     end
 
-    def infer_operator_result(expr, operator, result_type)
+    def infer_operator_result(_expr, _operator, result_type)
       case result_type
       when "Boolean"
         InferredType.new(type: "Boolean", confidence: InferredType::HIGH, source: :operator)
@@ -540,8 +538,6 @@ module TRuby
         InferredType.new(type: "Numeric | String", confidence: InferredType::LOW, source: :operator)
       when :propagate
         # Type propagates from operands
-        nil
-      else
         nil
       end
     end
@@ -563,7 +559,7 @@ module TRuby
         )
       elsif element_types.length > 1
         InferredType.new(
-          type: "Array<#{element_types.join(' | ')}>",
+          type: "Array<#{element_types.join(" | ")}>",
           confidence: InferredType::MEDIUM,
           source: :literal
         )

@@ -21,7 +21,6 @@ RSpec.describe "한글 문서: Stdlib Types" do
   it_behaves_like "valid documentation page", "reference/stdlib-types.md"
 
   describe "코드 예제" do
-
     # 예제 1: T-Ruby (라인 28)
     describe "예제 1: T-Ruby 코드" do
       let(:example) { examples[0] }

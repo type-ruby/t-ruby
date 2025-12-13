@@ -14,7 +14,7 @@ module TRuby
         types: {},
         interfaces: {},
         functions: {},
-        modules: {}
+        modules: {},
       }
       @parser = nil
     end
@@ -84,7 +84,7 @@ module TRuby
         md << ""
 
         if info[:type_params]&.any?
-          md << "**Type Parameters:** `<#{info[:type_params].join(', ')}>`"
+          md << "**Type Parameters:** `<#{info[:type_params].join(", ")}>`"
           md << ""
         end
 
@@ -94,7 +94,7 @@ module TRuby
           md << "| Name | Type | Description |"
           md << "|------|------|-------------|"
           info[:members].each do |member|
-            md << "| `#{member[:name]}` | `#{member[:type]}` | #{member[:description] || '-'} |"
+            md << "| `#{member[:name]}` | `#{member[:type]}` | #{member[:description] || "-"} |"
           end
           md << ""
         end
@@ -114,9 +114,9 @@ module TRuby
 
         # Signature
         params = info[:params]&.map { |p| "#{p[:name]}: #{p[:type]}" }&.join(", ") || ""
-        type_params = info[:type_params]&.any? ? "<#{info[:type_params].join(', ')}>" : ""
+        type_params = info[:type_params]&.any? ? "<#{info[:type_params].join(", ")}>" : ""
         md << "```ruby"
-        md << "def #{name}#{type_params}(#{params}): #{info[:return_type] || 'void'}"
+        md << "def #{name}#{type_params}(#{params}): #{info[:return_type] || "void"}"
         md << "```"
         md << ""
 
@@ -126,7 +126,7 @@ module TRuby
           md << "| Name | Type | Description |"
           md << "|------|------|-------------|"
           info[:params].each do |param|
-            md << "| `#{param[:name]}` | `#{param[:type]}` | #{param[:description] || '-'} |"
+            md << "| `#{param[:name]}` | `#{param[:type]}` | #{param[:description] || "-"} |"
           end
           md << ""
         end
@@ -147,13 +147,13 @@ module TRuby
       files.each { |file| parse_file(file) }
 
       File.write(output_path, JSON.pretty_generate({
-        generated_at: Time.now.iso8601,
-        version: TRuby::VERSION,
-        types: @docs[:types],
-        interfaces: @docs[:interfaces],
-        functions: @docs[:functions],
-        modules: @docs[:modules]
-      }))
+                                                     generated_at: Time.now.iso8601,
+                                                     version: TRuby::VERSION,
+                                                     types: @docs[:types],
+                                                     interfaces: @docs[:interfaces],
+                                                     functions: @docs[:functions],
+                                                     modules: @docs[:modules],
+                                                   }))
 
       puts "JSON documentation generated: #{output_path}"
     end
@@ -191,7 +191,7 @@ module TRuby
           type_params: type_params&.split(/\s*,\s*/),
           definition: definition.strip,
           description: doc_comments["type:#{name}"],
-          source: relative_path
+          source: relative_path,
         }
       end
 
@@ -240,11 +240,11 @@ module TRuby
       content.scan(/interface\s+(\w+)(?:<([^>]+)>)?\s*\n((?:(?!^end).)*?)^end/m) do |name, type_params, body|
         members = []
 
-        body.scan(/^\s*(\w+[\?\!]?)\s*:\s*(.+)$/) do |member_name, member_type|
+        body.scan(/^\s*(\w+[?!]?)\s*:\s*(.+)$/) do |member_name, member_type|
           members << {
             name: member_name,
             type: member_type.strip,
-            description: doc_comments["member:#{name}.#{member_name}"]
+            description: doc_comments["member:#{name}.#{member_name}"],
           }
         end
 
@@ -253,21 +253,21 @@ module TRuby
           type_params: type_params&.split(/\s*,\s*/),
           members: members,
           description: doc_comments["interface:#{name}"],
-          source: source
+          source: source,
         }
       end
     end
 
     def parse_functions(content, source, doc_comments)
       # Match function definitions
-      content.scan(/def\s+(\w+[\?\!]?)(?:<([^>]+)>)?\s*\(([^)]*)\)(?:\s*:\s*(.+?))?(?:\n|$)/) do |name, type_params, params_str, return_type|
+      content.scan(/def\s+(\w+[?!]?)(?:<([^>]+)>)?\s*\(([^)]*)\)(?:\s*:\s*(.+?))?(?:\n|$)/) do |name, type_params, params_str, return_type|
         params = []
 
         params_str.scan(/(\w+)\s*:\s*([^,]+)/) do |param_name, param_type|
           params << {
             name: param_name,
             type: param_type.strip,
-            description: doc_comments["param:#{name}.#{param_name}"]
+            description: doc_comments["param:#{name}.#{param_name}"],
           }
         end
 
@@ -277,7 +277,7 @@ module TRuby
           params: params,
           return_type: return_type&.strip,
           description: doc_comments["def:#{name}"],
-          source: source
+          source: source,
         }
       end
     end
@@ -360,15 +360,15 @@ module TRuby
     def generate_search_index(output_dir)
       search_data = []
 
-      @docs[:types].each do |name, info|
+      @docs[:types].each_key do |name|
         search_data << { type: "type", name: name, url: "types/#{name}.html" }
       end
 
-      @docs[:interfaces].each do |name, info|
+      @docs[:interfaces].each_key do |name|
         search_data << { type: "interface", name: name, url: "interfaces/#{name}.html" }
       end
 
-      @docs[:functions].each do |name, info|
+      @docs[:functions].each_key do |name|
         search_data << { type: "function", name: name, url: "functions/#{name}.html" }
       end
 
@@ -392,8 +392,8 @@ module TRuby
         <body>
           <a href="../index.html">← Back to Index</a>
           <h1>type #{name}</h1>
-          #{info[:description] ? "<p>#{info[:description]}</p>" : ""}
-          <pre>type #{name}#{info[:type_params] ? "<#{info[:type_params].join(', ')}>" : ""} = #{info[:definition]}</pre>
+          #{"<p>#{info[:description]}</p>" if info[:description]}
+          <pre>type #{name}#{"<#{info[:type_params].join(", ")}>" if info[:type_params]} = #{info[:definition]}</pre>
           <p class="meta">Source: <code>#{info[:source]}</code></p>
         </body>
         </html>
@@ -402,7 +402,7 @@ module TRuby
 
     def generate_interface_html(name, info)
       members_html = info[:members]&.map do |m|
-        "<tr><td><code>#{m[:name]}</code></td><td><code>#{m[:type]}</code></td><td>#{m[:description] || '-'}</td></tr>"
+        "<tr><td><code>#{m[:name]}</code></td><td><code>#{m[:type]}</code></td><td>#{m[:description] || "-"}</td></tr>"
       end&.join || ""
 
       <<~HTML
@@ -423,8 +423,8 @@ module TRuby
         </head>
         <body>
           <a href="../index.html">← Back to Index</a>
-          <h1>interface #{name}#{info[:type_params] ? "&lt;#{info[:type_params].join(', ')}&gt;" : ""}</h1>
-          #{info[:description] ? "<p>#{info[:description]}</p>" : ""}
+          <h1>interface #{name}#{"&lt;#{info[:type_params].join(", ")}&gt;" if info[:type_params]}</h1>
+          #{"<p>#{info[:description]}</p>" if info[:description]}
           #{"<h2>Members</h2><table><tr><th>Name</th><th>Type</th><th>Description</th></tr>#{members_html}</table>" unless members_html.empty?}
           <p class="meta">Source: <code>#{info[:source]}</code></p>
         </body>
@@ -434,11 +434,11 @@ module TRuby
 
     def generate_function_html(name, info)
       params_html = info[:params]&.map do |p|
-        "<tr><td><code>#{p[:name]}</code></td><td><code>#{p[:type]}</code></td><td>#{p[:description] || '-'}</td></tr>"
+        "<tr><td><code>#{p[:name]}</code></td><td><code>#{p[:type]}</code></td><td>#{p[:description] || "-"}</td></tr>"
       end&.join || ""
 
       params_sig = info[:params]&.map { |p| "#{p[:name]}: #{p[:type]}" }&.join(", ") || ""
-      type_params = info[:type_params]&.any? ? "<#{info[:type_params].join(', ')}>" : ""
+      type_params = info[:type_params]&.any? ? "<#{info[:type_params].join(", ")}>" : ""
 
       <<~HTML
         <!DOCTYPE html>
@@ -459,12 +459,12 @@ module TRuby
         <body>
           <a href="../index.html">← Back to Index</a>
           <h1>#{name}</h1>
-          #{info[:description] ? "<p>#{info[:description]}</p>" : ""}
+          #{"<p>#{info[:description]}</p>" if info[:description]}
           <h2>Signature</h2>
-          <pre>def #{name}#{type_params}(#{params_sig}): #{info[:return_type] || 'void'}</pre>
+          <pre>def #{name}#{type_params}(#{params_sig}): #{info[:return_type] || "void"}</pre>
           #{"<h2>Parameters</h2><table><tr><th>Name</th><th>Type</th><th>Description</th></tr>#{params_html}</table>" unless params_html.empty?}
           <h2>Returns</h2>
-          <p><code>#{info[:return_type] || 'void'}</code></p>
+          <p><code>#{info[:return_type] || "void"}</code></p>
           <p class="meta">Source: <code>#{info[:source]}</code></p>
         </body>
         </html>

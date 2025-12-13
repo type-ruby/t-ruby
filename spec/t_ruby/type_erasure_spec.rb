@@ -24,9 +24,9 @@ describe TRuby::TypeErasure do
       end
 
       it "preserves function body" do
-        source = 'def greet(name: String)' + "\n" +
-                 '  puts "Hello, #{name}"' + "\n" +
-                 'end'
+        source = "def greet(name: String)" + "\n  " \
+                                             'puts "Hello, #{name}"' + "\n" \
+                                                                       "end"
         eraser = TRuby::TypeErasure.new(source)
 
         result = eraser.erase
@@ -123,11 +123,11 @@ describe TRuby::TypeErasure do
       end
 
       it "handles nested structures" do
-        source = 'class Greeter' + "\n" +
-                 '  def greet(name: String): String' + "\n" +
-                 '    "Hello, #{name}"' + "\n" +
-                 '  end' + "\n" +
-                 'end'
+        source = "class Greeter" + "\n  " \
+                                   "def greet(name: String): String" + "\n    " \
+                                                                       '"Hello, #{name}"' + "\n  " \
+                                                                                            "end" + "\n" \
+                                                                                                    "end"
         eraser = TRuby::TypeErasure.new(source)
 
         result = eraser.erase

@@ -13,7 +13,7 @@
 
 class ExampleBadgeAdder
   DOCS_ROOT = File.expand_path("../../t-ruby.github.io", __dir__)
-  KO_DOCS = "#{DOCS_ROOT}/i18n/ko/docusaurus-plugin-content-docs/current"
+  KO_DOCS = "#{DOCS_ROOT}/i18n/ko/docusaurus-plugin-content-docs/current".freeze
   SPEC_ROOT = File.expand_path("../spec/docs_site/pages", __dir__)
 
   # 코드 블록 패턴
@@ -80,15 +80,13 @@ class ExampleBadgeAdder
   def find_spec_file(doc_relative_path)
     # introduction/what-is-t-ruby.md -> introduction/what_is_t_ruby_spec.rb
     spec_relative = doc_relative_path
-      .sub(".md", "_spec.rb")
-      .gsub("-", "_")
+                    .sub(".md", "_spec.rb")
+                    .gsub("-", "_")
 
     spec_path = "#{SPEC_ROOT}/#{spec_relative}"
 
     if File.exist?(spec_path)
       "spec/docs_site/pages/#{spec_relative}"
-    else
-      nil
     end
   end
 
@@ -125,7 +123,7 @@ class ExampleBadgeAdder
   end
 end
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   dry_run = ARGV.include?("--dry-run")
   ExampleBadgeAdder.new(dry_run: dry_run).run
 end

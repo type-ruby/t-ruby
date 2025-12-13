@@ -112,9 +112,9 @@ RSpec.describe TRuby::DeclarationGenerator do
     end
 
     it "raises error for non-existent file" do
-      expect {
+      expect do
         generator.generate_file("/nonexistent.trb")
-      }.to raise_error(ArgumentError, /File not found/)
+      end.to raise_error(ArgumentError, /File not found/)
     end
 
     it "raises error for non-.trb file" do
@@ -122,9 +122,9 @@ RSpec.describe TRuby::DeclarationGenerator do
         file_path = File.join(dir, "test.rb")
         File.write(file_path, "puts 'hello'")
 
-        expect {
+        expect do
           generator.generate_file(file_path)
-        }.to raise_error(ArgumentError, /Expected .trb file/)
+        end.to raise_error(ArgumentError, /Expected .trb file/)
       end
     end
 
@@ -201,9 +201,9 @@ RSpec.describe TRuby::DeclarationParser do
     end
 
     it "raises error for non-existent file" do
-      expect {
+      expect do
         parser.parse_file("/nonexistent.d.trb")
-      }.to raise_error(ArgumentError, /Declaration file not found/)
+      end.to raise_error(ArgumentError, /Declaration file not found/)
     end
 
     it "raises error for wrong extension" do
@@ -211,9 +211,9 @@ RSpec.describe TRuby::DeclarationParser do
         file_path = File.join(dir, "types.trb")
         File.write(file_path, "type Test = String")
 
-        expect {
+        expect do
           parser.parse_file(file_path)
-        }.to raise_error(ArgumentError, /Expected .d.trb file/)
+        end.to raise_error(ArgumentError, /Expected .d.trb file/)
       end
     end
   end
@@ -245,9 +245,9 @@ RSpec.describe TRuby::DeclarationParser do
     end
 
     it "raises error for non-existent directory" do
-      expect {
+      expect do
         parser.load_directory("/nonexistent")
-      }.to raise_error(ArgumentError, /Directory not found/)
+      end.to raise_error(ArgumentError, /Directory not found/)
     end
   end
 

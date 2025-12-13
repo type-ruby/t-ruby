@@ -86,7 +86,7 @@ RSpec.describe "Documentation Site Components" do
       end
 
       if missing_badge.any?
-        fail "#{missing_badge.size} Korean documents missing DocsBadge:\n#{missing_badge.join("\n")}"
+        raise "#{missing_badge.size} Korean documents missing DocsBadge:\n#{missing_badge.join("\n")}"
       end
 
       expect(missing_badge).to be_empty
@@ -102,7 +102,7 @@ RSpec.describe "Documentation Site Components" do
       end
 
       if missing_badge.any?
-        fail "#{missing_badge.size} English documents missing DocsBadge:\n#{missing_badge.join("\n")}"
+        raise "#{missing_badge.size} English documents missing DocsBadge:\n#{missing_badge.join("\n")}"
       end
 
       expect(missing_badge).to be_empty
@@ -118,7 +118,7 @@ RSpec.describe "Documentation Site Components" do
       end
 
       if missing_badge.any?
-        fail "#{missing_badge.size} Japanese documents missing DocsBadge:\n#{missing_badge.join("\n")}"
+        raise "#{missing_badge.size} Japanese documents missing DocsBadge:\n#{missing_badge.join("\n")}"
       end
 
       expect(missing_badge).to be_empty

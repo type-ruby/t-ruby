@@ -7,11 +7,9 @@ module TRuby
     end
 
     def generate(functions, type_aliases)
-      lines = []
-
       # Add type aliases
-      type_aliases.each do |type_alias|
-        lines << generate_type_alias(type_alias)
+      lines = type_aliases.map do |type_alias|
+        generate_type_alias(type_alias)
       end
 
       lines << "" if type_aliases.any? && functions.any?

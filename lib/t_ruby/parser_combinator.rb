@@ -32,11 +32,13 @@ module TRuby
 
       def map
         return self if failure?
+
         ParseResult.success(yield(value), remaining, position)
       end
 
       def flat_map
         return self if failure?
+
         yield(value, remaining, position)
       end
     end
@@ -167,7 +169,7 @@ module TRuby
         remaining = input[position..]
         match = @pattern.match(remaining)
 
-        if match && match.begin(0) == 0
+        if match&.begin(0)&.zero?
           matched = match[0]
           ParseResult.success(matched, input, position + matched.length)
         else
@@ -303,6 +305,7 @@ module TRuby
 
           results << result.value
           break if result.position == current_pos # Prevent infinite loop
+
           current_pos = result.position
         end
 
@@ -329,6 +332,7 @@ module TRuby
 
           results << result.value
           break if result.position == current_pos
+
           current_pos = result.position
         end
 
@@ -597,11 +601,11 @@ module TRuby
       end
 
       def spaces
-        whitespace.many.map { |chars| chars.join }
+        whitespace.many.map(&:join)
       end
 
       def spaces1
-        whitespace.many1.map { |chars| chars.join }
+        whitespace.many1.map(&:join)
       end
 
       def newline
@@ -622,7 +626,7 @@ module TRuby
       end
 
       def float
-        regex(/\-?\d+\.\d+/, "float").map(&:to_f)
+        regex(/-?\d+\.\d+/, "float").map(&:to_f)
       end
 
       def quoted_string(quote = '"')
@@ -670,7 +674,7 @@ module TRuby
         type_name = identifier.label("type name")
 
         # Simple type
-        simple_type = type_name.map { |name| IR::SimpleType.new(name: name) }
+        type_name.map { |name| IR::SimpleType.new(name: name) }
 
         # Lazy reference for recursive types
         type_expr = lazy { @type_expr }
@@ -778,15 +782,15 @@ module TRuby
 
       def build_parsers
         # Type expression (delegate to TypeParser)
-        type_expr = lazy { parse_type_inline }
+        lazy { parse_type_inline }
 
         # Keywords
         kw_type = lexeme(string("type"))
         kw_interface = lexeme(string("interface"))
         kw_def = lexeme(string("def"))
         kw_end = lexeme(string("end"))
-        kw_class = lexeme(string("class"))
-        kw_module = lexeme(string("module"))
+        lexeme(string("class"))
+        lexeme(string("module"))
 
         # Type alias: type Name = Definition
         type_alias = (
@@ -798,8 +802,6 @@ module TRuby
           type_result = @type_parser.parse(definition)
           if type_result[:success]
             IR::TypeAlias.new(name: name, definition: type_result[:type])
-          else
-            nil
           end
         end
 
@@ -812,8 +814,6 @@ module TRuby
           type_result = @type_parser.parse(type_str)
           if type_result[:success]
             IR::InterfaceMember.new(name: name, type_signature: type_result[:type])
-          else
-            nil
           end
         end
 
@@ -836,10 +836,10 @@ module TRuby
           (lexeme(char(":")) >> regex(/[^,)]+/).map(&:strip)).optional
         ).map do |(name, type_str)|
           type_node = if type_str
-            type_str_val = type_str.is_a?(Array) ? type_str.last : type_str
-            result = @type_parser.parse(type_str_val)
-            result[:success] ? result[:type] : nil
-          end
+                        type_str_val = type_str.is_a?(Array) ? type_str.last : type_str
+                        result = @type_parser.parse(type_str_val)
+                        result[:success] ? result[:type] : nil
+                      end
           IR::Parameter.new(name: name, type_annotation: type_node)
         end
 
@@ -864,9 +864,9 @@ module TRuby
           return_type
         ).map do |(((_, name), params), ret_str)|
           ret_type = if ret_str
-            result = @type_parser.parse(ret_str)
-            result[:success] ? result[:type] : nil
-          end
+                       result = @type_parser.parse(ret_str)
+                       result[:success] ? result[:type] : nil
+                     end
           IR::MethodDef.new(
             name: name,
             params: params || [],
@@ -922,7 +922,7 @@ module TRuby
           result << "#{prefix}#{i + 1}: #{input_lines[i]}"
 
           if i == @line - 1
-            result << "    " + " " * (@column + @line.to_s.length + 1) + "^"
+            result << "    #{" " * (@column + @line.to_s.length + 1)}^"
           end
         end
 

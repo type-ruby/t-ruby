@@ -45,7 +45,7 @@ RSpec.describe "다국어 문서 구조 일치 테스트" do
       en_count = Dir.glob("#{en_docs_root}/**/*.md").size
 
       expect(en_count).to eq(ko_count),
-        "영어 문서 수(#{en_count})가 한글 문서 수(#{ko_count})와 다릅니다"
+                          "영어 문서 수(#{en_count})가 한글 문서 수(#{ko_count})와 다릅니다"
     end
 
     it "한글 문서와 동일한 파일 구조를 가진다" do
@@ -82,7 +82,7 @@ RSpec.describe "다국어 문서 구조 일치 테스트" do
       ja_count = Dir.glob("#{ja_docs_root}/**/*.md").size
 
       expect(ja_count).to eq(ko_count),
-        "일본어 문서 수(#{ja_count})가 한글 문서 수(#{ko_count})와 다릅니다"
+                          "일본어 문서 수(#{ja_count})가 한글 문서 수(#{ko_count})와 다릅니다"
     end
 
     it "한글 문서와 동일한 파일 구조를 가진다" do
@@ -142,9 +142,9 @@ RSpec.describe "다국어 문서 구조 일치 테스트" do
           ja_files = Dir.glob("#{ja_docs_root}/#{section}/**/*.md").size
 
           expect(en_files).to eq(ko_files),
-            "#{section}: 영어(#{en_files}) != 한글(#{ko_files})"
+                              "#{section}: 영어(#{en_files}) != 한글(#{ko_files})"
           expect(ja_files).to eq(ko_files),
-            "#{section}: 일본어(#{ja_files}) != 한글(#{ko_files})"
+                              "#{section}: 일본어(#{ja_files}) != 한글(#{ko_files})"
         end
       end
     end
