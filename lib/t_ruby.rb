@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "t_ruby/version"
+require_relative "t_ruby/version_checker"
 require_relative "t_ruby/config"
 
 # Core infrastructure (must be loaded first)

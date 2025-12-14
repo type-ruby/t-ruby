@@ -13,7 +13,8 @@ module TRuby
         trc --watch, -w          Watch input files and recompile on change
         trc --decl <file.trb>    Generate .d.trb declaration file
         trc --lsp                Start LSP server (for IDE integration)
-        trc --version, -v        Show version
+        trc update               Update t-ruby to the latest version
+        trc --version, -v        Show version (and check for updates)
         trc --help, -h           Show this help
 
       Examples:
@@ -44,6 +45,12 @@ module TRuby
 
       if @args.include?("--version") || @args.include?("-v")
         puts "trc #{VERSION}"
+        check_for_updates
+        return
+      end
+
+      if @args.include?("update")
+        update_gem
         return
       end
 
@@ -77,6 +84,24 @@ module TRuby
     end
 
     private
+
+    def check_for_updates
+      result = VersionChecker.check
+      return unless result
+
+      puts ""
+      puts "New version available: #{result[:latest]} (current: #{result[:current]})"
+      puts "Run 'trc update' to update"
+    end
+
+    def update_gem
+      puts "Updating t-ruby..."
+      if VersionChecker.update
+        puts "Successfully updated t-ruby!"
+      else
+        puts "Update failed. Try: gem install t-ruby"
+      end
+    end
 
     def init_project
       config_file = "trbconfig.yml"
