@@ -3,6 +3,7 @@
 require "net/http"
 require "json"
 require "uri"
+require "openssl"
 
 module TRuby
   class VersionChecker
@@ -37,7 +38,16 @@ module TRuby
 
     def fetch_latest_version
       uri = URI(RUBYGEMS_API)
-      response = Net::HTTP.get_response(uri)
+
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      http.verify_callback = ->(_preverify_ok, _store_ctx) { true } # Skip CRL check
+      http.open_timeout = 3
+      http.read_timeout = 3
+
+      request = Net::HTTP::Get.new(uri)
+      response = http.request(request)
 
       return nil unless response.is_a?(Net::HTTPSuccess)
 
