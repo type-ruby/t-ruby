@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "t-ruby compiles .trb files with type annotations to executable Ruby (.rb) " \
                      "and optional type signature files (.rbs)"
   spec.homepage = "https://type-ruby.github.io"
-  spec.license = "MIT"
+  spec.license = "BSD-2-Clause"
   spec.required_ruby_version = ">= 3.1.0"
 
   spec.files = Dir["lib/**/*.rb", "bin/*", "LICENSE", "README.md"]
