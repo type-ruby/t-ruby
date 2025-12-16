@@ -18,6 +18,7 @@ dependencies {
     intellijPlatform {
         intellijIdeaCommunity("2024.2")
         plugin("com.redhat.devtools.lsp4ij:0.19.0")
+        bundledPlugin("org.jetbrains.plugins.textmate")
         pluginVerifier()
         zipSigner()
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)

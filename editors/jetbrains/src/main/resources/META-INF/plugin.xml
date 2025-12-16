@@ -27,6 +27,7 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
     <depends>com.redhat.devtools.lsp4ij</depends>
+    <depends>org.jetbrains.plugins.textmate</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- File Type Registration -->
@@ -53,6 +54,9 @@
 
         <applicationService
                 serviceImplementation="io.truby.intellij.settings.TRubySettings"/>
+
+        <!-- TextMate Bundle Provider for Syntax Highlighting -->
+        <textmate.bundleProvider implementation="io.truby.intellij.TRubyTextMateBundleProvider"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
