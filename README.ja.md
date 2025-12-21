@@ -252,8 +252,7 @@ watch:
 **IDE サポート**
 - [VS Code 拡張 (および Cursor)](https://github.com/type-ruby/t-ruby-vscode)
 - [JetBrains プラグイン](https://github.com/type-ruby/t-ruby-jetbrains)
-- [Vim セットアップ](./docs/vim/ja/getting-started.md)
-- [Neovim セットアップ](./docs/neovim/ja/getting-started.md)
+- [Vim / Neovim](https://github.com/type-ruby/t-ruby-vim)
 
 **ガイド**
 - [シンタックスハイライト](./docs/syntax-highlighting/ja/guide.md)

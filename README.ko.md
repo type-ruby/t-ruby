@@ -252,8 +252,7 @@ watch:
 **IDE 지원**
 - [VS Code 확장 (및 Cursor)](https://github.com/type-ruby/t-ruby-vscode)
 - [JetBrains 플러그인](https://github.com/type-ruby/t-ruby-jetbrains)
-- [Vim 설정](./docs/vim/ko/getting-started.md)
-- [Neovim 설정](./docs/neovim/ko/getting-started.md)
+- [Vim / Neovim](https://github.com/type-ruby/t-ruby-vim)
 
 **가이드**
 - [구문 강조](./docs/syntax-highlighting/ko/guide.md)
