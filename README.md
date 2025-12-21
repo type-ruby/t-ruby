@@ -255,7 +255,7 @@ watch:
 ## Links
 
 **IDE Support**
-- [VS Code Extension (and Cursor)](./docs/vscode/en/getting-started.md)
+- [VS Code Extension (and Cursor)](https://github.com/type-ruby/t-ruby-vscode)
 - [JetBrains Plugin](./docs/jetbrains/en/getting-started.md)
 - [Vim Setup](./docs/vim/en/getting-started.md)
 - [Neovim Setup](./docs/neovim/en/getting-started.md)

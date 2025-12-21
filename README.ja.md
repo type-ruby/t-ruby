@@ -250,7 +250,7 @@ watch:
 ## リンク
 
 **IDE サポート**
-- [VS Code 拡張 (および Cursor)](./docs/vscode/ja/getting-started.md)
+- [VS Code 拡張 (および Cursor)](https://github.com/type-ruby/t-ruby-vscode)
 - [JetBrains プラグイン](./docs/jetbrains/ja/getting-started.md)
 - [Vim セットアップ](./docs/vim/ja/getting-started.md)
 - [Neovim セットアップ](./docs/neovim/ja/getting-started.md)

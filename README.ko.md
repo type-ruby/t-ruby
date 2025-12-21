@@ -250,7 +250,7 @@ watch:
 ## 링크
 
 **IDE 지원**
-- [VS Code 확장 (및 Cursor)](./docs/vscode/ko/getting-started.md)
+- [VS Code 확장 (및 Cursor)](https://github.com/type-ruby/t-ruby-vscode)
 - [JetBrains 플러그인](./docs/jetbrains/ko/getting-started.md)
 - [Vim 설정](./docs/vim/ko/getting-started.md)
 - [Neovim 설정](./docs/neovim/ko/getting-started.md)
