@@ -506,4 +506,50 @@ RSpec.describe "Config Options E2E Behavior" do
       end
     end
   end
+
+  describe "source and output directory separation" do
+    it "find_source_files does not include files in output directory" do
+      Dir.chdir(tmpdir) do
+        create_config_file(<<~YAML)
+          source:
+            include:
+              - src
+          output:
+            ruby_dir: build
+        YAML
+
+        create_trb_file("src/main.trb", "def main: void\nend")
+        create_trb_file("build/compiled.trb", "def compiled: void\nend")
+
+        config = TRuby::Config.new
+        files = config.find_source_files
+
+        expect(files.size).to eq(1)
+        expect(files.first).to end_with("main.trb")
+        expect(files.none? { |f| f.include?("build/") }).to be true
+      end
+    end
+
+    it "watcher only monitors source_include directories by default" do
+      Dir.chdir(tmpdir) do
+        create_config_file(<<~YAML)
+          source:
+            include:
+              - src
+          output:
+            ruby_dir: build
+        YAML
+
+        FileUtils.mkdir_p(File.join(tmpdir, "src"))
+        FileUtils.mkdir_p(File.join(tmpdir, "build"))
+
+        config = TRuby::Config.new
+        watcher = TRuby::Watcher.new(config: config)
+
+        dirs = watcher.send(:watch_directories)
+        expect(dirs).to eq([File.expand_path("src")])
+        expect(dirs.none? { |d| d.include?("build") }).to be true
+      end
+    end
+  end
 end

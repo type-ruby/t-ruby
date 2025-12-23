@@ -80,14 +80,18 @@ module TRuby
 
     private
 
+    def watch_directory(path)
+      File.directory?(path) ? path : File.dirname(path)
+    end
+
     def watch_directories
-      @paths.map do |path|
-        if File.directory?(path)
-          path
-        else
-          File.dirname(path)
-        end
-      end.uniq
+      if @paths == [File.expand_path(".")]
+        # Default case: only watch source_include directories from config
+        @config.source_include.map { |dir| File.expand_path(dir) }.select { |dir| Dir.exist?(dir) }
+      else
+        # Specific paths provided: watch those paths
+        @paths.map { |path| watch_directory(path) }.uniq
+      end
     end
 
     def handle_changes(modified, added, removed)
@@ -243,21 +247,18 @@ module TRuby
     def find_source_files_by_extension(ext)
       files = []
 
-      # If watching specific paths, use those paths
-      # Otherwise, use Config's find_source_files which respects include/exclude patterns
-      if @paths == [File.expand_path(".")]
-        # Default case: use config's src_dir with include/exclude patterns
-        files = @config.find_source_files.select { |f| f.end_with?(ext) }
-      else
-        # Specific paths provided: search in those paths but still apply exclude patterns
-        @paths.each do |path|
-          if File.directory?(path)
-            Dir.glob(File.join(path, "**", "*#{ext}")).each do |file|
-              files << file unless @config.excluded?(file)
-            end
-          elsif File.file?(path) && path.end_with?(ext) && !@config.excluded?(path)
-            files << path
-          end
+      # Always search in source_include directories only
+      source_dirs = if @paths == [File.expand_path(".")]
+                      @config.source_include.map { |dir| File.expand_path(dir) }
+                    else
+                      @paths.map { |path| File.expand_path(path) }
+                    end
+
+      source_dirs.each do |dir|
+        next unless Dir.exist?(dir)
+
+        Dir.glob(File.join(dir, "**", "*#{ext}")).each do |file|
+          files << file unless @config.excluded?(file)
         end
       end
 
