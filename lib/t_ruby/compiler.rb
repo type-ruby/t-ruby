@@ -9,14 +9,16 @@ module TRuby
   METHOD_NAME_PATTERN = "#{IDENTIFIER_CHAR}+[?!]?".freeze
 
   class Compiler
-    attr_reader :declaration_loader, :use_ir, :optimizer
+    attr_reader :declaration_loader, :use_ir, :optimizer, :type_check
 
-    def initialize(config = nil, use_ir: true, optimize: true)
+    def initialize(config = nil, use_ir: true, optimize: true, type_check: false)
       @config = config || Config.new
       @use_ir = use_ir
       @optimize = optimize
+      @type_check = type_check
       @declaration_loader = DeclarationLoader.new
       @optimizer = IR::Optimizer.new if use_ir && optimize
+      @type_inferrer = ASTTypeInferrer.new if type_check
       setup_declaration_paths if @config
     end
 
@@ -39,6 +41,11 @@ module TRuby
       # Parse with IR support
       parser = Parser.new(source, use_combinator: @use_ir)
       parse_result = parser.parse
+
+      # Run type checking if enabled
+      if @type_check && @use_ir && parser.ir_program
+        check_types(parser.ir_program, input_path)
+      end
 
       # Transform source to Ruby code
       output = @use_ir ? transform_with_ir(source, parser) : transform_legacy(source, parse_result)
@@ -219,6 +226,132 @@ module TRuby
     end
 
     private
+
+    # Check types in IR program and raise TypeCheckError if mismatches found
+    # @param ir_program [IR::Program] IR program to check
+    # @param file_path [String] source file path for error messages
+    def check_types(ir_program, file_path)
+      ir_program.declarations.each do |decl|
+        case decl
+        when IR::MethodDef
+          check_method_return_type(decl, nil, file_path)
+        when IR::ClassDecl
+          decl.body.each do |member|
+            check_method_return_type(member, decl, file_path) if member.is_a?(IR::MethodDef)
+          end
+        end
+      end
+    end
+
+    # Check if method's inferred return type matches declared return type
+    # @param method [IR::MethodDef] method to check
+    # @param class_def [IR::ClassDef, nil] containing class if any
+    # @param file_path [String] source file path for error messages
+    def check_method_return_type(method, class_def, file_path)
+      # Skip if no explicit return type annotation
+      return unless method.return_type
+
+      declared_type = normalize_type(method.return_type.to_rbs)
+
+      # Create type environment for the class context
+      class_env = create_class_env(class_def) if class_def
+
+      # Infer actual return type
+      inferred_type = @type_inferrer.infer_method_return_type(method, class_env)
+      inferred_type = normalize_type(inferred_type || "nil")
+
+      # Check compatibility
+      return if types_compatible?(inferred_type, declared_type)
+
+      location = method.location ? "#{file_path}:#{method.location}" : file_path
+      method_name = class_def ? "#{class_def.name}##{method.name}" : method.name
+
+      raise TypeCheckError.new(
+        message: "Return type mismatch in method '#{method_name}': " \
+                 "declared '#{declared_type}' but inferred '#{inferred_type}'",
+        location: location,
+        expected: declared_type,
+        actual: inferred_type
+      )
+    end
+
+    # Create type environment for class context
+    # @param class_def [IR::ClassDecl] class declaration
+    # @return [TypeEnv] type environment with instance variables
+    def create_class_env(class_def)
+      env = TypeEnv.new
+
+      # Register instance variables from class
+      class_def.instance_vars&.each do |ivar|
+        type = ivar.type_annotation&.to_rbs || "untyped"
+        env.define_instance_var(ivar.name, type)
+      end
+
+      env
+    end
+
+    # Normalize type string for comparison
+    # @param type [String] type string
+    # @return [String] normalized type string
+    def normalize_type(type)
+      return "untyped" if type.nil?
+
+      type.to_s.strip
+    end
+
+    # Check if inferred type is compatible with declared type
+    # @param inferred [String] inferred type
+    # @param declared [String] declared type
+    # @return [Boolean] true if compatible
+    def types_compatible?(inferred, declared)
+      # Exact match
+      return true if inferred == declared
+
+      # untyped is compatible with anything
+      return true if inferred == "untyped" || declared == "untyped"
+
+      # void is compatible with anything (no return value check)
+      return true if declared == "void"
+
+      # nil is compatible with nullable types
+      return true if inferred == "nil" && declared.end_with?("?")
+
+      # Subtype relationships
+      return true if subtype_of?(inferred, declared)
+
+      # Handle union types in declared
+      if declared.include?("|")
+        declared_types = declared.split("|").map(&:strip)
+        return true if declared_types.include?(inferred)
+        return true if declared_types.any? { |t| types_compatible?(inferred, t) }
+      end
+
+      # Handle union types in inferred - all must be compatible
+      if inferred.include?("|")
+        inferred_types = inferred.split("|").map(&:strip)
+        return inferred_types.all? { |t| types_compatible?(t, declared) }
+      end
+
+      false
+    end
+
+    # Check if subtype is a subtype of supertype
+    # @param subtype [String] potential subtype
+    # @param supertype [String] potential supertype
+    # @return [Boolean] true if subtype
+    def subtype_of?(subtype, supertype)
+      # Handle nullable - X is subtype of X?
+      return true if supertype.end_with?("?") && supertype[0..-2] == subtype
+
+      # Numeric hierarchy
+      return true if subtype == "Integer" && supertype == "Numeric"
+      return true if subtype == "Float" && supertype == "Numeric"
+
+      # Object is supertype of everything
+      return true if supertype == "Object"
+
+      false
+    end
 
     # Resolve path to absolute path, following symlinks
     # Falls back to expand_path if realpath fails (e.g., file doesn't exist yet)

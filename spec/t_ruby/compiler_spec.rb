@@ -257,6 +257,130 @@ describe TRuby::Compiler do
       end
     end
 
+    context "with return type validation" do
+      it "raises TypeCheckError when return type mismatches declaration" do
+        Dir.mktmpdir do |tmpdir|
+          # Method declares bool but returns nil
+          input_file = File.join(tmpdir, "type_mismatch.trb")
+          File.write(input_file, <<~RUBY)
+            def test(name: String): bool
+              return
+            end
+          RUBY
+
+          allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+          allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => false })
+
+          compiler = TRuby::Compiler.new(config, type_check: true)
+
+          expect do
+            compiler.compile(input_file)
+          end.to raise_error(TRuby::TypeCheckError)
+        end
+      end
+
+      it "raises TypeCheckError when inferred type doesn't match declared type" do
+        Dir.mktmpdir do |tmpdir|
+          # Method declares Integer but returns String
+          input_file = File.join(tmpdir, "type_mismatch2.trb")
+          File.write(input_file, <<~RUBY)
+            def get_value(): Integer
+              "hello"
+            end
+          RUBY
+
+          allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+          allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => false })
+
+          compiler = TRuby::Compiler.new(config, type_check: true)
+
+          error = nil
+          begin
+            compiler.compile(input_file)
+          rescue TRuby::TypeCheckError => e
+            error = e
+          end
+
+          expect(error).to be_a(TRuby::TypeCheckError)
+          expect(error.message).to include("Integer")
+          expect(error.message).to include("String")
+        end
+      end
+
+      it "passes when return type matches declaration" do
+        Dir.mktmpdir do |tmpdir|
+          input_file = File.join(tmpdir, "type_match.trb")
+          File.write(input_file, <<~RUBY)
+            def greet(name: String): String
+              "Hello, " + name
+            end
+          RUBY
+
+          allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+          allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => false })
+
+          compiler = TRuby::Compiler.new(config, type_check: true)
+
+          expect do
+            compiler.compile(input_file)
+          end.not_to raise_error
+        end
+      end
+
+      it "skips type check when type_check option is false" do
+        Dir.mktmpdir do |tmpdir|
+          # Type mismatch but type_check is disabled
+          input_file = File.join(tmpdir, "skip_check.trb")
+          File.write(input_file, <<~RUBY)
+            def test(): bool
+              return
+            end
+          RUBY
+
+          allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+          allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => false })
+
+          compiler = TRuby::Compiler.new(config, type_check: false)
+
+          expect do
+            compiler.compile(input_file)
+          end.not_to raise_error
+        end
+      end
+
+      it "validates class methods" do
+        Dir.mktmpdir do |tmpdir|
+          input_file = File.join(tmpdir, "class_method.trb")
+          File.write(input_file, <<~RUBY)
+            class Calculator
+              def add(a: Integer, b: Integer): Integer
+                "not a number"
+              end
+            end
+          RUBY
+
+          allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+          allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => false })
+
+          compiler = TRuby::Compiler.new(config, type_check: true)
+
+          expect do
+            compiler.compile(input_file)
+          end.to raise_error(TRuby::TypeCheckError)
+        end
+      end
+    end
+
     context "with directory structure preservation" do
       it "preserves directory structure with single source_include" do
         Dir.mktmpdir do |tmpdir|

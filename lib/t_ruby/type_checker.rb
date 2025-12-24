@@ -1,37 +1,40 @@
 # frozen_string_literal: true
 
 module TRuby
-  # Represents a type checking error
-  class TypeCheckError
-    attr_reader :message, :location, :expected, :actual, :suggestion, :severity
+  # Represents a type checking error (can be raised as an exception)
+  class TypeCheckError < StandardError
+    attr_reader :error_message, :location, :expected, :actual, :suggestion, :severity
 
     def initialize(message:, location: nil, expected: nil, actual: nil, suggestion: nil, severity: :error)
-      @message = message
+      @error_message = message
       @location = location
       @expected = expected
       @actual = actual
       @suggestion = suggestion
       @severity = severity
-    end
-
-    def to_s
-      parts = [@message]
-      parts << "  Expected: #{@expected}" if @expected
-      parts << "  Actual: #{@actual}" if @actual
-      parts << "  Suggestion: #{@suggestion}" if @suggestion
-      parts << "  at #{@location}" if @location
-      parts.join("\n")
+      super(build_full_message)
     end
 
     def to_diagnostic
       {
         severity: @severity,
-        message: @message,
+        message: @error_message,
         location: @location,
         expected: @expected,
         actual: @actual,
         suggestion: @suggestion,
       }
+    end
+
+    private
+
+    def build_full_message
+      parts = [@error_message]
+      parts << "  Expected: #{@expected}" if @expected
+      parts << "  Actual: #{@actual}" if @actual
+      parts << "  Suggestion: #{@suggestion}" if @suggestion
+      parts << "  at #{@location}" if @location
+      parts.join("\n")
     end
   end
 
