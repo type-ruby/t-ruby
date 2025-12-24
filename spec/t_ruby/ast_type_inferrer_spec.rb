@@ -282,4 +282,104 @@ RSpec.describe TRuby::ASTTypeInferrer do
       expect(inferrer.type_cache).to have_key(node.object_id)
     end
   end
+
+  describe "unreachable code handling" do
+    it "ignores code after unconditional return" do
+      # def test
+      #   return false
+      #   "unreachable"
+      # end
+      body = TRuby::IR::Block.new(
+        statements: [
+          TRuby::IR::Return.new(
+            value: TRuby::IR::Literal.new(value: false, literal_type: :boolean)
+          ),
+          TRuby::IR::Literal.new(value: "unreachable", literal_type: :string),
+        ]
+      )
+      method = TRuby::IR::MethodDef.new(
+        name: "test",
+        params: [],
+        return_type: nil,
+        body: body
+      )
+
+      # Should be bool, not bool | String
+      expect(inferrer.infer_method_return_type(method)).to eq("bool")
+    end
+
+    it "ignores conditional after unconditional return" do
+      # def test
+      #   return 42
+      #   if condition
+      #     "then"
+      #   else
+      #     "else"
+      #   end
+      # end
+      conditional = TRuby::IR::Conditional.new(
+        condition: TRuby::IR::Literal.new(value: true, literal_type: :boolean),
+        then_branch: TRuby::IR::Block.new(
+          statements: [TRuby::IR::Literal.new(value: "then", literal_type: :string)]
+        ),
+        else_branch: TRuby::IR::Block.new(
+          statements: [TRuby::IR::Literal.new(value: "else", literal_type: :string)]
+        ),
+        kind: :if
+      )
+      body = TRuby::IR::Block.new(
+        statements: [
+          TRuby::IR::Return.new(
+            value: TRuby::IR::Literal.new(value: 42, literal_type: :integer)
+          ),
+          conditional,
+        ]
+      )
+      method = TRuby::IR::MethodDef.new(
+        name: "test",
+        params: [],
+        return_type: nil,
+        body: body
+      )
+
+      # Should be Integer only
+      expect(inferrer.infer_method_return_type(method)).to eq("Integer")
+    end
+
+    it "collects returns from all branches when conditional does not fully terminate" do
+      # def test
+      #   if condition
+      #     return "yes"
+      #   end
+      #   "no"
+      # end
+      conditional = TRuby::IR::Conditional.new(
+        condition: TRuby::IR::Literal.new(value: true, literal_type: :boolean),
+        then_branch: TRuby::IR::Block.new(
+          statements: [
+            TRuby::IR::Return.new(
+              value: TRuby::IR::Literal.new(value: "yes", literal_type: :string)
+            ),
+          ]
+        ),
+        else_branch: nil,
+        kind: :if
+      )
+      body = TRuby::IR::Block.new(
+        statements: [
+          conditional,
+          TRuby::IR::Literal.new(value: "no", literal_type: :string),
+        ]
+      )
+      method = TRuby::IR::MethodDef.new(
+        name: "test",
+        params: [],
+        return_type: nil,
+        body: body
+      )
+
+      # Should include both String from return and String from implicit return
+      expect(inferrer.infer_method_return_type(method)).to eq("String")
+    end
+  end
 end

@@ -205,11 +205,13 @@ module TRuby
       end
 
       # 본문에서 반환 타입 수집
-      return_types = collect_return_types(method_node.body, env)
+      return_types, terminated = collect_return_types(method_node.body, env)
 
-      # 암묵적 반환값 추론 (마지막 표현식)
-      implicit_return = infer_implicit_return(method_node.body, env)
-      return_types << implicit_return if implicit_return
+      # 암묵적 반환값 추론 (마지막 표현식) - 종료되지 않은 경우만
+      unless terminated
+        implicit_return = infer_implicit_return(method_node.body, env)
+        return_types << implicit_return if implicit_return
+      end
 
       # 타입 통합
       unify_types(return_types)
@@ -407,24 +409,35 @@ module TRuby
     end
 
     # 본문에서 모든 return 타입 수집
+    # @return [Array<(Array<String>, Boolean)>] [수집된 타입들, 종료 여부]
     def collect_return_types(body, env)
       types = []
 
-      collect_returns_recursive(body, env, types)
+      terminated = collect_returns_recursive(body, env, types)
 
-      types
+      [types, terminated]
     end
 
+    # @return [Boolean] true if this node terminates (contains unconditional return)
     def collect_returns_recursive(node, env, types)
       case node
       when IR::Return
         type = node.value ? infer_expression(node.value, env) : "nil"
         types << type
+        true # return은 항상 실행 흐름 종료
       when IR::Block
-        node.statements.each { |stmt| collect_returns_recursive(stmt, env, types) }
+        node.statements.each do |stmt|
+          terminated = collect_returns_recursive(stmt, env, types)
+          return true if terminated # return 이후 코드는 unreachable
+        end
+        false
       when IR::Conditional
-        collect_returns_recursive(node.then_branch, env, types) if node.then_branch
-        collect_returns_recursive(node.else_branch, env, types) if node.else_branch
+        then_terminated = node.then_branch ? collect_returns_recursive(node.then_branch, env, types) : false
+        else_terminated = node.else_branch ? collect_returns_recursive(node.else_branch, env, types) : false
+        # 모든 분기가 종료되어야 조건문 전체가 종료됨
+        then_terminated && else_terminated
+      else
+        false
       end
     end
 
