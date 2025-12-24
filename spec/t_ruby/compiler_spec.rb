@@ -260,10 +260,10 @@ describe TRuby::Compiler do
     context "with return type validation" do
       it "raises TypeCheckError when return type mismatches declaration" do
         Dir.mktmpdir do |tmpdir|
-          # Method declares bool but returns nil
+          # Method declares Boolean but returns nil
           input_file = File.join(tmpdir, "type_mismatch.trb")
           File.write(input_file, <<~RUBY)
-            def test(name: String): bool
+            def test(name: String): Boolean
               return
             end
           RUBY
@@ -341,7 +341,7 @@ describe TRuby::Compiler do
           # Type mismatch but type_check is disabled in config
           input_file = File.join(tmpdir, "skip_check.trb")
           File.write(input_file, <<~RUBY)
-            def test(): bool
+            def test(): Boolean
               return
             end
           RUBY
