@@ -269,4 +269,73 @@ RSpec.describe TRuby::BodyParser do
       expect(result.statements.length).to eq(2)
     end
   end
+
+  describe "conditional expressions" do
+    it "parses if/else conditional" do
+      lines = [
+        "  if x == 1",
+        "    true",
+        "  else",
+        "    false",
+        "  end",
+      ]
+      result = parser.parse(lines, 0, 5)
+
+      expect(result.statements.length).to eq(1)
+      stmt = result.statements.first
+      expect(stmt).to be_a(TRuby::IR::Conditional)
+      expect(stmt.kind).to eq(:if)
+      expect(stmt.then_branch).to be_a(TRuby::IR::Block)
+      expect(stmt.else_branch).to be_a(TRuby::IR::Block)
+    end
+
+    it "parses if without else" do
+      lines = [
+        "  if x == 1",
+        "    true",
+        "  end",
+      ]
+      result = parser.parse(lines, 0, 3)
+
+      stmt = result.statements.first
+      expect(stmt).to be_a(TRuby::IR::Conditional)
+      expect(stmt.then_branch).to be_a(TRuby::IR::Block)
+      expect(stmt.else_branch).to be_nil
+    end
+
+    it "parses unless conditional" do
+      lines = [
+        "  unless x.nil?",
+        "    x",
+        "  end",
+      ]
+      result = parser.parse(lines, 0, 3)
+
+      stmt = result.statements.first
+      expect(stmt).to be_a(TRuby::IR::Conditional)
+      expect(stmt.kind).to eq(:unless)
+    end
+
+    it "parses conditional returning nil or value" do
+      lines = [
+        "  if name == \"test\"",
+        "    nil",
+        "  else",
+        "    name",
+        "  end",
+      ]
+      result = parser.parse(lines, 0, 5)
+
+      stmt = result.statements.first
+      expect(stmt).to be_a(TRuby::IR::Conditional)
+
+      then_stmt = stmt.then_branch.statements.first
+      expect(then_stmt).to be_a(TRuby::IR::Literal)
+      expect(then_stmt.literal_type).to eq(:nil)
+
+      else_stmt = stmt.else_branch.statements.first
+      expect(else_stmt).to be_a(TRuby::IR::VariableRef)
+      expect(else_stmt.name).to eq("name")
+    end
+  end
 end

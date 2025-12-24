@@ -19,15 +19,94 @@ module TRuby
         stripped = line.strip
 
         # 빈 줄이나 주석은 건너뛰기
-        unless stripped.empty? || stripped.start_with?("#")
-          node = parse_statement(stripped, i)
-          statements << node if node
+        if stripped.empty? || stripped.start_with?("#")
+          i += 1
+          next
+        end
+
+        # if/unless 조건문 처리
+        if stripped.match?(/^(if|unless)\s+/)
+          node, next_i = parse_conditional(lines, i, end_line)
+          if node
+            statements << node
+            i = next_i
+            next
+          end
+        end
+
+        node = parse_statement(stripped, i)
+        statements << node if node
+        i += 1
+      end
+
+      IR::Block.new(statements: statements)
+    end
+
+    # if/unless/elsif 조건문 파싱
+    # @return [Array(IR::Conditional, Integer)] 조건문 노드와 다음 라인 인덱스
+    def parse_conditional(lines, start_line, block_end)
+      line = lines[start_line].strip
+      match = line.match(/^(if|unless|elsif)\s+(.+)$/)
+      return [nil, start_line] unless match
+
+      # elsif는 내부적으로 if처럼 처리
+      kind = match[1] == "elsif" ? :if : match[1].to_sym
+      condition = parse_expression(match[2])
+
+      # then/elsif/else/end 블록 찾기
+      then_statements = []
+      else_statements = []
+      current_branch = :then
+      depth = 1
+      i = start_line + 1
+
+      while i < block_end && depth.positive?
+        current_line = lines[i].strip
+
+        if current_line.match?(/^(if|unless|case|while|until|for|begin)\b/)
+          depth += 1
+          if current_branch == :then
+            then_statements << IR::RawCode.new(code: current_line)
+          else
+            else_statements << IR::RawCode.new(code: current_line)
+          end
+        elsif current_line == "end"
+          depth -= 1
+          break if depth.zero?
+        elsif depth == 1 && current_line.match?(/^elsif\s+/)
+          # elsif는 중첩된 if로 처리
+          nested_cond, next_i = parse_conditional(lines, i, block_end)
+          else_statements << nested_cond if nested_cond
+          i = next_i
+          break
+        elsif depth == 1 && current_line == "else"
+          current_branch = :else
+        elsif !current_line.empty? && !current_line.start_with?("#")
+          node = parse_statement(current_line, i)
+          next unless node
+
+          if current_branch == :then
+            then_statements << node
+          else
+            else_statements << node
+          end
         end
 
         i += 1
       end
 
-      IR::Block.new(statements: statements)
+      then_block = IR::Block.new(statements: then_statements)
+      else_block = else_statements.empty? ? nil : IR::Block.new(statements: else_statements)
+
+      conditional = IR::Conditional.new(
+        condition: condition,
+        then_branch: then_block,
+        else_branch: else_block,
+        kind: kind,
+        location: start_line
+      )
+
+      [conditional, i + 1]
     end
 
     private
