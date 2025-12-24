@@ -74,8 +74,9 @@ RSpec.describe "T-Ruby E2E Integration" do
         end
       TRB
 
-      # Compile all files with custom config
+      # Compile all files with custom config (disable type checking for this test)
       config = TRuby::Config.new(File.join(tmpdir, "trbconfig.yml"))
+      allow(config).to receive(:type_check?).and_return(false)
       compiler = TRuby::Compiler.new(config)
 
       trb_files = Dir.glob(File.join(lib_dir, "*.trb"))

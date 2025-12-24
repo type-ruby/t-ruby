@@ -299,7 +299,15 @@ module TRuby
     def normalize_type(type)
       return "untyped" if type.nil?
 
-      type.to_s.strip
+      normalized = type.to_s.strip
+
+      # Normalize boolean types (bool/Boolean/TrueClass/FalseClass -> bool)
+      case normalized
+      when "Boolean", "TrueClass", "FalseClass"
+        "bool"
+      else
+        normalized
+      end
     end
 
     # Check if inferred type is compatible with declared type
