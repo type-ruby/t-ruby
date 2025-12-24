@@ -170,6 +170,56 @@ describe TRuby::Parser do
         expect(result).to be_a(Hash)
       end
     end
+
+    context "with non-ASCII (Unicode) method names" do
+      it "parses method names with Korean characters" do
+        source = "def 안녕하세요(name: String): String\n  name\nend"
+        parser = TRuby::Parser.new(source)
+
+        result = parser.parse
+        expect(result[:type]).to eq(:success)
+        expect(result[:functions].length).to eq(1)
+        expect(result[:functions][0][:name]).to eq("안녕하세요")
+        expect(result[:functions][0][:params][0][:type]).to eq("String")
+        expect(result[:functions][0][:return_type]).to eq("String")
+      end
+
+      it "parses method names with mixed ASCII and Unicode characters" do
+        source = "def 비_영어_함수명___테스트1!(name: String)\n  name\nend"
+        parser = TRuby::Parser.new(source)
+
+        result = parser.parse
+        expect(result[:type]).to eq(:success)
+        expect(result[:functions].length).to eq(1)
+        expect(result[:functions][0][:name]).to eq("비_영어_함수명___테스트1!")
+      end
+
+      it "parses method names with Japanese characters" do
+        source = "def こんにちは(): String\n  'hello'\nend"
+        parser = TRuby::Parser.new(source)
+
+        result = parser.parse
+        expect(result[:type]).to eq(:success)
+        expect(result[:functions][0][:name]).to eq("こんにちは")
+      end
+
+      it "parses class methods with Unicode names" do
+        source = <<~RUBY
+          class HelloWorld
+            def 인사하기(name: String): String
+              "Hello, \#{name}!"
+            end
+          end
+        RUBY
+        parser = TRuby::Parser.new(source)
+
+        result = parser.parse
+        expect(result[:type]).to eq(:success)
+        expect(result[:classes].length).to eq(1)
+        expect(result[:classes][0][:methods].length).to eq(1)
+        expect(result[:classes][0][:methods][0][:name]).to eq("인사하기")
+      end
+    end
   end
 
   describe "parsing namespaced interfaces" do
