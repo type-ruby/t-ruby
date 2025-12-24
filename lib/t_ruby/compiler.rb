@@ -3,6 +3,11 @@
 require "fileutils"
 
 module TRuby
+  # Pattern for method names that supports Unicode characters
+  # \p{L} matches any Unicode letter, \p{N} matches any Unicode number
+  IDENTIFIER_CHAR = '[\p{L}\p{N}_]'
+  METHOD_NAME_PATTERN = "#{IDENTIFIER_CHAR}+[?!]?".freeze
+
   class Compiler
     attr_reader :declaration_loader, :use_ir, :optimizer
 
@@ -362,7 +367,7 @@ module TRuby
       result = source.dup
 
       # Match function definitions and remove type annotations from parameters
-      result.gsub!(/^(\s*def\s+\w+\s*\()([^)]+)(\)\s*)(?::\s*[^\n]+)?(\s*$)/) do |_match|
+      result.gsub!(/^(\s*def\s+#{TRuby::METHOD_NAME_PATTERN}\s*\()([^)]+)(\)\s*)(?::\s*[^\n]+)?(\s*$)/) do |_match|
         indent = ::Regexp.last_match(1)
         params = ::Regexp.last_match(2)
         close_paren = ::Regexp.last_match(3)
@@ -411,8 +416,8 @@ module TRuby
 
     # Clean a single parameter (remove type annotation)
     def clean_param(param)
-      # Match: name: Type or name
-      if (match = param.match(/^(\w+)\s*:/))
+      # Match: name: Type or name (supports Unicode identifiers)
+      if (match = param.match(/^(#{TRuby::IDENTIFIER_CHAR}+)\s*:/))
         match[1]
       else
         param

@@ -7,6 +7,12 @@ module TRuby
     # Type names that are recognized as valid
     VALID_TYPES = %w[String Integer Boolean Array Hash Symbol void nil].freeze
 
+    # Pattern for method/variable names that supports Unicode characters
+    # \p{L} matches any Unicode letter, \p{N} matches any Unicode number
+    IDENTIFIER_CHAR = '[\p{L}\p{N}_]'
+    # Method names can end with ? or !
+    METHOD_NAME_PATTERN = "#{IDENTIFIER_CHAR}+[?!]?".freeze
+
     attr_reader :source, :ir_program, :use_combinator
 
     def initialize(source, use_combinator: true, parse_body: true)
@@ -56,7 +62,7 @@ module TRuby
         end
 
         # Match function definitions (top-level only, not inside class)
-        if line.match?(/^\s*def\s+\w+/)
+        if line.match?(/^\s*def\s+#{IDENTIFIER_CHAR}+/)
           func_info, next_i = parse_function_with_body(i)
           if func_info
             functions << func_info
@@ -167,7 +173,7 @@ module TRuby
       # def foo(): Type         - no params but with return type
       # def foo(params)         - with params, no return type
       # def foo                  - no params, no return type
-      match = line.match(/^\s*def\s+([\w?!]+)\s*(?:\((.*?)\))?\s*(?::\s*(.+?))?\s*$/)
+      match = line.match(/^\s*def\s+(#{METHOD_NAME_PATTERN})\s*(?:\((.*?)\))?\s*(?::\s*(.+?))?\s*$/)
       return nil unless match
 
       function_name = match[1]
@@ -320,7 +326,7 @@ module TRuby
         current_line = @lines[i]
 
         # Match method definitions inside class
-        if current_line.match?(/^\s*def\s+\w+/)
+        if current_line.match?(/^\s*def\s+#{IDENTIFIER_CHAR}+/)
           method_info, next_i = parse_method_in_class(i, class_end)
           if method_info
             methods << method_info
