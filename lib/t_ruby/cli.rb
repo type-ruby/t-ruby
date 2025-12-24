@@ -216,6 +216,9 @@ module TRuby
 
       output_path = compiler.compile(input_file)
       puts "Compiled: #{input_file} -> #{output_path}"
+    rescue TypeCheckError => e
+      puts "Type error: #{e.message}"
+      exit 1
     rescue ArgumentError => e
       puts "Error: #{e.message}"
       exit 1

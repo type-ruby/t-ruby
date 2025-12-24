@@ -24,6 +24,7 @@ module TRuby
       "compiler" => {
         "strictness" => "standard",
         "generate_rbs" => true,
+        "type_check" => true,
         "target_ruby" => "3.0",
         "experimental" => [],
         "checks" => {
@@ -87,6 +88,12 @@ module TRuby
     # @return [Boolean] true if RBS files should be generated
     def generate_rbs?
       @compiler["generate_rbs"] != false
+    end
+
+    # Check if type checking is enabled
+    # @return [Boolean] true if type checking is enabled (default: true)
+    def type_check?
+      @compiler["type_check"] != false
     end
 
     # Get target Ruby version

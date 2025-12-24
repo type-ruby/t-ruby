@@ -9,17 +9,20 @@ module TRuby
   METHOD_NAME_PATTERN = "#{IDENTIFIER_CHAR}+[?!]?".freeze
 
   class Compiler
-    attr_reader :declaration_loader, :use_ir, :optimizer, :type_check
+    attr_reader :declaration_loader, :use_ir, :optimizer
 
-    def initialize(config = nil, use_ir: true, optimize: true, type_check: false)
+    def initialize(config = nil, use_ir: true, optimize: true)
       @config = config || Config.new
       @use_ir = use_ir
       @optimize = optimize
-      @type_check = type_check
       @declaration_loader = DeclarationLoader.new
       @optimizer = IR::Optimizer.new if use_ir && optimize
-      @type_inferrer = ASTTypeInferrer.new if type_check
+      @type_inferrer = ASTTypeInferrer.new if type_check?
       setup_declaration_paths if @config
+    end
+
+    def type_check?
+      @config.type_check?
     end
 
     def compile(input_path)
@@ -43,7 +46,7 @@ module TRuby
       parse_result = parser.parse
 
       # Run type checking if enabled
-      if @type_check && @use_ir && parser.ir_program
+      if type_check? && @use_ir && parser.ir_program
         check_types(parser.ir_program, input_path)
       end
 

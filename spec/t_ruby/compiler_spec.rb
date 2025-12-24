@@ -272,8 +272,9 @@ describe TRuby::Compiler do
           allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
           allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
           allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => false })
+          allow_any_instance_of(TRuby::Config).to receive(:type_check?).and_return(true)
 
-          compiler = TRuby::Compiler.new(config, type_check: true)
+          compiler = TRuby::Compiler.new(config)
 
           expect do
             compiler.compile(input_file)
@@ -295,8 +296,9 @@ describe TRuby::Compiler do
           allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
           allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
           allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => false })
+          allow_any_instance_of(TRuby::Config).to receive(:type_check?).and_return(true)
 
-          compiler = TRuby::Compiler.new(config, type_check: true)
+          compiler = TRuby::Compiler.new(config)
 
           error = nil
           begin
@@ -324,8 +326,9 @@ describe TRuby::Compiler do
           allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
           allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
           allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => false })
+          allow_any_instance_of(TRuby::Config).to receive(:type_check?).and_return(true)
 
-          compiler = TRuby::Compiler.new(config, type_check: true)
+          compiler = TRuby::Compiler.new(config)
 
           expect do
             compiler.compile(input_file)
@@ -333,9 +336,9 @@ describe TRuby::Compiler do
         end
       end
 
-      it "skips type check when type_check option is false" do
+      it "skips type check when type_check config is false" do
         Dir.mktmpdir do |tmpdir|
-          # Type mismatch but type_check is disabled
+          # Type mismatch but type_check is disabled in config
           input_file = File.join(tmpdir, "skip_check.trb")
           File.write(input_file, <<~RUBY)
             def test(): bool
@@ -347,8 +350,9 @@ describe TRuby::Compiler do
           allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
           allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
           allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => false })
+          allow_any_instance_of(TRuby::Config).to receive(:type_check?).and_return(false)
 
-          compiler = TRuby::Compiler.new(config, type_check: false)
+          compiler = TRuby::Compiler.new(config)
 
           expect do
             compiler.compile(input_file)
@@ -371,8 +375,9 @@ describe TRuby::Compiler do
           allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
           allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
           allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => false })
+          allow_any_instance_of(TRuby::Config).to receive(:type_check?).and_return(true)
 
-          compiler = TRuby::Compiler.new(config, type_check: true)
+          compiler = TRuby::Compiler.new(config)
 
           expect do
             compiler.compile(input_file)
@@ -490,6 +495,7 @@ describe TRuby::Compiler do
           allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(out_dir)
           allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([src_dir])
           allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => true })
+          allow_any_instance_of(TRuby::Config).to receive(:type_check?).and_return(false)
 
           compiler = TRuby::Compiler.new(config)
           compiler.compile(input_file)
