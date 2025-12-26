@@ -15,14 +15,13 @@ module TRuby
     # Visibility modifiers for method definitions
     VISIBILITY_PATTERN = '(?:(?:private|protected|public)\s+)?'
 
-    attr_reader :source, :ir_program, :use_combinator
+    attr_reader :source, :ir_program
 
-    def initialize(source, use_combinator: true, parse_body: true)
+    def initialize(source, parse_body: true)
       @source = source
       @lines = source.split("\n")
-      @use_combinator = use_combinator
       @parse_body = parse_body
-      @type_parser = ParserCombinator::TypeParser.new if use_combinator
+      @type_parser = ParserCombinator::TypeParser.new
       @body_parser = BodyParser.new if parse_body
       @ir_program = nil
     end
@@ -93,11 +92,9 @@ module TRuby
         classes: classes,
       }
 
-      # Build IR if combinator is enabled
-      if @use_combinator
-        builder = IR::Builder.new
-        @ir_program = builder.build(result, source: @source)
-      end
+      # Build IR
+      builder = IR::Builder.new
+      @ir_program = builder.build(result, source: @source)
 
       result
     end
@@ -108,10 +105,8 @@ module TRuby
       @ir_program
     end
 
-    # Parse a type expression using combinator (new API)
+    # Parse a type expression using combinator
     def parse_type(type_string)
-      return nil unless @use_combinator
-
       result = @type_parser.parse(type_string)
       result[:success] ? result[:type] : nil
     end
@@ -160,16 +155,14 @@ module TRuby
       alias_name = match[1]
       definition = match[2].strip
 
-      # Use combinator for complex type parsing if available
-      if @use_combinator
-        type_result = @type_parser.parse(definition)
-        if type_result[:success]
-          return {
-            name: alias_name,
-            definition: definition,
-            ir_type: type_result[:type],
-          }
-        end
+      # Use combinator for complex type parsing
+      type_result = @type_parser.parse(definition)
+      if type_result[:success]
+        return {
+          name: alias_name,
+          definition: definition,
+          ir_type: type_result[:type],
+        }
       end
 
       {
@@ -207,8 +200,8 @@ module TRuby
         visibility: visibility,
       }
 
-      # Parse return type with combinator if available
-      if @use_combinator && return_type_str
+      # Parse return type with combinator
+      if return_type_str
         type_result = @type_parser.parse(return_type_str)
         result[:ir_return_type] = type_result[:type] if type_result[:success]
       end
@@ -300,8 +293,8 @@ module TRuby
         type: type_str,
       }
 
-      # Parse type with combinator if available
-      if @use_combinator && type_str
+      # Parse type with combinator
+      if type_str
         type_result = @type_parser.parse(type_str)
         result[:ir_type] = type_result[:type] if type_result[:success]
       end
@@ -452,10 +445,8 @@ module TRuby
             }
 
             # Parse member type with combinator
-            if @use_combinator
-              type_result = @type_parser.parse(member[:type])
-              member[:ir_type] = type_result[:type] if type_result[:success]
-            end
+            type_result = @type_parser.parse(member[:type])
+            member[:ir_type] = type_result[:type] if type_result[:success]
 
             members << member
           end
@@ -465,13 +456,6 @@ module TRuby
       end
 
       [{ name: interface_name, members: members }, i]
-    end
-  end
-
-  # Legacy Parser for backward compatibility (regex-only)
-  class LegacyParser < Parser
-    def initialize(source)
-      super(source, use_combinator: false)
     end
   end
 end

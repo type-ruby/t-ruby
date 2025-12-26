@@ -11,14 +11,13 @@ module TRuby
   VISIBILITY_PATTERN = '(?:(?:private|protected|public)\s+)?'
 
   class Compiler
-    attr_reader :declaration_loader, :use_ir, :optimizer
+    attr_reader :declaration_loader, :optimizer
 
-    def initialize(config = nil, use_ir: true, optimize: true)
+    def initialize(config = nil, optimize: true)
       @config = config || Config.new
-      @use_ir = use_ir
       @optimize = optimize
       @declaration_loader = DeclarationLoader.new
-      @optimizer = IR::Optimizer.new if use_ir && optimize
+      @optimizer = IR::Optimizer.new if optimize
       @type_inferrer = ASTTypeInferrer.new if type_check?
       setup_declaration_paths if @config
     end
@@ -44,16 +43,16 @@ module TRuby
       source = File.read(input_path)
 
       # Parse with IR support
-      parser = Parser.new(source, use_combinator: @use_ir)
-      parse_result = parser.parse
+      parser = Parser.new(source)
+      parser.parse
 
       # Run type checking if enabled
-      if type_check? && @use_ir && parser.ir_program
+      if type_check? && parser.ir_program
         check_types(parser.ir_program, input_path)
       end
 
       # Transform source to Ruby code
-      output = @use_ir ? transform_with_ir(source, parser) : transform_legacy(source, parse_result)
+      output = transform_with_ir(source, parser)
 
       # Compute output path (respects preserve_structure setting)
       output_path = compute_output_path(input_path, @config.ruby_dir, ".rb")
@@ -65,11 +64,7 @@ module TRuby
       if @config.compiler["generate_rbs"]
         rbs_path = compute_output_path(input_path, @config.rbs_dir, ".rbs")
         FileUtils.mkdir_p(File.dirname(rbs_path))
-        if @use_ir && parser.ir_program
-          generate_rbs_from_ir_to_path(rbs_path, parser.ir_program)
-        else
-          generate_rbs_file_to_path(rbs_path, parse_result)
-        end
+        generate_rbs_from_ir_to_path(rbs_path, parser.ir_program)
       end
 
       # Generate .d.trb file if enabled in config (legacy support)
@@ -89,25 +84,17 @@ module TRuby
     def compile_string(source, options = {})
       generate_rbs = options.fetch(:rbs, true)
 
-      parser = Parser.new(source, use_combinator: @use_ir)
-      parse_result = parser.parse
+      parser = Parser.new(source)
+      parser.parse
 
       # Transform source to Ruby code
-      ruby_output = @use_ir ? transform_with_ir(source, parser) : transform_legacy(source, parse_result)
+      ruby_output = transform_with_ir(source, parser)
 
       # Generate RBS if requested
       rbs_output = ""
-      if generate_rbs
-        if @use_ir && parser.ir_program
-          generator = IR::RBSGenerator.new
-          rbs_output = generator.generate(parser.ir_program)
-        else
-          generator = RBSGenerator.new
-          rbs_output = generator.generate(
-            parse_result[:functions] || [],
-            parse_result[:type_aliases] || []
-          )
-        end
+      if generate_rbs && parser.ir_program
+        generator = IR::RBSGenerator.new
+        rbs_output = generator.generate(parser.ir_program)
       end
 
       {
@@ -136,7 +123,7 @@ module TRuby
       end
 
       source = File.read(input_path)
-      parser = Parser.new(source, use_combinator: true)
+      parser = Parser.new(source)
       parser.parse
       parser.ir_program
     end
@@ -382,10 +369,10 @@ module TRuby
       @declaration_loader.add_search_path("./lib/types")
     end
 
-    # Transform using IR system (new approach)
+    # Transform using IR system
     def transform_with_ir(source, parser)
       ir_program = parser.ir_program
-      return transform_legacy(source, parser.parse) unless ir_program
+      return source unless ir_program
 
       # Run optimization passes if enabled
       if @optimize && @optimizer
@@ -398,31 +385,13 @@ module TRuby
       generator.generate_with_source(ir_program, source)
     end
 
-    # Legacy transformation using TypeErasure (backward compatible)
-    def transform_legacy(source, parse_result)
-      if parse_result[:type] == :success
-        eraser = TypeErasure.new(source)
-        eraser.erase
-      else
-        source
-      end
-    end
-
     # Generate RBS from IR to a specific path
     def generate_rbs_from_ir_to_path(rbs_path, ir_program)
+      return unless ir_program
+
       generator = IR::RBSGenerator.new
       rbs_content = generator.generate(ir_program)
       File.write(rbs_path, rbs_content) unless rbs_content.strip.empty?
-    end
-
-    # Legacy RBS generation to a specific path
-    def generate_rbs_file_to_path(rbs_path, parse_result)
-      generator = RBSGenerator.new
-      rbs_content = generator.generate(
-        parse_result[:functions] || [],
-        parse_result[:type_aliases] || []
-      )
-      File.write(rbs_path, rbs_content) unless rbs_content.empty?
     end
 
     def generate_dtrb_file(input_path, out_dir)
@@ -581,13 +550,6 @@ module TRuby
       end
 
       result
-    end
-  end
-
-  # Legacy Compiler for backward compatibility (no IR)
-  class LegacyCompiler < Compiler
-    def initialize(config)
-      super(config, use_ir: false, optimize: false)
     end
   end
 end

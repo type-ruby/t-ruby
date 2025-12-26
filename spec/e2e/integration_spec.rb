@@ -199,7 +199,7 @@ RSpec.describe "T-Ruby E2E Integration" do
         end
       TRB
 
-      parser = TRuby::Parser.new(content, use_combinator: true)
+      parser = TRuby::Parser.new(content)
       parser.parse
       ir_program = parser.ir_program
       expect(ir_program).not_to be_nil

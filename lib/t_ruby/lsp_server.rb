@@ -787,7 +787,7 @@ module TRuby
       lines = text.split("\n")
 
       # Parse the document to get IR
-      parser = Parser.new(text, use_combinator: true)
+      parser = Parser.new(text)
       parse_result = parser.parse
       parser.ir_program
 
