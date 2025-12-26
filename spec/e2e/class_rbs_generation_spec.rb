@@ -216,6 +216,88 @@ RSpec.describe "Class RBS Generation E2E" do
     end
   end
 
+  describe "visibility modifier generation" do
+    it "generates RBS with private method visibility" do
+      Dir.chdir(tmpdir) do
+        create_config_file(<<~YAML)
+          source:
+            include:
+              - src
+          output:
+            ruby_dir: build
+            rbs_dir: sig
+          compiler:
+            generate_rbs: true
+        YAML
+
+        create_trb_file("src/secret.trb", <<~TRB)
+          class Secret
+            def public_method(): String
+              "public"
+            end
+
+            private def hidden(x: Integer): Boolean
+              x > 0
+            end
+
+            protected def internal(name: String): String
+              name.upcase
+            end
+          end
+        TRB
+
+        rbs_content = compile_and_get_rbs(File.join(tmpdir, "src/secret.trb"))
+
+        # Validate RBS syntax using official rbs gem
+        expect_valid_rbs(rbs_content)
+
+        expect(rbs_content).to include("class Secret")
+        expect(rbs_content).to include("def public_method: () -> String")
+        expect(rbs_content).to include("private def hidden: (x: Integer) -> Boolean")
+        # RBS does not support protected visibility, treated as public
+        # See: https://github.com/ruby/rbs/issues/579
+        expect(rbs_content).to include("def internal: (name: String) -> String")
+        expect(rbs_content).not_to include("protected def")
+      end
+    end
+
+    it "preserves visibility in compiled Ruby code" do
+      Dir.chdir(tmpdir) do
+        create_config_file(<<~YAML)
+          source:
+            include:
+              - src
+          output:
+            ruby_dir: build
+            rbs_dir: sig
+          compiler:
+            generate_rbs: true
+        YAML
+
+        create_trb_file("src/visible.trb", <<~TRB)
+          class Visible
+            private def secret(x: String): Integer
+              x.length
+            end
+          end
+        TRB
+
+        trb_path = File.join(tmpdir, "src/visible.trb")
+        config = TRuby::Config.new
+        compiler = TRuby::Compiler.new(config)
+        compiler.compile(trb_path)
+
+        # Check compiled Ruby preserves private keyword
+        ruby_path = File.join(tmpdir, "build/visible.rb")
+        ruby_content = File.read(ruby_path)
+
+        expect(ruby_content).to include("private def secret")
+        expect(ruby_content).not_to include(": String")
+        expect(ruby_content).not_to include(": Integer")
+      end
+    end
+  end
+
   describe "HelloWorld integration test" do
     it "generates correct RBS for HelloWorld sample structure" do
       Dir.chdir(tmpdir) do

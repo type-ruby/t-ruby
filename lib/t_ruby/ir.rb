@@ -778,7 +778,8 @@ module TRuby
           name: info[:name],
           params: params,
           return_type: info[:return_type] ? parse_type(info[:return_type]) : nil,
-          body: body
+          body: body,
+          visibility: info[:visibility] || :public
         )
       end
 
@@ -1051,7 +1052,8 @@ module TRuby
         end
 
         return_type ||= "untyped"
-        emit("def #{node.name}: (#{params}) -> #{return_type}")
+        visibility_prefix = format_visibility(node.visibility)
+        emit("#{visibility_prefix}def #{node.name}: (#{params}) -> #{return_type}")
       end
 
       def visit_class_decl(node)
@@ -1091,6 +1093,17 @@ module TRuby
 
       def emit(text)
         @output << (("  " * @indent) + text)
+      end
+
+      def format_visibility(visibility)
+        # RBS only supports private visibility, not protected
+        # See: https://github.com/ruby/rbs/issues/579
+        case visibility
+        when :private
+          "private "
+        else
+          ""
+        end
       end
     end
 

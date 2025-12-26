@@ -12,15 +12,16 @@ module TRuby
     IDENTIFIER_CHAR = '[\p{L}\p{N}_]'
     # Method names can end with ? or !
     METHOD_NAME_PATTERN = "#{IDENTIFIER_CHAR}+[?!]?".freeze
+    # Visibility modifiers for method definitions
+    VISIBILITY_PATTERN = '(?:(?:private|protected|public)\s+)?'
 
-    attr_reader :source, :ir_program, :use_combinator
+    attr_reader :source, :ir_program
 
-    def initialize(source, use_combinator: true, parse_body: true)
+    def initialize(source, parse_body: true)
       @source = source
       @lines = source.split("\n")
-      @use_combinator = use_combinator
       @parse_body = parse_body
-      @type_parser = ParserCombinator::TypeParser.new if use_combinator
+      @type_parser = ParserCombinator::TypeParser.new
       @body_parser = BodyParser.new if parse_body
       @ir_program = nil
     end
@@ -32,7 +33,16 @@ module TRuby
       classes = []
       i = 0
 
+      # Pre-detect heredoc regions to skip
+      heredoc_ranges = HeredocDetector.detect(@lines)
+
       while i < @lines.length
+        # Skip lines inside heredoc content
+        if HeredocDetector.inside_heredoc?(i, heredoc_ranges)
+          i += 1
+          next
+        end
+
         line = @lines[i]
 
         # Match type alias definitions
@@ -62,7 +72,7 @@ module TRuby
         end
 
         # Match function definitions (top-level only, not inside class)
-        if line.match?(/^\s*def\s+#{IDENTIFIER_CHAR}+/)
+        if line.match?(/^\s*#{VISIBILITY_PATTERN}def\s+#{IDENTIFIER_CHAR}+/)
           func_info, next_i = parse_function_with_body(i)
           if func_info
             functions << func_info
@@ -82,11 +92,9 @@ module TRuby
         classes: classes,
       }
 
-      # Build IR if combinator is enabled
-      if @use_combinator
-        builder = IR::Builder.new
-        @ir_program = builder.build(result, source: @source)
-      end
+      # Build IR
+      builder = IR::Builder.new
+      @ir_program = builder.build(result, source: @source)
 
       result
     end
@@ -97,10 +105,8 @@ module TRuby
       @ir_program
     end
 
-    # Parse a type expression using combinator (new API)
+    # Parse a type expression using combinator
     def parse_type(type_string)
-      return nil unless @use_combinator
-
       result = @type_parser.parse(type_string)
       result[:success] ? result[:type] : nil
     end
@@ -149,16 +155,14 @@ module TRuby
       alias_name = match[1]
       definition = match[2].strip
 
-      # Use combinator for complex type parsing if available
-      if @use_combinator
-        type_result = @type_parser.parse(definition)
-        if type_result[:success]
-          return {
-            name: alias_name,
-            definition: definition,
-            ir_type: type_result[:type],
-          }
-        end
+      # Use combinator for complex type parsing
+      type_result = @type_parser.parse(definition)
+      if type_result[:success]
+        return {
+          name: alias_name,
+          definition: definition,
+          ir_type: type_result[:type],
+        }
       end
 
       {
@@ -173,12 +177,14 @@ module TRuby
       # def foo(): Type         - no params but with return type
       # def foo(params)         - with params, no return type
       # def foo                  - no params, no return type
-      match = line.match(/^\s*def\s+(#{METHOD_NAME_PATTERN})\s*(?:\((.*?)\))?\s*(?::\s*(.+?))?\s*$/)
+      # Also supports visibility modifiers: private def, protected def, public def
+      match = line.match(/^\s*(?:(private|protected|public)\s+)?def\s+(#{METHOD_NAME_PATTERN})\s*(?:\((.*?)\))?\s*(?::\s*(.+?))?\s*$/)
       return nil unless match
 
-      function_name = match[1]
-      params_str = match[2] || ""
-      return_type_str = match[3]&.strip
+      visibility = match[1] ? match[1].to_sym : :public
+      function_name = match[2]
+      params_str = match[3] || ""
+      return_type_str = match[4]&.strip
 
       # Validate return type if present
       if return_type_str
@@ -191,10 +197,11 @@ module TRuby
         name: function_name,
         params: params,
         return_type: return_type_str,
+        visibility: visibility,
       }
 
-      # Parse return type with combinator if available
-      if @use_combinator && return_type_str
+      # Parse return type with combinator
+      if return_type_str
         type_result = @type_parser.parse(return_type_str)
         result[:ir_return_type] = type_result[:type] if type_result[:success]
       end
@@ -286,8 +293,8 @@ module TRuby
         type: type_str,
       }
 
-      # Parse type with combinator if available
-      if @use_combinator && type_str
+      # Parse type with combinator
+      if type_str
         type_result = @type_parser.parse(type_str)
         result[:ir_type] = type_result[:type] if type_result[:success]
       end
@@ -326,7 +333,7 @@ module TRuby
         current_line = @lines[i]
 
         # Match method definitions inside class
-        if current_line.match?(/^\s*def\s+#{IDENTIFIER_CHAR}+/)
+        if current_line.match?(/^\s*#{VISIBILITY_PATTERN}def\s+#{IDENTIFIER_CHAR}+/)
           method_info, next_i = parse_method_in_class(i, class_end)
           if method_info
             methods << method_info
@@ -438,10 +445,8 @@ module TRuby
             }
 
             # Parse member type with combinator
-            if @use_combinator
-              type_result = @type_parser.parse(member[:type])
-              member[:ir_type] = type_result[:type] if type_result[:success]
-            end
+            type_result = @type_parser.parse(member[:type])
+            member[:ir_type] = type_result[:type] if type_result[:success]
 
             members << member
           end
@@ -451,13 +456,6 @@ module TRuby
       end
 
       [{ name: interface_name, members: members }, i]
-    end
-  end
-
-  # Legacy Parser for backward compatibility (regex-only)
-  class LegacyParser < Parser
-    def initialize(source)
-      super(source, use_combinator: false)
     end
   end
 end
