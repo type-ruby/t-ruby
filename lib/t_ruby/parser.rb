@@ -12,6 +12,8 @@ module TRuby
     IDENTIFIER_CHAR = '[\p{L}\p{N}_]'
     # Method names can end with ? or !
     METHOD_NAME_PATTERN = "#{IDENTIFIER_CHAR}+[?!]?".freeze
+    # Visibility modifiers for method definitions
+    VISIBILITY_PATTERN = '(?:(?:private|protected|public)\s+)?'
 
     attr_reader :source, :ir_program, :use_combinator
 
@@ -62,7 +64,7 @@ module TRuby
         end
 
         # Match function definitions (top-level only, not inside class)
-        if line.match?(/^\s*def\s+#{IDENTIFIER_CHAR}+/)
+        if line.match?(/^\s*#{VISIBILITY_PATTERN}def\s+#{IDENTIFIER_CHAR}+/)
           func_info, next_i = parse_function_with_body(i)
           if func_info
             functions << func_info
@@ -173,12 +175,14 @@ module TRuby
       # def foo(): Type         - no params but with return type
       # def foo(params)         - with params, no return type
       # def foo                  - no params, no return type
-      match = line.match(/^\s*def\s+(#{METHOD_NAME_PATTERN})\s*(?:\((.*?)\))?\s*(?::\s*(.+?))?\s*$/)
+      # Also supports visibility modifiers: private def, protected def, public def
+      match = line.match(/^\s*(?:(private|protected|public)\s+)?def\s+(#{METHOD_NAME_PATTERN})\s*(?:\((.*?)\))?\s*(?::\s*(.+?))?\s*$/)
       return nil unless match
 
-      function_name = match[1]
-      params_str = match[2] || ""
-      return_type_str = match[3]&.strip
+      visibility = match[1] ? match[1].to_sym : :public
+      function_name = match[2]
+      params_str = match[3] || ""
+      return_type_str = match[4]&.strip
 
       # Validate return type if present
       if return_type_str
@@ -191,6 +195,7 @@ module TRuby
         name: function_name,
         params: params,
         return_type: return_type_str,
+        visibility: visibility,
       }
 
       # Parse return type with combinator if available
@@ -326,7 +331,7 @@ module TRuby
         current_line = @lines[i]
 
         # Match method definitions inside class
-        if current_line.match?(/^\s*def\s+#{IDENTIFIER_CHAR}+/)
+        if current_line.match?(/^\s*#{VISIBILITY_PATTERN}def\s+#{IDENTIFIER_CHAR}+/)
           method_info, next_i = parse_method_in_class(i, class_end)
           if method_info
             methods << method_info

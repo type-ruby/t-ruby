@@ -7,6 +7,8 @@ module TRuby
   # \p{L} matches any Unicode letter, \p{N} matches any Unicode number
   IDENTIFIER_CHAR = '[\p{L}\p{N}_]'
   METHOD_NAME_PATTERN = "#{IDENTIFIER_CHAR}+[?!]?".freeze
+  # Visibility modifiers for method definitions
+  VISIBILITY_PATTERN = '(?:(?:private|protected|public)\s+)?'
 
   class Compiler
     attr_reader :declaration_loader, :use_ir, :optimizer
@@ -511,7 +513,8 @@ module TRuby
       result = source.dup
 
       # Match function definitions and remove type annotations from parameters
-      result.gsub!(/^(\s*def\s+#{TRuby::METHOD_NAME_PATTERN}\s*\()([^)]+)(\)\s*)(?::\s*[^\n]+)?(\s*$)/) do |_match|
+      # Also supports visibility modifiers: private def, protected def, public def
+      result.gsub!(/^(\s*#{TRuby::VISIBILITY_PATTERN}def\s+#{TRuby::METHOD_NAME_PATTERN}\s*\()([^)]+)(\)\s*)(?::\s*[^\n]+)?(\s*$)/) do |_match|
         indent = ::Regexp.last_match(1)
         params = ::Regexp.last_match(2)
         close_paren = ::Regexp.last_match(3)

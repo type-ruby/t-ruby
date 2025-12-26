@@ -222,6 +222,68 @@ describe TRuby::Parser do
     end
   end
 
+  describe "parsing visibility modifiers" do
+    context "with private def" do
+      it "parses private def in class" do
+        source = <<~RUBY
+          class Example
+            private def secret(x: String): Integer
+              x.length
+            end
+          end
+        RUBY
+        parser = TRuby::Parser.new(source)
+        result = parser.parse
+
+        expect(result[:classes][0][:methods].length).to eq(1)
+        expect(result[:classes][0][:methods][0][:name]).to eq("secret")
+        expect(result[:classes][0][:methods][0][:visibility]).to eq(:private)
+      end
+
+      it "parses private def at top level" do
+        source = <<~RUBY
+          private def helper(x: String): String
+            x.upcase
+          end
+        RUBY
+        parser = TRuby::Parser.new(source)
+        result = parser.parse
+
+        expect(result[:functions].length).to eq(1)
+        expect(result[:functions][0][:name]).to eq("helper")
+        expect(result[:functions][0][:visibility]).to eq(:private)
+      end
+    end
+
+    context "with protected def" do
+      it "parses protected def in class" do
+        source = <<~RUBY
+          class Example
+            protected def internal(n: Integer): Boolean
+              n > 0
+            end
+          end
+        RUBY
+        parser = TRuby::Parser.new(source)
+        result = parser.parse
+
+        expect(result[:classes][0][:methods].length).to eq(1)
+        expect(result[:classes][0][:methods][0][:name]).to eq("internal")
+        expect(result[:classes][0][:methods][0][:visibility]).to eq(:protected)
+      end
+    end
+
+    context "without visibility modifier" do
+      it "defaults to public visibility" do
+        source = "def hello(name: String): String\n  name\nend"
+        parser = TRuby::Parser.new(source)
+        result = parser.parse
+
+        expect(result[:functions][0][:visibility]).to eq(:public)
+      end
+    end
+  end
+
   describe "parsing namespaced interfaces" do
     it "parses namespaced interface correctly" do
       source = <<~RUBY
