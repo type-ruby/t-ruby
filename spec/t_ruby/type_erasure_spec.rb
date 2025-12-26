@@ -40,6 +40,41 @@ describe TRuby::TypeErasure do
         result = eraser.erase
         expect(result).to include("def create(name, age, active)")
       end
+
+      it "preserves default value for parameter with type" do
+        source = "def greet(name: String, greeting: String = \"Hello\")\n  " \
+                 "\"\#{greeting}, \#{name}!\"\nend"
+        eraser = TRuby::TypeErasure.new(source)
+
+        result = eraser.erase
+        expect(result).to include('def greet(name, greeting = "Hello")')
+        expect(result).not_to include(": String")
+      end
+
+      it "preserves default value with numeric value" do
+        source = "def add(a: Integer, b: Integer = 0)\n  a + b\nend"
+        eraser = TRuby::TypeErasure.new(source)
+
+        result = eraser.erase
+        expect(result).to include("def add(a, b = 0)")
+      end
+
+      it "preserves default value with nil" do
+        source = "def find(id: Integer, fallback: String = nil)\n  id\nend"
+        eraser = TRuby::TypeErasure.new(source)
+
+        result = eraser.erase
+        expect(result).to include("def find(id, fallback = nil)")
+      end
+
+      it "preserves multiple default values" do
+        source = "def config(host: String = \"localhost\", port: Integer = 8080)\n  " \
+                 "host\nend"
+        eraser = TRuby::TypeErasure.new(source)
+
+        result = eraser.erase
+        expect(result).to include('def config(host = "localhost", port = 8080)')
+      end
     end
 
     context "return type annotations" do

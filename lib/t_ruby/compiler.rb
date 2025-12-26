@@ -530,10 +530,13 @@ module TRuby
       params.join(", ")
     end
 
-    # Clean a single parameter (remove type annotation)
+    # Clean a single parameter (remove type annotation, preserve default value)
     def clean_param(param)
-      # Match: name: Type or name (supports Unicode identifiers)
-      if (match = param.match(/^(#{TRuby::IDENTIFIER_CHAR}+)\s*:/))
+      # Match: name: Type = value (with default value)
+      if (match = param.match(/^(#{TRuby::IDENTIFIER_CHAR}+)\s*:\s*.+?\s*(=\s*.+)$/))
+        "#{match[1]} #{match[2]}"
+      # Match: name: Type (without default value)
+      elsif (match = param.match(/^(#{TRuby::IDENTIFIER_CHAR}+)\s*:/))
         match[1]
       else
         param
