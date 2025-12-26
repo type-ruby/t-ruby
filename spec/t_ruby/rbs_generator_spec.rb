@@ -137,7 +137,9 @@ describe TRuby::RBSGenerator do
       expect(rbs).to eq("private def secret: (x: String) -> Integer")
     end
 
-    it "generates RBS with protected visibility" do
+    it "treats protected as public in RBS (RBS limitation)" do
+      # RBS does not support protected visibility
+      # See: https://github.com/ruby/rbs/issues/579
       func = {
         name: "internal",
         params: [{ name: "n", type: "Integer" }],
@@ -146,7 +148,7 @@ describe TRuby::RBSGenerator do
       }
 
       rbs = generator.generate_function_signature(func)
-      expect(rbs).to eq("protected def internal: (n: Integer) -> Boolean")
+      expect(rbs).to eq("def internal: (n: Integer) -> Boolean")
     end
 
     it "generates RBS without modifier for public visibility" do

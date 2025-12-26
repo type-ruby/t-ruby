@@ -69,11 +69,11 @@ module TRuby
     end
 
     def format_visibility(visibility)
+      # RBS only supports private visibility, not protected
+      # See: https://github.com/ruby/rbs/issues/579
       case visibility
       when :private
         "private "
-      when :protected
-        "protected "
       else
         ""
       end
