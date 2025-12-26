@@ -340,6 +340,25 @@ describe TRuby::Parser do
       expect(result[:functions].length).to eq(1)
       expect(result[:functions][0][:name]).to eq("query")
     end
+
+    it "ignores def patterns inside =begin/=end block comments" do
+      source = <<~RUBY
+        =begin
+        def fake(x: String): Integer
+          x
+        end
+        =end
+
+        def real(name: String): String
+          name
+        end
+      RUBY
+      parser = TRuby::Parser.new(source)
+      result = parser.parse
+
+      expect(result[:functions].length).to eq(1)
+      expect(result[:functions][0][:name]).to eq("real")
+    end
   end
 
   describe "parsing namespaced interfaces" do

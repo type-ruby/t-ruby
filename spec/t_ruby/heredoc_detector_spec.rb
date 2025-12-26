@@ -66,6 +66,48 @@ RSpec.describe TRuby::HeredocDetector do
 
       expect(ranges).to eq([1..2])
     end
+
+    it "detects =begin/=end block comments" do
+      lines = [
+        "=begin",
+        "This is a comment",
+        "def fake(x: String): Integer",
+        "=end",
+        "def real(): String",
+      ]
+      ranges = described_class.detect(lines)
+
+      expect(ranges).to eq([0..3])
+    end
+
+    it "detects multiple block comments" do
+      lines = [
+        "=begin",
+        "first comment",
+        "=end",
+        "code_here",
+        "=begin",
+        "second comment",
+        "=end",
+      ]
+      ranges = described_class.detect(lines)
+
+      expect(ranges).to eq([0..2, 4..6])
+    end
+
+    it "handles mixed heredocs and block comments" do
+      lines = [
+        "=begin",
+        "comment",
+        "=end",
+        "text = <<EOT",
+        "heredoc content",
+        "EOT",
+      ]
+      ranges = described_class.detect(lines)
+
+      expect(ranges).to eq([0..2, 4..5])
+    end
   end
 
   describe ".inside_heredoc?" do

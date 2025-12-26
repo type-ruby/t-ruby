@@ -1,17 +1,18 @@
 # frozen_string_literal: true
 
 module TRuby
-  # Detects heredoc block positions in source code
-  # Used to skip parsing inside heredoc content
+  # Detects regions that should be skipped during parsing:
+  # - Heredoc content
+  # - Block comments (=begin/=end)
   class HeredocDetector
     # Heredoc start patterns:
     # <<IDENTIFIER, <<-IDENTIFIER, <<~IDENTIFIER
     # <<'IDENTIFIER', <<"IDENTIFIER"
     HEREDOC_START_PATTERN = /<<([~-])?(['"]?)(\w+)\2/
 
-    # Detect all heredoc ranges in lines
+    # Detect all skippable ranges in lines (heredocs and block comments)
     # @param lines [Array<String>] source lines
-    # @return [Array<Range>] heredoc content ranges (0-indexed, excludes start line)
+    # @return [Array<Range>] content ranges to skip (0-indexed)
     def self.detect(lines)
       ranges = []
       i = 0
@@ -19,7 +20,22 @@ module TRuby
       while i < lines.length
         line = lines[i]
 
-        if (match = line.match(HEREDOC_START_PATTERN))
+        # Check for =begin block comment
+        if line.strip == "=begin"
+          start_line = i
+          i += 1
+
+          # Find =end
+          while i < lines.length
+            break if lines[i].strip == "=end"
+
+            i += 1
+          end
+
+          # Range covers from =begin to =end (inclusive)
+          ranges << (start_line..i) if i < lines.length
+        # Check for heredoc
+        elsif (match = line.match(HEREDOC_START_PATTERN))
           delimiter = match[3]
           squiggly = match[1] == "~"
           start_line = i
@@ -47,7 +63,7 @@ module TRuby
       ranges
     end
 
-    # Check if a line index is inside any heredoc content
+    # Check if a line index is inside any skippable region
     # @param line_index [Integer] line index to check
     # @param heredoc_ranges [Array<Range>] ranges from detect()
     # @return [Boolean]
