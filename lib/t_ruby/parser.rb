@@ -34,7 +34,16 @@ module TRuby
       classes = []
       i = 0
 
+      # Pre-detect heredoc regions to skip
+      heredoc_ranges = HeredocDetector.detect(@lines)
+
       while i < @lines.length
+        # Skip lines inside heredoc content
+        if HeredocDetector.inside_heredoc?(i, heredoc_ranges)
+          i += 1
+          next
+        end
+
         line = @lines[i]
 
         # Match type alias definitions

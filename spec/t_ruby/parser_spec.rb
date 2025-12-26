@@ -284,6 +284,64 @@ describe TRuby::Parser do
     end
   end
 
+  describe "heredoc handling" do
+    it "ignores def patterns inside heredoc" do
+      source = <<~RUBY
+        text = <<EOT
+        Lorem ipsum
+        def x(a: String)
+        Dolor sit amet
+        EOT
+
+        def real_method(name: String): String
+          name
+        end
+      RUBY
+      parser = TRuby::Parser.new(source)
+      result = parser.parse
+
+      expect(result[:functions].length).to eq(1)
+      expect(result[:functions][0][:name]).to eq("real_method")
+    end
+
+    it "handles squiggly heredoc" do
+      source = <<~RUBY
+        html = <<~HTML
+          <script>
+            def fake_method(x: Integer): void
+          </script>
+        HTML
+
+        def process(data: String): Boolean
+          true
+        end
+      RUBY
+      parser = TRuby::Parser.new(source)
+      result = parser.parse
+
+      expect(result[:functions].length).to eq(1)
+      expect(result[:functions][0][:name]).to eq("process")
+    end
+
+    it "handles heredoc with dash" do
+      source = <<~RUBY
+        sql = <<-SQL
+          SELECT def from users
+          WHERE def foo(x: String)
+        SQL
+
+        def query(table: String): Array
+          []
+        end
+      RUBY
+      parser = TRuby::Parser.new(source)
+      result = parser.parse
+
+      expect(result[:functions].length).to eq(1)
+      expect(result[:functions][0][:name]).to eq("query")
+    end
+  end
+
   describe "parsing namespaced interfaces" do
     it "parses namespaced interface correctly" do
       source = <<~RUBY

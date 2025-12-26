@@ -11,6 +11,7 @@ require_relative "t_ruby/smt_solver"
 
 # Basic components
 require_relative "t_ruby/type_alias_registry"
+require_relative "t_ruby/heredoc_detector"
 require_relative "t_ruby/body_parser"
 require_relative "t_ruby/parser"
 require_relative "t_ruby/union_type_parser"
