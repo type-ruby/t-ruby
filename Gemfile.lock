@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    t-ruby (0.0.39)
+    t-ruby (0.0.40)
       listen (~> 3.8)
 
 GEM
