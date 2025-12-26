@@ -1051,7 +1051,8 @@ module TRuby
         end
 
         return_type ||= "untyped"
-        emit("def #{node.name}: (#{params}) -> #{return_type}")
+        visibility_prefix = format_visibility(node.visibility)
+        emit("#{visibility_prefix}def #{node.name}: (#{params}) -> #{return_type}")
       end
 
       def visit_class_decl(node)
@@ -1091,6 +1092,17 @@ module TRuby
 
       def emit(text)
         @output << (("  " * @indent) + text)
+      end
+
+      def format_visibility(visibility)
+        case visibility
+        when :private
+          "private "
+        when :protected
+          "protected "
+        else
+          ""
+        end
       end
     end
 

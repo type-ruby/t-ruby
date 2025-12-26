@@ -37,11 +37,13 @@ module TRuby
       name = func[:name]
       params = func[:params] || []
       return_type = func[:return_type]
+      visibility = func[:visibility]
 
       param_str = format_parameters(params)
       return_str = format_return_type(return_type)
+      visibility_prefix = format_visibility(visibility)
 
-      "def #{name}: (#{param_str}) -> #{return_str}"
+      "#{visibility_prefix}def #{name}: (#{param_str}) -> #{return_str}"
     end
 
     private
@@ -64,6 +66,17 @@ module TRuby
       return "nil" if return_type.nil?
 
       return_type
+    end
+
+    def format_visibility(visibility)
+      case visibility
+      when :private
+        "private "
+      when :protected
+        "protected "
+      else
+        ""
+      end
     end
   end
 end

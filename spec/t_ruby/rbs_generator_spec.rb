@@ -124,6 +124,55 @@ describe TRuby::RBSGenerator do
     end
   end
 
+  describe "visibility modifier generation" do
+    it "generates RBS with private visibility" do
+      func = {
+        name: "secret",
+        params: [{ name: "x", type: "String" }],
+        return_type: "Integer",
+        visibility: :private,
+      }
+
+      rbs = generator.generate_function_signature(func)
+      expect(rbs).to eq("private def secret: (x: String) -> Integer")
+    end
+
+    it "generates RBS with protected visibility" do
+      func = {
+        name: "internal",
+        params: [{ name: "n", type: "Integer" }],
+        return_type: "Boolean",
+        visibility: :protected,
+      }
+
+      rbs = generator.generate_function_signature(func)
+      expect(rbs).to eq("protected def internal: (n: Integer) -> Boolean")
+    end
+
+    it "generates RBS without modifier for public visibility" do
+      func = {
+        name: "hello",
+        params: [],
+        return_type: "String",
+        visibility: :public,
+      }
+
+      rbs = generator.generate_function_signature(func)
+      expect(rbs).to eq("def hello: () -> String")
+    end
+
+    it "generates RBS without modifier when visibility is nil" do
+      func = {
+        name: "hello",
+        params: [],
+        return_type: "String",
+      }
+
+      rbs = generator.generate_function_signature(func)
+      expect(rbs).to eq("def hello: () -> String")
+    end
+  end
+
   describe "RBS format validation" do
     it "maintains proper RBS syntax" do
       func = {
