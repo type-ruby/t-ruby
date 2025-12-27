@@ -547,9 +547,14 @@ module TRuby
     def erase_return_types(source)
       result = source.dup
 
-      # Remove return type: ): Type or ): Type<Foo> etc.
+      # Remove return type after parentheses: ): Type or ): Type<Foo> etc.
       result.gsub!(/\)\s*:\s*[^\n]+?(?=\s*$)/m) do |_match|
         ")"
+      end
+
+      # Remove return type for methods without parentheses: def method_name: Type
+      result.gsub!(/^(\s*#{TRuby::VISIBILITY_PATTERN}def\s+#{TRuby::METHOD_NAME_PATTERN})\s*:\s*[^\n]+?(?=\s*$)/m) do |_match|
+        ::Regexp.last_match(1)
       end
 
       result
