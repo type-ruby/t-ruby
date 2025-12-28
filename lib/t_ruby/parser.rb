@@ -244,18 +244,36 @@ module TRuby
       param_list = split_params(params_str)
 
       param_list.each do |param|
-        param_info = parse_single_parameter(param)
-        parameters << param_info if param_info
+        param = param.strip
+
+        # 1. 더블 스플랫: **name: Type
+        if param.start_with?("**")
+          param_info = parse_double_splat_parameter(param)
+          parameters << param_info if param_info
+        # 2. 키워드 인자 그룹: { ... } 또는 { ... }: InterfaceName
+        elsif param.start_with?("{")
+          keyword_params = parse_keyword_args_group(param)
+          parameters.concat(keyword_params) if keyword_params
+        # 3. Hash 리터럴: name: { ... }
+        elsif param.match?(/^\w+:\s*\{/)
+          param_info = parse_hash_literal_parameter(param)
+          parameters << param_info if param_info
+        # 4. 일반 위치 인자: name: Type 또는 name: Type = default
+        else
+          param_info = parse_single_parameter(param)
+          parameters << param_info if param_info
+        end
       end
 
       parameters
     end
 
     def split_params(params_str)
-      # Handle nested generics like Array<Map<String, Int>>
+      # Handle nested generics, braces, brackets
       result = []
       current = ""
       depth = 0
+      brace_depth = 0
 
       params_str.each_char do |char|
         case char
@@ -265,8 +283,14 @@ module TRuby
         when ">", "]", ")"
           depth -= 1
           current += char
+        when "{"
+          brace_depth += 1
+          current += char
+        when "}"
+          brace_depth -= 1
+          current += char
         when ","
-          if depth.zero?
+          if depth.zero? && brace_depth.zero?
             result << current.strip
             current = ""
           else
@@ -281,8 +305,10 @@ module TRuby
       result
     end
 
-    def parse_single_parameter(param)
-      match = param.match(/^(\w+)(?::\s*(.+?))?$/)
+    # 더블 스플랫 파라미터 파싱: **opts: Type
+    def parse_double_splat_parameter(param)
+      # **name: Type
+      match = param.match(/^\*\*(\w+)(?::\s*(.+?))?$/)
       return nil unless match
 
       param_name = match[1]
@@ -291,6 +317,155 @@ module TRuby
       result = {
         name: param_name,
         type: type_str,
+        kind: :keyrest,
+      }
+
+      if type_str
+        type_result = @type_parser.parse(type_str)
+        result[:ir_type] = type_result[:type] if type_result[:success]
+      end
+
+      result
+    end
+
+    # 키워드 인자 그룹 파싱: { name: String, age: Integer = 0 } 또는 { name:, age: 0 }: InterfaceName
+    def parse_keyword_args_group(param)
+      # { ... }: InterfaceName 형태 확인
+      # 또는 { ... } 만 있는 형태 (인라인 타입)
+      interface_match = param.match(/^\{(.+)\}\s*:\s*(\w+)\s*$/)
+      inline_match = param.match(/^\{(.+)\}\s*$/) unless interface_match
+
+      if interface_match
+        inner_content = interface_match[1]
+        interface_name = interface_match[2]
+        parse_keyword_args_with_interface(inner_content, interface_name)
+      elsif inline_match
+        inner_content = inline_match[1]
+        parse_keyword_args_inline(inner_content)
+      end
+    end
+
+    # interface 참조 키워드 인자 파싱: { name:, age: 0 }: UserParams
+    def parse_keyword_args_with_interface(inner_content, interface_name)
+      parameters = []
+      parts = split_keyword_args(inner_content)
+
+      parts.each do |part|
+        part = part.strip
+        next if part.empty?
+
+        # name: default_value 또는 name: 형태
+        next unless part.match?(/^(\w+):\s*(.*)$/)
+
+        match = part.match(/^(\w+):\s*(.*)$/)
+        param_name = match[1]
+        default_value = match[2].strip
+        default_value = nil if default_value.empty?
+
+        parameters << {
+          name: param_name,
+          type: nil, # interface에서 타입을 가져옴
+          default_value: default_value,
+          kind: :keyword,
+          interface_ref: interface_name,
+        }
+      end
+
+      parameters
+    end
+
+    # 인라인 타입 키워드 인자 파싱: { name: String, age: Integer = 0 }
+    def parse_keyword_args_inline(inner_content)
+      parameters = []
+      parts = split_keyword_args(inner_content)
+
+      parts.each do |part|
+        part = part.strip
+        next if part.empty?
+
+        # name: Type = default 또는 name: Type 형태
+        next unless part.match?(/^(\w+):\s*(.+)$/)
+
+        match = part.match(/^(\w+):\s*(.+)$/)
+        param_name = match[1]
+        type_and_default = match[2].strip
+
+        # Type = default 분리
+        type_str, default_value = split_type_and_default(type_and_default)
+
+        result = {
+          name: param_name,
+          type: type_str,
+          default_value: default_value,
+          kind: :keyword,
+        }
+
+        if type_str
+          type_result = @type_parser.parse(type_str)
+          result[:ir_type] = type_result[:type] if type_result[:success]
+        end
+
+        parameters << result
+      end
+
+      parameters
+    end
+
+    # 키워드 인자 내부를 콤마로 분리 (중첩된 제네릭/배열/해시 고려)
+    def split_keyword_args(content)
+      StringUtils.split_by_comma(content)
+    end
+
+    # 타입과 기본값 분리: "String = 0" -> ["String", "0"]
+    def split_type_and_default(type_and_default)
+      StringUtils.split_type_and_default(type_and_default)
+    end
+
+    # Hash 리터럴 파라미터 파싱: config: { host: String, port: Integer }
+    def parse_hash_literal_parameter(param)
+      # name: { ... } 또는 name: { ... }: InterfaceName
+      match = param.match(/^(\w+):\s*(\{.+\})(?::\s*(\w+))?$/)
+      return nil unless match
+
+      param_name = match[1]
+      hash_type = match[2]
+      interface_name = match[3]
+
+      result = {
+        name: param_name,
+        type: interface_name || hash_type,
+        kind: :required,
+        hash_type_def: hash_type, # 원본 해시 타입 정의 저장
+      }
+
+      result[:interface_ref] = interface_name if interface_name
+
+      result
+    end
+
+    def parse_single_parameter(param)
+      # name: Type = default 또는 name: Type 또는 name
+      # 기본값이 있는 경우 먼저 처리
+      type_str = nil
+      default_value = nil
+
+      if param.include?(":")
+        match = param.match(/^(\w+):\s*(.+)$/)
+        return nil unless match
+
+        param_name = match[1]
+        type_and_default = match[2].strip
+        type_str, default_value = split_type_and_default(type_and_default)
+      else
+        # 타입 없이 이름만 있는 경우
+        param_name = param.strip
+      end
+
+      result = {
+        name: param_name,
+        type: type_str,
+        default_value: default_value,
+        kind: default_value ? :optional : :required,
       }
 
       # Parse type with combinator
