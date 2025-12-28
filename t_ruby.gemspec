@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
+  spec.add_dependency "benchmark"
   spec.add_dependency "listen", "~> 3.8"
   spec.metadata["rubygems_mfa_required"] = "true"
 end
