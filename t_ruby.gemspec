@@ -21,6 +21,10 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
-  spec.add_dependency "listen", "~> 3.8"
+  spec.add_dependency "benchmark"
+
+  # Development dependencies are specified in Gemfile, not here
+  # (per RuboCop Gemspec/DevelopmentDependencies rule)
+
   spec.metadata["rubygems_mfa_required"] = "true"
 end

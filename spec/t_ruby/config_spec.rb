@@ -92,11 +92,12 @@ describe TRuby::Config do
   end
 
   describe "compiler.target_ruby" do
-    it "returns '3.0' by default" do
+    it "auto-detects current Ruby version by default" do
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
           config = TRuby::Config.new
-          expect(config.target_ruby).to eq("3.0")
+          expected = "#{RUBY_VERSION.split(".")[0]}.#{RUBY_VERSION.split(".")[1]}"
+          expect(config.target_ruby).to eq(expected)
         end
       end
     end
@@ -120,6 +121,31 @@ describe TRuby::Config do
 
       create_config(yaml) do |config|
         expect(config.target_ruby).to eq("3.3")
+      end
+    end
+
+    it "raises UnsupportedRubyVersionError for unsupported version" do
+      yaml = <<~YAML
+        compiler:
+          target_ruby: "2.7"
+      YAML
+
+      create_config(yaml) do |config|
+        expect { config.target_ruby }.to raise_error(TRuby::UnsupportedRubyVersionError)
+      end
+    end
+
+    it "provides target_ruby_version as RubyVersion object" do
+      yaml = <<~YAML
+        compiler:
+          target_ruby: "3.4"
+      YAML
+
+      create_config(yaml) do |config|
+        version = config.target_ruby_version
+        expect(version).to be_a(TRuby::RubyVersion)
+        expect(version.major).to eq(3)
+        expect(version.minor).to eq(4)
       end
     end
   end
@@ -817,7 +843,10 @@ describe TRuby::Config do
             config = TRuby::Config.new
             expect(config.compiler["strictness"]).to eq("standard")
             expect(config.compiler["generate_rbs"]).to eq(true)
-            expect(config.compiler["target_ruby"]).to eq("3.0")
+            # target_ruby defaults to nil (auto-detect), but target_ruby method returns current version
+            expect(config.compiler["target_ruby"]).to be_nil
+            expected_ruby = "#{RUBY_VERSION.split(".")[0]}.#{RUBY_VERSION.split(".")[1]}"
+            expect(config.target_ruby).to eq(expected_ruby)
             expect(config.compiler["experimental"]).to eq([])
             expect(config.compiler["checks"]["no_implicit_any"]).to eq(false)
             expect(config.compiler["checks"]["no_unused_vars"]).to eq(false)

@@ -380,8 +380,8 @@ module TRuby
         ir_program = result[:program]
       end
 
-      # Generate Ruby code using IR-aware generator
-      generator = IRCodeGenerator.new
+      # Generate Ruby code using IR-aware generator with target Ruby version
+      generator = IRCodeGenerator.new(target_ruby: @config.target_ruby)
       generator.generate_with_source(ir_program, source)
     end
 
@@ -434,8 +434,12 @@ module TRuby
 
   # IR-aware code generator for source-preserving transformation
   class IRCodeGenerator
-    def initialize
+    attr_reader :emitter
+
+    # @param target_ruby [String] target Ruby version (e.g., "3.0", "4.0")
+    def initialize(target_ruby: "3.0")
       @output = []
+      @emitter = CodeEmitter.for_version(target_ruby)
     end
 
     # Generate Ruby code from IR program
@@ -470,6 +474,9 @@ module TRuby
 
       # Remove return type annotations
       result = erase_return_types(result)
+
+      # Apply version-specific transformations
+      result = @emitter.transform(result)
 
       # Clean up extra blank lines
       result.gsub(/\n{3,}/, "\n\n")
@@ -544,6 +551,14 @@ module TRuby
     def clean_param(param)
       param = param.strip
       return nil if param.empty?
+
+      # 0. 블록 파라미터: &name: Type -> &name
+      if param.start_with?("&")
+        match = param.match(/^&(\w+)(?::\s*.+)?$/)
+        return "&#{match[1]}" if match
+
+        return param
+      end
 
       # 1. 더블 스플랫: **name: Type -> **name
       if param.start_with?("**")

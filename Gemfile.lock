@@ -2,12 +2,13 @@ PATH
   remote: .
   specs:
     t-ruby (0.0.41)
-      listen (~> 3.8)
+      benchmark
 
 GEM
   remote: https://rubygems.org/
   specs:
     ast (2.4.3)
+    benchmark (0.5.0)
     diff-lcs (1.6.2)
     docile (1.4.1)
     ffi (1.17.2)
@@ -79,6 +80,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  listen (~> 3.8)
   rake (~> 13.0)
   rbs (~> 3.0)
   rspec (~> 3.0)

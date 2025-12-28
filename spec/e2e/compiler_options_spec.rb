@@ -306,18 +306,25 @@ RSpec.describe "Compiler Options E2E Behavior" do
       expect(config.target_ruby).to eq("3.2")
     end
 
-    it "defaults to 3.0" do
+    it "auto-detects from current Ruby version when not specified" do
       config = create_project_config(<<~YAML)
         source:
           include:
             - src
       YAML
 
-      expect(config.target_ruby).to eq("3.0")
+      expected = "#{RUBY_VERSION.split(".")[0]}.#{RUBY_VERSION.split(".")[1]}"
+      expect(config.target_ruby).to eq(expected)
     end
 
-    # TODO: When target_ruby affects code generation, add tests here
-    # e.g., using Ruby 3.1+ pattern matching syntax only when target >= 3.1
+    it "raises error for unsupported Ruby version" do
+      config = create_project_config(<<~YAML)
+        compiler:
+          target_ruby: "2.7"
+      YAML
+
+      expect { config.target_ruby }.to raise_error(TRuby::UnsupportedRubyVersionError)
+    end
   end
 
   describe "compiler.experimental" do
