@@ -94,7 +94,7 @@ RSpec.describe TRuby::ParserCombinator::TokenParser do
         result = parser.parse(tokens, 0)
         expect(result.success?).to be true
         expect(result.value.length).to eq(3)
-        expect(result.value.map { |t| t.type }).to eq([:public, :private, :protected])
+        expect(result.value.map(&:type)).to eq(%i[public private protected])
       end
 
       it "returns empty array when no matches" do

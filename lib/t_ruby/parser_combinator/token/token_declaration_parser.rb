@@ -59,9 +59,7 @@ module TRuby
       private
 
       def skip_newlines(tokens, position)
-        while position < tokens.length && [:newline, :comment].include?(tokens[position].type)
-          position += 1
-        end
+        position += 1 while position < tokens.length && %i[newline comment].include?(tokens[position].type)
         position
       end
 
@@ -84,15 +82,18 @@ module TRuby
             loop do
               param_result = parse_parameter(tokens, position)
               return param_result if param_result.failure?
+
               params << param_result.value
               position = param_result.position
 
               break unless tokens[position]&.type == :comma
+
               position += 1
             end
           end
 
           return TokenParseResult.failure("Expected ')'", tokens, position) unless tokens[position]&.type == :rparen
+
           position += 1
         end
 
@@ -102,6 +103,7 @@ module TRuby
           position += 1
           type_result = parse_type(tokens, position)
           return type_result if type_result.failure?
+
           return_type = type_result.value
           position = type_result.position
         end
@@ -178,6 +180,7 @@ module TRuby
           position += 1
           type_result = parse_type(tokens, position)
           return type_result if type_result.failure?
+
           type_annotation = type_result.value
           position = type_result.position
         end
@@ -191,6 +194,7 @@ module TRuby
 
         # Parse class name
         return TokenParseResult.failure("Expected class name", tokens, position) if position >= tokens.length
+
         class_name = tokens[position].value
         position += 1
 
@@ -217,11 +221,13 @@ module TRuby
             # Instance variable declaration: @name: Type
             ivar_result = parse_instance_var_decl(tokens, position)
             return ivar_result if ivar_result.failure?
+
             instance_vars << ivar_result.value
             position = ivar_result.position
-          elsif [:def, :public, :private, :protected].include?(tokens[position].type)
+          elsif %i[def public private protected].include?(tokens[position].type)
             method_result = parse_declaration(tokens, position)
             return method_result if method_result.failure?
+
             body << method_result.value
             position = method_result.position
           else
@@ -260,6 +266,7 @@ module TRuby
 
         # Parse module name
         return TokenParseResult.failure("Expected module name", tokens, position) if position >= tokens.length
+
         module_name = tokens[position].value
         position += 1
 
@@ -273,14 +280,13 @@ module TRuby
           break if position >= tokens.length
           break if tokens[position].type == :end
 
-          if [:def, :public, :private, :protected].include?(tokens[position].type)
-            method_result = parse_declaration(tokens, position)
-            return method_result if method_result.failure?
-            body << method_result.value
-            position = method_result.position
-          else
-            break
-          end
+          break unless %i[def public private protected].include?(tokens[position].type)
+
+          method_result = parse_declaration(tokens, position)
+          return method_result if method_result.failure?
+
+          body << method_result.value
+          position = method_result.position
         end
 
         # Expect 'end'
@@ -297,11 +303,13 @@ module TRuby
 
         # Parse type name
         return TokenParseResult.failure("Expected type name", tokens, position) if position >= tokens.length
+
         type_name = tokens[position].value
         position += 1
 
         # Expect '='
         return TokenParseResult.failure("Expected '='", tokens, position) unless tokens[position]&.type == :eq
+
         position += 1
 
         # Parse type definition
@@ -317,6 +325,7 @@ module TRuby
 
         # Parse interface name
         return TokenParseResult.failure("Expected interface name", tokens, position) if position >= tokens.length
+
         interface_name = tokens[position].value
         position += 1
 
@@ -332,6 +341,7 @@ module TRuby
 
           member_result = parse_interface_member(tokens, position)
           break if member_result.failure?
+
           members << member_result.value
           position = member_result.position
         end
@@ -353,6 +363,7 @@ module TRuby
         position += 1
 
         return TokenParseResult.failure("Expected ':'", tokens, position) unless tokens[position]&.type == :colon
+
         position += 1
 
         type_result = parse_type(tokens, position)
@@ -378,6 +389,7 @@ module TRuby
           position += 1
           next_result = parse_primary_type(tokens, position)
           return next_result if next_result.failure?
+
           types << next_result.value
           position = next_result.position
         end
@@ -412,15 +424,18 @@ module TRuby
             loop do
               type_result = parse_type(tokens, position)
               return type_result if type_result.failure?
+
               param_types << type_result.value
               position = type_result.position
 
               break unless tokens[position]&.type == :comma
+
               position += 1
             end
           end
 
           return TokenParseResult.failure("Expected ')'", tokens, position) unless tokens[position]&.type == :rparen
+
           position += 1
 
           # Check for function arrow
@@ -449,29 +464,30 @@ module TRuby
           loop do
             arg_result = parse_type(tokens, position)
             return arg_result if arg_result.failure?
+
             type_args << arg_result.value
             position = arg_result.position
 
             break unless tokens[position]&.type == :comma
+
             position += 1
           end
 
           return TokenParseResult.failure("Expected '>'", tokens, position) unless tokens[position]&.type == :gt
+
           position += 1
 
           node = IR::GenericType.new(base: type_name, type_args: type_args)
           TokenParseResult.success(node, tokens, position)
-        else
+        elsif position < tokens.length && tokens[position].type == :question
           # Check for nullable: Type?
-          if position < tokens.length && tokens[position].type == :question
-            position += 1
-            inner = IR::SimpleType.new(name: type_name)
-            node = IR::NullableType.new(inner_type: inner)
-            TokenParseResult.success(node, tokens, position)
-          else
-            node = IR::SimpleType.new(name: type_name)
-            TokenParseResult.success(node, tokens, position)
-          end
+          position += 1
+          inner = IR::SimpleType.new(name: type_name)
+          node = IR::NullableType.new(inner_type: inner)
+          TokenParseResult.success(node, tokens, position)
+        else
+          node = IR::SimpleType.new(name: type_name)
+          TokenParseResult.success(node, tokens, position)
         end
       end
     end

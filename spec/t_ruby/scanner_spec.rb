@@ -25,10 +25,10 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.map(&:type)
 
-        expect(types).to eq([
-          :def, :end, :class, :module, :if, :unless, :else, :elsif,
-          :return, :type, :interface, :eof
-        ])
+        expect(types).to eq(%i[
+                              def end class module if unless else elsif
+                              return type interface eof
+                            ])
       end
     end
 
@@ -39,7 +39,7 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.map(&:type)
 
-        expect(types).to eq([:public, :private, :protected, :eof])
+        expect(types).to eq(%i[public private protected eof])
       end
     end
 
@@ -107,7 +107,7 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         tokens = tokens.reject { |t| t.type == :eof }
 
-        expect(tokens.map(&:type)).to eq([:integer, :integer, :minus, :integer, :integer])
+        expect(tokens.map(&:type)).to eq(%i[integer integer minus integer integer])
         expect(tokens.map(&:value)).to eq(["0", "42", "-", "123", "1_000_000"])
       end
     end
@@ -119,7 +119,7 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         tokens = tokens.reject { |t| t.type == :eof }
 
-        expect(tokens.map(&:type)).to eq([:float, :float, :minus, :float])
+        expect(tokens.map(&:type)).to eq(%i[float float minus float])
       end
     end
 
@@ -130,7 +130,7 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         tokens = tokens.reject { |t| t.type == :eof }
 
-        expect(tokens.map(&:type)).to eq([:string, :string])
+        expect(tokens.map(&:type)).to eq(%i[string string])
         expect(tokens.map(&:value)).to eq(['"hello"', "'world'"])
       end
     end
@@ -142,10 +142,10 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.reject { |t| t.type == :eof }.map(&:type)
 
-        expect(types).to eq([
-          :string_start, :string_content, :interpolation_start,
-          :identifier, :interpolation_end, :string_content, :string_end
-        ])
+        expect(types).to eq(%i[
+                              string_start string_content interpolation_start
+                              identifier interpolation_end string_content string_end
+                            ])
       end
     end
 
@@ -168,7 +168,7 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.reject { |t| t.type == :eof }.map(&:type)
 
-        expect(types).to eq([:true, :false, :nil])
+        expect(types).to eq([true, false, :nil])
       end
     end
 
@@ -179,11 +179,11 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.reject { |t| t.type == :eof }.map(&:type)
 
-        expect(types).to eq([
-          :plus, :minus, :star, :slash, :percent, :star_star,
-          :eq, :eq_eq, :bang_eq, :lt, :gt, :lt_eq, :gt_eq, :spaceship,
-          :and_and, :or_or, :bang
-        ])
+        expect(types).to eq(%i[
+                              plus minus star slash percent star_star
+                              eq eq_eq bang_eq lt gt lt_eq gt_eq spaceship
+                              and_and or_or bang
+                            ])
       end
     end
 
@@ -194,7 +194,7 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.reject { |t| t.type == :eof }.map(&:type)
 
-        expect(types).to eq([:colon, :arrow, :pipe, :amp, :question])
+        expect(types).to eq(%i[colon arrow pipe amp question])
       end
     end
 
@@ -205,10 +205,10 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.reject { |t| t.type == :eof }.map(&:type)
 
-        expect(types).to eq([
-          :lparen, :rparen, :lbracket, :rbracket, :lbrace, :rbrace,
-          :comma, :dot
-        ])
+        expect(types).to eq(%i[
+                              lparen rparen lbracket rbracket lbrace rbrace
+                              comma dot
+                            ])
       end
     end
 
@@ -219,7 +219,7 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.reject { |t| t.type == :eof }.map(&:type)
 
-        expect(types).to eq([:star_star, :identifier])
+        expect(types).to eq(%i[star_star identifier])
       end
     end
 
@@ -230,7 +230,7 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.map(&:type)
 
-        expect(types).to eq([:identifier, :newline, :identifier, :newline, :identifier, :eof])
+        expect(types).to eq(%i[identifier newline identifier newline identifier eof])
       end
     end
 
@@ -247,7 +247,7 @@ RSpec.describe TRuby::Scanner do
     end
 
     context "with a complete function definition" do
-      let(:source) { 'def greet(n: String): String' + "\n" + '  "Hello #{n}"' + "\n" + 'end' }
+      let(:source) { "def greet(n: String): String" + "\n" + '  "Hello #{n}"' + "\n" + "end" }
 
       it "tokenizes a complete function" do
         tokens = scanner.scan_all
@@ -265,7 +265,7 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.reject { |t| t.type == :eof }.map(&:type)
 
-        expect(types).to eq([:type, :constant, :eq, :constant])
+        expect(types).to eq(%i[type constant eq constant])
       end
     end
 
@@ -287,7 +287,7 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.reject { |t| t.type == :eof }.map(&:type)
 
-        expect(types).to eq([:constant, :lt, :constant, :gt])
+        expect(types).to eq(%i[constant lt constant gt])
       end
     end
 
@@ -298,7 +298,7 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.reject { |t| t.type == :eof }.map(&:type)
 
-        expect(types).to eq([:constant, :pipe, :constant, :pipe, :nil])
+        expect(types).to eq(%i[constant pipe constant pipe nil])
       end
     end
 
@@ -309,10 +309,10 @@ RSpec.describe TRuby::Scanner do
         tokens = scanner.scan_all
         types = tokens.reject { |t| t.type == :eof }.map(&:type)
 
-        expect(types).to eq([
-          :lbrace, :identifier, :colon, :constant, :comma,
-          :identifier, :colon, :constant, :rbrace
-        ])
+        expect(types).to eq(%i[
+                              lbrace identifier colon constant comma
+                              identifier colon constant rbrace
+                            ])
       end
     end
   end

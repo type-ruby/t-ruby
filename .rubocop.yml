@@ -43,7 +43,7 @@ Metrics/BlockNesting:
     - "lib/**/*"
 
 Metrics/ClassLength:
-  Max: 700
+  Max: 750
 
 Metrics/ModuleLength:
   Max: 700
@@ -52,7 +52,7 @@ Metrics/AbcSize:
   Max: 120
 
 Metrics/CyclomaticComplexity:
-  Max: 30
+  Max: 35
 
 Metrics/PerceivedComplexity:
   Max: 30

@@ -35,8 +35,8 @@ module TRuby
       "public" => :public,
       "private" => :private,
       "protected" => :protected,
-      "true" => :true,
-      "false" => :false,
+      "true" => true,
+      "false" => false,
       "nil" => :nil,
       "while" => :while,
       "until" => :until,
@@ -133,84 +133,82 @@ module TRuby
       start_column = @column
       char = current_char
 
-      token = case char
-              when "\n"
-                scan_newline
-              when "#"
-                scan_comment
-              when '"'
-                scan_double_quoted_string
-              when "'"
-                scan_single_quoted_string
-              when ":"
-                scan_colon_or_symbol
-              when "@"
-                scan_instance_or_class_variable
-              when "$"
-                scan_global_variable
-              when /[a-z_]/i
-                scan_identifier_or_keyword
-              when /[0-9]/
-                scan_number
-              when "<"
-                scan_less_than_or_heredoc
-              when ">"
-                scan_greater_than
-              when "="
-                scan_equals
-              when "!"
-                scan_bang
-              when "&"
-                scan_ampersand
-              when "|"
-                scan_pipe
-              when "+"
-                scan_plus
-              when "-"
-                scan_minus_or_arrow
-              when "*"
-                scan_star
-              when "/"
-                scan_slash
-              when "%"
-                scan_percent
-              when "?"
-                advance
-                Token.new(:question, "?", start_pos, @position, start_line, start_column)
-              when "("
-                advance
-                Token.new(:lparen, "(", start_pos, @position, start_line, start_column)
-              when ")"
-                advance
-                Token.new(:rparen, ")", start_pos, @position, start_line, start_column)
-              when "["
-                advance
-                Token.new(:lbracket, "[", start_pos, @position, start_line, start_column)
-              when "]"
-                advance
-                Token.new(:rbracket, "]", start_pos, @position, start_line, start_column)
-              when "{"
-                advance
-                Token.new(:lbrace, "{", start_pos, @position, start_line, start_column)
-              when "}"
-                advance
-                Token.new(:rbrace, "}", start_pos, @position, start_line, start_column)
-              when ","
-                advance
-                Token.new(:comma, ",", start_pos, @position, start_line, start_column)
-              when "."
-                advance
-                Token.new(:dot, ".", start_pos, @position, start_line, start_column)
-              else
-                raise ScanError.new(
-                  "Unexpected character '#{char}'",
-                  line: start_line,
-                  column: start_column,
-                  position: start_pos
-                )
-              end
-
-      token
+      case char
+      when "\n"
+        scan_newline
+      when "#"
+        scan_comment
+      when '"'
+        scan_double_quoted_string
+      when "'"
+        scan_single_quoted_string
+      when ":"
+        scan_colon_or_symbol
+      when "@"
+        scan_instance_or_class_variable
+      when "$"
+        scan_global_variable
+      when /[a-z_]/i
+        scan_identifier_or_keyword
+      when /[0-9]/
+        scan_number
+      when "<"
+        scan_less_than_or_heredoc
+      when ">"
+        scan_greater_than
+      when "="
+        scan_equals
+      when "!"
+        scan_bang
+      when "&"
+        scan_ampersand
+      when "|"
+        scan_pipe
+      when "+"
+        scan_plus
+      when "-"
+        scan_minus_or_arrow
+      when "*"
+        scan_star
+      when "/"
+        scan_slash
+      when "%"
+        scan_percent
+      when "?"
+        advance
+        Token.new(:question, "?", start_pos, @position, start_line, start_column)
+      when "("
+        advance
+        Token.new(:lparen, "(", start_pos, @position, start_line, start_column)
+      when ")"
+        advance
+        Token.new(:rparen, ")", start_pos, @position, start_line, start_column)
+      when "["
+        advance
+        Token.new(:lbracket, "[", start_pos, @position, start_line, start_column)
+      when "]"
+        advance
+        Token.new(:rbracket, "]", start_pos, @position, start_line, start_column)
+      when "{"
+        advance
+        Token.new(:lbrace, "{", start_pos, @position, start_line, start_column)
+      when "}"
+        advance
+        Token.new(:rbrace, "}", start_pos, @position, start_line, start_column)
+      when ","
+        advance
+        Token.new(:comma, ",", start_pos, @position, start_line, start_column)
+      when "."
+        advance
+        Token.new(:dot, ".", start_pos, @position, start_line, start_column)
+      else
+        raise ScanError.new(
+          "Unexpected character '#{char}'",
+          line: start_line,
+          column: start_column,
+          position: start_pos
+        )
+      end
     end
 
     def scan_newline
@@ -283,7 +281,7 @@ module TRuby
 
         if char == '"'
           # 문자열 끝
-          if content.length > 0
+          if content.length.positive?
             @tokens << Token.new(:string_content, content, content_start, @position, content_line, content_column)
           end
           advance
@@ -296,7 +294,7 @@ module TRuby
           advance
         elsif char == "#" && peek_char == "{"
           # 보간 시작
-          if content.length > 0
+          if content.length.positive?
             @tokens << Token.new(:string_content, content, content_start, @position, content_line, content_column)
             content = ""
           end
@@ -329,7 +327,7 @@ module TRuby
     def scan_interpolation_content
       depth = 1
 
-      while @position < @source.length && depth > 0
+      while @position < @source.length && depth.positive?
         skip_whitespace_in_interpolation
 
         break if @position >= @source.length
@@ -338,7 +336,7 @@ module TRuby
 
         if char == "}"
           depth -= 1
-          if depth == 0
+          if depth.zero?
             interp_end_pos = @position
             advance
             @tokens << Token.new(:interpolation_end, "}", interp_end_pos, @position, @line, @column - 1)
@@ -355,9 +353,7 @@ module TRuby
     end
 
     def skip_whitespace_in_interpolation
-      while @position < @source.length && current_char =~ /[ \t]/
-        advance
-      end
+      advance while @position < @source.length && current_char =~ /[ \t]/
     end
 
     def scan_simple_string(start_pos, start_line, start_column, quote)
@@ -480,7 +476,7 @@ module TRuby
       end
 
       # ? 또는 ! 접미사 처리
-      if @position < @source.length && (current_char == "?" || current_char == "!")
+      if @position < @source.length && ["?", "!"].include?(current_char)
         value += current_char
         advance
       end
@@ -531,7 +527,7 @@ module TRuby
         # heredoc 또는 <<
         advance
         # heredoc: <<EOF, <<-EOF, <<~EOF 형태
-        if current_char =~ /[~\-]/ || current_char =~ /[A-Z_]/i
+        if current_char =~ /[~-]/ || current_char =~ /[A-Z_]/i
           scan_heredoc(start_pos, start_line, start_column)
         else
           # << 연산자? 아니면 다시 되돌리기
@@ -573,19 +569,15 @@ module TRuby
       end
 
       # 현재 줄 끝까지 스킵
-      while @position < @source.length && current_char != "\n"
-        advance
-      end
+      advance while @position < @source.length && current_char != "\n"
       advance if @position < @source.length # skip newline
       @line += 1
       @column = 1
 
       # heredoc 내용 수집
       content = ""
-      content_start = @position
 
       while @position < @source.length
-        line_start = @position
         line_content = ""
 
         while @position < @source.length && current_char != "\n"
@@ -597,17 +589,21 @@ module TRuby
         stripped = squiggly || dash ? line_content.lstrip : line_content
         if stripped == delimiter || line_content.strip == delimiter
           # heredoc 끝
-          value = "<<#{squiggly ? "~" : (dash ? "-" : "")}#{delimiter}\n#{content}#{delimiter}"
+          value = "<<#{if squiggly
+                         "~"
+                       else
+                         (dash ? "-" : "")
+                       end}#{delimiter}\n#{content}#{delimiter}"
           return Token.new(:heredoc, value, start_pos, @position, start_line, start_column)
         end
 
         content += line_content
-        if @position < @source.length
-          content += "\n"
-          advance # skip newline
-          @line += 1
-          @column = 1
-        end
+        next unless @position < @source.length
+
+        content += "\n"
+        advance # skip newline
+        @line += 1
+        @column = 1
       end
 
       # 종료 마커를 찾지 못함
@@ -772,7 +768,7 @@ module TRuby
     def regex_context?
       # Check if / followed by whitespace - always division
       next_char = @source[@position]
-      return false if next_char == " " || next_char == "\t" || next_char == "\n"
+      return false if [" ", "\t", "\n"].include?(next_char)
 
       # Check previous token context
       return true if @tokens.empty?
@@ -812,7 +808,8 @@ module TRuby
       while @position < @source.length
         char = current_char
 
-        if char == "/"
+        case char
+        when "/"
           value += char
           advance
           # 플래그 스캔 (i, m, x, o 등)
@@ -821,7 +818,7 @@ module TRuby
             advance
           end
           return Token.new(:regex, value, start_pos, @position, start_line, start_column)
-        elsif char == "\\"
+        when "\\"
           # 이스케이프 시퀀스
           value += char
           advance
@@ -829,7 +826,7 @@ module TRuby
             value += current_char
             advance
           end
-        elsif char == "\n"
+        when "\n"
           raise ScanError.new(
             "Unterminated regex",
             line: start_line,
@@ -866,9 +863,7 @@ module TRuby
     end
 
     def skip_whitespace
-      while @position < @source.length && current_char =~ /[ \t\r]/
-        advance
-      end
+      advance while @position < @source.length && current_char =~ /[ \t\r]/
     end
 
     def current_char
