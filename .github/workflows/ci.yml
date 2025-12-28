@@ -19,6 +19,9 @@ jobs:
       fail-fast: false
       matrix:
         ruby: ['3.1', '3.2', '3.3', '3.4', 'head']
+        include:
+          - ruby: 'head'
+            skip_listen: true
 
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +30,15 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
+          bundler-cache: ${{ matrix.ruby != 'head' }}
+
+      # Ruby head (4.0) requires special handling due to ffi incompatibility
+      - name: Install dependencies (Ruby head)
+        if: matrix.ruby == 'head'
+        run: |
+          # Remove listen from Gemfile for Ruby 4.0+ (ffi incompatible)
+          sed -i '/gem "listen"/d' Gemfile
+          bundle install
 
       - name: Run tests
         run: bundle exec rspec --format progress --format RspecJunitFormatter --out tmp/rspec_results.xml

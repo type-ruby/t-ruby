@@ -23,11 +23,8 @@ Gem::Specification.new do |spec|
   # Runtime dependencies
   spec.add_dependency "benchmark"
 
-  # Optional: listen gem for watch mode
-  # Note: listen depends on ffi which may not be compatible with Ruby 4.0+
-  # Users can install separately if needed: gem install listen
-  # Watch mode will gracefully degrade if listen is not available
-  spec.add_development_dependency "listen", "~> 3.8"
+  # Development dependencies are specified in Gemfile, not here
+  # (per RuboCop Gemspec/DevelopmentDependencies rule)
 
   spec.metadata["rubygems_mfa_required"] = "true"
 end
