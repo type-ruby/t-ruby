@@ -5,6 +5,7 @@ require_relative "t_ruby/version_checker"
 require_relative "t_ruby/config"
 
 # Core infrastructure (must be loaded first)
+require_relative "t_ruby/string_utils"
 require_relative "t_ruby/ir"
 require_relative "t_ruby/parser_combinator"
 require_relative "t_ruby/smt_solver"

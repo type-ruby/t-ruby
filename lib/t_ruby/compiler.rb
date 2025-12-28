@@ -505,6 +505,7 @@ module TRuby
       params = []
       current = ""
       depth = 0
+      brace_depth = 0
 
       params_str.each_char do |char|
         case char
@@ -514,9 +515,16 @@ module TRuby
         when ">", "]", ")"
           depth -= 1
           current += char
+        when "{"
+          brace_depth += 1
+          current += char
+        when "}"
+          brace_depth -= 1
+          current += char
         when ","
-          if depth.zero?
-            params << clean_param(current.strip)
+          if depth.zero? && brace_depth.zero?
+            cleaned = clean_param(current.strip)
+            params.concat(Array(cleaned)) if cleaned
             current = ""
           else
             current += char
@@ -526,12 +534,39 @@ module TRuby
         end
       end
 
-      params << clean_param(current.strip) unless current.empty?
+      cleaned = clean_param(current.strip) unless current.empty?
+      params.concat(Array(cleaned)) if cleaned
       params.join(", ")
     end
 
     # Clean a single parameter (remove type annotation, preserve default value)
+    # Returns String or Array of Strings (for keyword args group)
     def clean_param(param)
+      param = param.strip
+      return nil if param.empty?
+
+      # 1. 더블 스플랫: **name: Type -> **name
+      if param.start_with?("**")
+        match = param.match(/^\*\*(\w+)(?::\s*.+)?$/)
+        return "**#{match[1]}" if match
+
+        return param
+      end
+
+      # 2. 키워드 인자 그룹: { ... } 또는 { ... }: InterfaceName
+      if param.start_with?("{")
+        return clean_keyword_args_group(param)
+      end
+
+      # 3. Hash 리터럴: name: { ... } -> name
+      if param.match?(/^\w+:\s*\{/)
+        match = param.match(/^(\w+):\s*\{.+\}(?::\s*\w+)?$/)
+        return match[1] if match
+
+        return param
+      end
+
+      # 4. 일반 파라미터: name: Type = value -> name = value 또는 name: Type -> name
       # Match: name: Type = value (with default value)
       if (match = param.match(/^(#{TRuby::IDENTIFIER_CHAR}+)\s*:\s*.+?\s*(=\s*.+)$/))
         "#{match[1]} #{match[2]}"
@@ -541,6 +576,69 @@ module TRuby
       else
         param
       end
+    end
+
+    # 키워드 인자 그룹을 Ruby 키워드 인자로 변환
+    # { name: String, age: Integer = 0 } -> name:, age: 0
+    # { name:, age: 0 }: UserParams -> name:, age: 0
+    def clean_keyword_args_group(param)
+      # { ... }: InterfaceName 또는 { ... } 형태 파싱
+      interface_match = param.match(/^\{(.+)\}\s*:\s*\w+\s*$/)
+      inline_match = param.match(/^\{(.+)\}\s*$/) unless interface_match
+
+      inner_content = if interface_match
+                        interface_match[1]
+                      elsif inline_match
+                        inline_match[1]
+                      else
+                        return param
+                      end
+
+      # 내부 파라미터 분리
+      parts = split_nested_content(inner_content)
+      keyword_params = []
+
+      parts.each do |part|
+        part = part.strip
+        next if part.empty?
+
+        if interface_match
+          # interface 참조: name: default_value 또는 name:
+          if (match = part.match(/^(\w+):\s*(.*)$/))
+            name = match[1]
+            default_value = match[2].strip
+            keyword_params << if default_value.empty?
+                                "#{name}:"
+                              else
+                                "#{name}: #{default_value}"
+                              end
+          end
+        elsif (match = part.match(/^(\w+):\s*(.+)$/))
+          # 인라인 타입: name: Type = default 또는 name: Type
+          name = match[1]
+          type_and_default = match[2].strip
+
+          # Type = default 분리
+          default_value = extract_default_value(type_and_default)
+          keyword_params << if default_value
+                              "#{name}: #{default_value}"
+                            else
+                              "#{name}:"
+                            end
+        end
+      end
+
+      keyword_params
+    end
+
+    # 중첩된 내용을 콤마로 분리
+    def split_nested_content(content)
+      StringUtils.split_by_comma(content)
+    end
+
+    # 타입과 기본값에서 기본값만 추출
+    def extract_default_value(type_and_default)
+      StringUtils.extract_default_value(type_and_default)
     end
 
     # Erase return type annotations

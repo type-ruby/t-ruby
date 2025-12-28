@@ -147,15 +147,19 @@ module TRuby
 
     # Method parameter
     class Parameter < Node
-      attr_accessor :name, :type_annotation, :default_value, :kind
+      attr_accessor :name, :type_annotation, :default_value, :kind, :interface_ref
 
-      # kind: :required, :optional, :rest, :keyrest, :block
-      def initialize(name:, type_annotation: nil, default_value: nil, kind: :required, **opts)
+      # kind: :required, :optional, :rest, :keyrest, :block, :keyword
+      # :keyword - 키워드 인자 (구조분해): { name: String } → def foo(name:)
+      # :keyrest - 더블 스플랫: **opts: Type → def foo(**opts)
+      # interface_ref - interface 참조 타입 (예: }: UserParams 부분)
+      def initialize(name:, type_annotation: nil, default_value: nil, kind: :required, interface_ref: nil, **opts)
         super(**opts)
         @name = name
         @type_annotation = type_annotation
         @default_value = default_value
         @kind = kind
+        @interface_ref = interface_ref
       end
     end
 
