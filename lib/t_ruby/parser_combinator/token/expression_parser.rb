@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 module TRuby
   module ParserCombinator
     # Expression Parser - Parse expressions into IR nodes
