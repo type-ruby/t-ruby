@@ -49,7 +49,7 @@ module TRuby
 
           token = tokens[position]
           break if token.type == :eof
-          break if [:end, :else, :elsif, :when, :rescue, :ensure].include?(token.type)
+          break if %i[end else elsif when rescue ensure].include?(token.type)
 
           result = parse_statement(tokens, position)
           break if result.failure?
@@ -65,9 +65,7 @@ module TRuby
       private
 
       def skip_newlines(tokens, position)
-        while position < tokens.length && [:newline, :comment].include?(tokens[position].type)
-          position += 1
-        end
+        position += 1 while position < tokens.length && %i[newline comment].include?(tokens[position].type)
         position
       end
 
@@ -103,6 +101,7 @@ module TRuby
         # Parse condition
         cond_result = @expression_parser.parse_expression(tokens, position)
         return cond_result if cond_result.failure?
+
         position = cond_result.position
 
         # Skip newline after condition
@@ -118,6 +117,7 @@ module TRuby
         if position < tokens.length && tokens[position].type == :elsif
           elsif_result = parse_if(tokens, position) # Reuse if parsing for elsif
           return elsif_result if elsif_result.failure?
+
           else_branch = elsif_result.value
           position = elsif_result.position
         elsif position < tokens.length && tokens[position].type == :else
@@ -149,6 +149,7 @@ module TRuby
         # Parse condition
         cond_result = @expression_parser.parse_expression(tokens, position)
         return cond_result if cond_result.failure?
+
         position = cond_result.position
 
         # Skip newline
@@ -190,6 +191,7 @@ module TRuby
         # Parse condition
         cond_result = @expression_parser.parse_expression(tokens, position)
         return cond_result if cond_result.failure?
+
         position = cond_result.position
 
         # Skip newline
@@ -219,6 +221,7 @@ module TRuby
         # Parse condition
         cond_result = @expression_parser.parse_expression(tokens, position)
         return cond_result if cond_result.failure?
+
         position = cond_result.position
 
         # Skip newline
@@ -264,6 +267,7 @@ module TRuby
         while position < tokens.length && tokens[position].type == :when
           when_result = parse_when_clause(tokens, position)
           return when_result if when_result.failure?
+
           when_clauses << when_result.value
           position = when_result.position
           position = skip_newlines(tokens, position)
@@ -301,10 +305,12 @@ module TRuby
         loop do
           pattern_result = @expression_parser.parse_expression(tokens, position)
           return pattern_result if pattern_result.failure?
+
           patterns << pattern_result.value
           position = pattern_result.position
 
           break unless tokens[position]&.type == :comma
+
           position += 1
         end
 
@@ -332,6 +338,7 @@ module TRuby
         while position < tokens.length && tokens[position].type == :rescue
           rescue_result = parse_rescue_clause(tokens, position)
           return rescue_result if rescue_result.failure?
+
           rescue_clauses << rescue_result.value
           position = rescue_result.position
           position = skip_newlines(tokens, position)
@@ -381,17 +388,16 @@ module TRuby
 
         # Check for exception types and variable binding
         # Format: rescue ExType, ExType2 => var or rescue => var
-        if position < tokens.length && ![:newline, :hash_rocket].include?(tokens[position].type)
-          # Parse exception types
-          if tokens[position].type == :constant
-            loop do
-              if tokens[position].type == :constant
-                exception_types << tokens[position].value
-                position += 1
-              end
-              break unless tokens[position]&.type == :comma
+        # Parse exception types
+        if position < tokens.length && !%i[newline hash_rocket].include?(tokens[position].type) && (tokens[position].type == :constant)
+          loop do
+            if tokens[position].type == :constant
+              exception_types << tokens[position].value
               position += 1
             end
+            break unless tokens[position]&.type == :comma
+
+            position += 1
           end
         end
 
@@ -459,6 +465,7 @@ module TRuby
 
         # Expect '='
         return TokenParseResult.failure("Expected '='", tokens, position) unless tokens[position]&.type == :eq
+
         position += 1
 
         # Parse value
@@ -477,8 +484,19 @@ module TRuby
         target = tokens[position].value
         position += 2 # skip variable and '='
 
-        # Parse value
-        value_result = @expression_parser.parse_expression(tokens, position)
+        # Check for statement expressions (case, if, begin, etc.) as value
+        value_result = case tokens[position]&.type
+                       when :case
+                         parse_case(tokens, position)
+                       when :if
+                         parse_if(tokens, position)
+                       when :unless
+                         parse_unless(tokens, position)
+                       when :begin
+                         parse_begin(tokens, position)
+                       else
+                         @expression_parser.parse_expression(tokens, position)
+                       end
         return value_result if value_result.failure?
 
         node = IR::Assignment.new(target: target, value: value_result.value)
@@ -582,28 +600,29 @@ module TRuby
 
       def assignable_token?(token)
         return false unless token
-        [:identifier, :ivar, :cvar, :gvar].include?(token.type)
+
+        %i[identifier ivar cvar gvar].include?(token.type)
       end
 
       def compound_assignment_token?(token)
         return false unless token
-        [:plus_eq, :minus_eq, :star_eq, :slash_eq, :percent_eq].include?(token.type)
+
+        %i[plus_eq minus_eq star_eq slash_eq percent_eq].include?(token.type)
       end
 
       def end_of_statement?(tokens, position)
         return true if position >= tokens.length
-        [:newline, :eof, :end, :else, :elsif, :when, :rescue, :ensure].include?(tokens[position].type)
+
+        %i[newline eof end else elsif when rescue ensure].include?(tokens[position].type)
       end
 
       def skip_newlines_if_not_modifier(tokens, position)
         # Don't skip newlines if next token after newline is a modifier
         if tokens[position]&.type == :newline
           next_pos = position + 1
-          while next_pos < tokens.length && tokens[next_pos].type == :newline
-            next_pos += 1
-          end
+          next_pos += 1 while next_pos < tokens.length && tokens[next_pos].type == :newline
           # If next meaningful token is a modifier, return original position
-          if next_pos < tokens.length && [:if, :unless, :while, :until].include?(tokens[next_pos].type)
+          if next_pos < tokens.length && %i[if unless while until].include?(tokens[next_pos].type)
             return position
           end
         end

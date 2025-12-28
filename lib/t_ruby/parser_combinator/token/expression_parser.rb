@@ -89,6 +89,33 @@ module TRuby
           )
         end
 
+        # 삼항 연산자: condition ? then_branch : else_branch
+        if pos < tokens.length && tokens[pos].type == :question
+          pos += 1 # consume '?'
+
+          then_result = parse_expression(tokens, pos)
+          return then_result if then_result.failure?
+
+          pos = then_result.position
+
+          unless tokens[pos]&.type == :colon
+            return TokenParseResult.failure("Expected ':' in ternary operator", tokens, pos)
+          end
+
+          pos += 1 # consume ':'
+
+          else_result = parse_expression(tokens, pos)
+          return else_result if else_result.failure?
+
+          left = IR::Conditional.new(
+            kind: :ternary,
+            condition: left,
+            then_branch: then_result.value,
+            else_branch: else_result.value
+          )
+          pos = else_result.position
+        end
+
         TokenParseResult.success(left, tokens, pos)
       end
 
@@ -101,19 +128,21 @@ module TRuby
         when :bang
           result = parse_unary(tokens, position + 1)
           return result if result.failure?
+
           node = IR::UnaryOp.new(operator: :!, operand: result.value)
           TokenParseResult.success(node, tokens, result.position)
         when :minus
           result = parse_unary(tokens, position + 1)
           return result if result.failure?
+
           # For negative number literals, we could fold them
-          if result.value.is_a?(IR::Literal) && result.value.literal_type == :integer
-            node = IR::Literal.new(value: -result.value.value, literal_type: :integer)
-          elsif result.value.is_a?(IR::Literal) && result.value.literal_type == :float
-            node = IR::Literal.new(value: -result.value.value, literal_type: :float)
-          else
-            node = IR::UnaryOp.new(operator: :-, operand: result.value)
-          end
+          node = if result.value.is_a?(IR::Literal) && result.value.literal_type == :integer
+                   IR::Literal.new(value: -result.value.value, literal_type: :integer)
+                 elsif result.value.is_a?(IR::Literal) && result.value.literal_type == :float
+                   IR::Literal.new(value: -result.value.value, literal_type: :float)
+                 else
+                   IR::UnaryOp.new(operator: :-, operand: result.value)
+                 end
           TokenParseResult.success(node, tokens, result.position)
         else
           parse_postfix(tokens, position)
@@ -149,6 +178,7 @@ module TRuby
             if pos < tokens.length && tokens[pos].type == :lparen
               args_result = parse_arguments(tokens, pos)
               return args_result if args_result.failure?
+
               args = args_result.value
               pos = args_result.position
             end
@@ -166,6 +196,7 @@ module TRuby
 
             pos = index_result.position
             return TokenParseResult.failure("Expected ']'", tokens, pos) unless tokens[pos]&.type == :rbracket
+
             pos += 1
 
             left = IR::MethodCall.new(
@@ -175,18 +206,17 @@ module TRuby
             )
           when :lparen
             # Function call without explicit receiver (left is identifier -> method call)
-            if left.is_a?(IR::VariableRef) && left.scope == :local
-              args_result = parse_arguments(tokens, pos)
-              return args_result if args_result.failure?
+            break unless left.is_a?(IR::VariableRef) && left.scope == :local
 
-              left = IR::MethodCall.new(
-                method_name: left.name,
-                arguments: args_result.value
-              )
-              pos = args_result.position
-            else
-              break
-            end
+            args_result = parse_arguments(tokens, pos)
+            return args_result if args_result.failure?
+
+            left = IR::MethodCall.new(
+              method_name: left.name,
+              arguments: args_result.value
+            )
+            pos = args_result.position
+
           else
             break
           end
@@ -225,11 +255,11 @@ module TRuby
           node = IR::Literal.new(value: value, literal_type: :symbol)
           TokenParseResult.success(node, tokens, position + 1)
 
-        when :true
+        when true
           node = IR::Literal.new(value: true, literal_type: :boolean)
           TokenParseResult.success(node, tokens, position + 1)
 
-        when :false
+        when false
           node = IR::Literal.new(value: false, literal_type: :boolean)
           TokenParseResult.success(node, tokens, position + 1)
 
@@ -264,6 +294,7 @@ module TRuby
 
           pos = result.position
           return TokenParseResult.failure("Expected ')'", tokens, pos) unless tokens[pos]&.type == :rparen
+
           TokenParseResult.success(result.value, tokens, pos + 1)
 
         when :lbracket
@@ -281,6 +312,7 @@ module TRuby
 
       def parse_arguments(tokens, position)
         return TokenParseResult.failure("Expected '('", tokens, position) unless tokens[position]&.type == :lparen
+
         position += 1
 
         args = []
@@ -291,26 +323,77 @@ module TRuby
         end
 
         # Parse first argument
-        result = parse_expression(tokens, position)
+        result = parse_argument(tokens, position)
         return result if result.failure?
+
         args << result.value
         position = result.position
 
         # Parse remaining arguments
         while tokens[position]&.type == :comma
           position += 1
-          result = parse_expression(tokens, position)
+          result = parse_argument(tokens, position)
           return result if result.failure?
+
           args << result.value
           position = result.position
         end
 
         return TokenParseResult.failure("Expected ')'", tokens, position) unless tokens[position]&.type == :rparen
+
         TokenParseResult.success(args, tokens, position + 1)
+      end
+
+      # Parse a single argument (handles splat, double splat, and keyword arguments)
+      def parse_argument(tokens, position)
+        # Double splat argument: **expr
+        if tokens[position]&.type == :star_star
+          position += 1
+          expr_result = parse_expression(tokens, position)
+          return expr_result if expr_result.failure?
+
+          # Wrap in a splat node (we'll use MethodCall with special name for now)
+          node = IR::MethodCall.new(
+            method_name: "**",
+            arguments: [expr_result.value]
+          )
+          return TokenParseResult.success(node, tokens, expr_result.position)
+        end
+
+        # Single splat argument: *expr
+        if tokens[position]&.type == :star
+          position += 1
+          expr_result = parse_expression(tokens, position)
+          return expr_result if expr_result.failure?
+
+          node = IR::MethodCall.new(
+            method_name: "*",
+            arguments: [expr_result.value]
+          )
+          return TokenParseResult.success(node, tokens, expr_result.position)
+        end
+
+        # Keyword argument: name: value
+        if tokens[position]&.type == :identifier && tokens[position + 1]&.type == :colon
+          key_name = tokens[position].value
+          position += 2 # skip identifier and colon
+
+          value_result = parse_expression(tokens, position)
+          return value_result if value_result.failure?
+
+          # Create a hash pair for keyword argument
+          key = IR::Literal.new(value: key_name.to_sym, literal_type: :symbol)
+          node = IR::HashPair.new(key: key, value: value_result.value)
+          return TokenParseResult.success(node, tokens, value_result.position)
+        end
+
+        # Regular expression argument
+        parse_expression(tokens, position)
       end
 
       def parse_array_literal(tokens, position)
         return TokenParseResult.failure("Expected '['", tokens, position) unless tokens[position]&.type == :lbracket
+
         position += 1
 
         elements = []
@@ -324,6 +407,7 @@ module TRuby
         # Parse first element
         result = parse_expression(tokens, position)
         return result if result.failure?
+
         elements << result.value
         position = result.position
 
@@ -332,17 +416,20 @@ module TRuby
           position += 1
           result = parse_expression(tokens, position)
           return result if result.failure?
+
           elements << result.value
           position = result.position
         end
 
         return TokenParseResult.failure("Expected ']'", tokens, position) unless tokens[position]&.type == :rbracket
+
         node = IR::ArrayLiteral.new(elements: elements)
         TokenParseResult.success(node, tokens, position + 1)
       end
 
       def parse_hash_literal(tokens, position)
         return TokenParseResult.failure("Expected '{'", tokens, position) unless tokens[position]&.type == :lbrace
+
         position += 1
 
         pairs = []
@@ -356,6 +443,7 @@ module TRuby
         # Parse first pair
         pair_result = parse_hash_pair(tokens, position)
         return pair_result if pair_result.failure?
+
         pairs << pair_result.value
         position = pair_result.position
 
@@ -364,11 +452,13 @@ module TRuby
           position += 1
           pair_result = parse_hash_pair(tokens, position)
           return pair_result if pair_result.failure?
+
           pairs << pair_result.value
           position = pair_result.position
         end
 
         return TokenParseResult.failure("Expected '}'", tokens, position) unless tokens[position]&.type == :rbrace
+
         node = IR::HashLiteral.new(pairs: pairs)
         TokenParseResult.success(node, tokens, position + 1)
       end
@@ -382,15 +472,15 @@ module TRuby
           # Parse key expression
           key_result = parse_expression(tokens, position)
           return key_result if key_result.failure?
+
           key = key_result.value
           position = key_result.position
 
           # Expect => or :
-          if tokens[position]&.type == :colon
-            position += 1
-          else
-            return TokenParseResult.failure("Expected ':' or '=>' in hash pair", tokens, position)
-          end
+          return TokenParseResult.failure("Expected ':' or '=>' in hash pair", tokens, position) unless tokens[position]&.type == :colon
+
+          position += 1
+
         end
 
         # Parse value expression
@@ -419,15 +509,15 @@ module TRuby
             position += 1
             expr_result = parse_expression(tokens, position)
             return expr_result if expr_result.failure?
+
             parts << expr_result.value
             position = expr_result.position
 
             # Expect interpolation_end (})
-            if tokens[position]&.type == :interpolation_end
-              position += 1
-            else
-              return TokenParseResult.failure("Expected '}'", tokens, position)
-            end
+            return TokenParseResult.failure("Expected '}'", tokens, position) unless tokens[position]&.type == :interpolation_end
+
+            position += 1
+
           when :string_end
             position += 1
             break
