@@ -158,6 +158,8 @@ module TRuby
       type = case node
              when IR::Literal
                infer_literal(node)
+             when IR::InterpolatedString
+               "String" # Interpolated strings always produce String
              when IR::VariableRef
                infer_variable_ref(node, env)
              when IR::BinaryOp

@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe TRuby::BodyParser do
+RSpec.describe TRuby::ParserCombinator::TokenBodyParser do
   subject(:parser) { described_class.new }
 
   describe "#parse" do
@@ -144,7 +144,7 @@ RSpec.describe TRuby::BodyParser do
 
       stmt = result.statements.first
       expect(stmt).to be_a(TRuby::IR::BinaryOp)
-      expect(stmt.operator).to eq("+")
+      expect(stmt.operator).to eq(:+)
       expect(stmt.left).to be_a(TRuby::IR::VariableRef)
       expect(stmt.right).to be_a(TRuby::IR::VariableRef)
     end
@@ -155,7 +155,7 @@ RSpec.describe TRuby::BodyParser do
 
       stmt = result.statements.first
       expect(stmt).to be_a(TRuby::IR::BinaryOp)
-      expect(stmt.operator).to eq("==")
+      expect(stmt.operator).to eq(:==)
     end
 
     it "parses logical operators" do
@@ -164,7 +164,7 @@ RSpec.describe TRuby::BodyParser do
 
       stmt = result.statements.first
       expect(stmt).to be_a(TRuby::IR::BinaryOp)
-      expect(stmt.operator).to eq("&&")
+      expect(stmt.operator).to eq(:"&&")
     end
   end
 
