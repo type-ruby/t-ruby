@@ -3,7 +3,6 @@ PATH
   specs:
     t-ruby (0.0.41)
       benchmark
-      listen (~> 3.8)
 
 GEM
   remote: https://rubygems.org/
@@ -81,6 +80,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  listen (~> 3.8)
   rake (~> 13.0)
   rbs (~> 3.0)
   rspec (~> 3.0)

@@ -25,7 +25,7 @@ module TRuby
         "strictness" => "standard",
         "generate_rbs" => true,
         "type_check" => true,
-        "target_ruby" => "3.0",
+        "target_ruby" => nil, # Auto-detect from current Ruby version
         "experimental" => [],
         "checks" => {
           "no_implicit_any" => false,
@@ -97,9 +97,24 @@ module TRuby
     end
 
     # Get target Ruby version
-    # @return [String] target Ruby version (e.g., "3.0", "3.2")
+    # If not specified in config, auto-detects from current Ruby environment
+    # @return [String] target Ruby version (e.g., "3.0", "3.2", "4.0")
+    # @raise [UnsupportedRubyVersionError] if detected version is not supported
     def target_ruby
-      (@compiler["target_ruby"] || "3.0").to_s
+      configured = @compiler["target_ruby"]
+      if configured
+        RubyVersion.parse(configured).validate!
+        configured.to_s
+      else
+        version = RubyVersion.current.validate!
+        "#{version.major}.#{version.minor}"
+      end
+    end
+
+    # Get target Ruby version as RubyVersion object
+    # @return [RubyVersion] target Ruby version object
+    def target_ruby_version
+      RubyVersion.parse(target_ruby)
     end
 
     # Get list of enabled experimental features

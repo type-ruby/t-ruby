@@ -31,7 +31,8 @@ describe TRuby::CLI do
         expect(config["compiler"]).to be_a(Hash)
         expect(config["compiler"]["generate_rbs"]).to eq(true)
         expect(config["compiler"]["strictness"]).to eq("standard")
-        expect(config["compiler"]["target_ruby"]).to eq("3.0")
+        expected_ruby = "#{RUBY_VERSION.split(".")[0]}.#{RUBY_VERSION.split(".")[1]}"
+        expect(config["compiler"]["target_ruby"]).to eq(expected_ruby)
 
         expect(config["watch"]).to be_a(Hash)
         expect(config["watch"]["debounce"]).to eq(100)

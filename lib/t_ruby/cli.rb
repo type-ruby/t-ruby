@@ -135,7 +135,7 @@ module TRuby
           compiler:
             strictness: standard  # strict | standard | permissive
             generate_rbs: true
-            target_ruby: "3.0"
+            target_ruby: "#{RubyVersion.current.major}.#{RubyVersion.current.minor}"
             # experimental: []
             # checks:
             #   no_implicit_any: false

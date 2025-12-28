@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
-require "listen"
+# listen gem is optional - only required for watch mode
+# This allows T-Ruby core functionality to work on Ruby 4.0+ where listen/ffi may not be available
+begin
+  require "listen"
+  LISTEN_AVAILABLE = true
+rescue LoadError
+  LISTEN_AVAILABLE = false
+end
 
 module TRuby
   class Watcher
@@ -52,6 +59,14 @@ module TRuby
     end
 
     def watch
+      unless LISTEN_AVAILABLE
+        puts colorize(:red, "Error: Watch mode requires the 'listen' gem.")
+        puts colorize(:yellow, "The 'listen' gem is not available (possibly due to Ruby 4.0+ ffi compatibility).")
+        puts colorize(:dim, "Install with: gem install listen")
+        puts colorize(:dim, "Or run without watch mode: trc")
+        exit 1
+      end
+
       print_start_message
 
       # Initial compilation
