@@ -234,6 +234,20 @@ module TRuby
       end
     end
 
+    # Interpolated string (string with #{...} expressions)
+    class InterpolatedString < Node
+      attr_accessor :parts
+
+      def initialize(parts: [], **opts)
+        super(**opts)
+        @parts = parts
+      end
+
+      def children
+        @parts
+      end
+    end
+
     # Array literal
     class ArrayLiteral < Node
       attr_accessor :elements, :element_type

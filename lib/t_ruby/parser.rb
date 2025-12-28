@@ -22,7 +22,7 @@ module TRuby
       @lines = source.split("\n")
       @parse_body = parse_body
       @type_parser = ParserCombinator::TypeParser.new
-      @body_parser = BodyParser.new if parse_body
+      @body_parser = ParserCombinator::TokenBodyParser.new if parse_body
       @ir_program = nil
     end
 
@@ -97,6 +97,8 @@ module TRuby
       @ir_program = builder.build(result, source: @source)
 
       result
+    rescue Scanner::ScanError => e
+      raise ParseError.new(e.message, line: e.line, column: e.column)
     end
 
     # Parse to IR directly (new API)

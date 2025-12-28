@@ -10,12 +10,12 @@ require_relative "t_ruby/config"
 require_relative "t_ruby/string_utils"
 require_relative "t_ruby/ir"
 require_relative "t_ruby/parser_combinator"
+require_relative "t_ruby/scanner"
 require_relative "t_ruby/smt_solver"
 
 # Basic components
 require_relative "t_ruby/type_alias_registry"
 require_relative "t_ruby/heredoc_detector"
-require_relative "t_ruby/body_parser"
 require_relative "t_ruby/parser"
 require_relative "t_ruby/union_type_parser"
 require_relative "t_ruby/generic_type_parser"
@@ -51,4 +51,15 @@ require_relative "t_ruby/docs_example_verifier"
 require_relative "t_ruby/docs_badge_generator"
 
 module TRuby
+  # Parse error for T-Ruby source code
+  class ParseError < StandardError
+    attr_reader :line, :column, :source
+
+    def initialize(message, line: nil, column: nil, source: nil)
+      @line = line
+      @column = column
+      @source = source
+      super(message)
+    end
+  end
 end

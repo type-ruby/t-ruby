@@ -319,6 +319,19 @@ module TRuby
       # Subtype relationships
       return true if subtype_of?(inferred, declared)
 
+      # Handle generic types (e.g., Array[untyped] is compatible with Array[String])
+      if inferred.include?("[") && declared.include?("[")
+        inferred_base = inferred.split("[").first
+        declared_base = declared.split("[").first
+        if inferred_base == declared_base
+          # Extract type arguments
+          inferred_args = inferred[/\[(.+)\]/, 1]
+          declared_args = declared[/\[(.+)\]/, 1]
+          # untyped type argument is compatible with any type argument
+          return true if inferred_args == "untyped" || declared_args == "untyped"
+        end
+      end
+
       # Handle union types in declared
       if declared.include?("|")
         declared_types = declared.split("|").map(&:strip)
