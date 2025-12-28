@@ -157,6 +157,15 @@ describe TRuby::TypeErasure do
         expect(result).to include("def hello()")
       end
 
+      it "handles functions without parentheses and with return type" do
+        source = "def hello: String\n  'hello'\nend"
+        eraser = TRuby::TypeErasure.new(source)
+
+        result = eraser.erase
+        expect(result).to include("def hello")
+        expect(result).not_to include(": String")
+      end
+
       it "handles nested structures" do
         source = "class Greeter" + "\n  " \
                                    "def greet(name: String): String" + "\n    " \
