@@ -294,4 +294,125 @@ RSpec.describe "Colon Spacing Validation E2E" do
       expect(colon_errors.length).to eq(2)
     end
   end
+
+  describe "Hash literal type parsing" do
+    it "parses hash literal type in parameter" do
+      source = <<~TRB
+        def process_config(config: { host: String, port: Integer }): String
+          config[:host]
+        end
+      TRB
+      input_file = File.join(tmpdir, "hash_literal1.trb")
+      File.write(input_file, source)
+
+      result = compiler.compile_with_diagnostics(input_file)
+      expect(result[:diagnostics]).to be_empty
+      expect(result[:success]).to be true
+    end
+
+    it "parses hash literal type with default values" do
+      source = <<~TRB
+        def with_defaults(opts: { name: String, age: Integer = 0 }): String
+          opts[:name]
+        end
+      TRB
+      input_file = File.join(tmpdir, "hash_literal2.trb")
+      File.write(input_file, source)
+
+      result = compiler.compile_with_diagnostics(input_file)
+      expect(result[:diagnostics]).to be_empty
+      expect(result[:success]).to be true
+    end
+
+    it "parses keyword arguments with braces" do
+      source = <<~TRB
+        def greet({ name: String, prefix: String = "Hello" }): String
+          "\#{prefix}, \#{name}!"
+        end
+      TRB
+      input_file = File.join(tmpdir, "keyword_args1.trb")
+      File.write(input_file, source)
+
+      result = compiler.compile_with_diagnostics(input_file)
+      expect(result[:diagnostics]).to be_empty
+      expect(result[:success]).to be true
+    end
+
+    it "parses mixed positional and keyword arguments" do
+      source = <<~TRB
+        def mixed(id: Integer, { name: String, age: Integer = 0 }): String
+          "\#{id}: \#{name}"
+        end
+      TRB
+      input_file = File.join(tmpdir, "mixed_args.trb")
+      File.write(input_file, source)
+
+      result = compiler.compile_with_diagnostics(input_file)
+      expect(result[:diagnostics]).to be_empty
+      expect(result[:success]).to be true
+    end
+
+    it "parses interface reference style keyword arguments" do
+      source = <<~TRB
+        interface Options
+          name: String
+          limit?: Integer
+        end
+
+        def fetch({ name:, limit: 10 }: Options): String
+          name
+        end
+      TRB
+      input_file = File.join(tmpdir, "interface_ref.trb")
+      File.write(input_file, source)
+
+      result = compiler.compile_with_diagnostics(input_file)
+      expect(result[:diagnostics]).to be_empty
+      expect(result[:success]).to be true
+    end
+
+    it "parses double splat keyword arguments" do
+      source = <<~TRB
+        def forward(**opts: Hash): String
+          opts.to_s
+        end
+      TRB
+      input_file = File.join(tmpdir, "double_splat.trb")
+      File.write(input_file, source)
+
+      result = compiler.compile_with_diagnostics(input_file)
+      expect(result[:diagnostics]).to be_empty
+      expect(result[:success]).to be true
+    end
+  end
+
+  describe "Unicode identifier support" do
+    it "parses Korean function names" do
+      source = <<~TRB
+        def 인사하기(이름: String): String
+          "안녕, \#{이름}!"
+        end
+      TRB
+      input_file = File.join(tmpdir, "korean.trb")
+      File.write(input_file, source)
+
+      result = compiler.compile_with_diagnostics(input_file)
+      expect(result[:diagnostics]).to be_empty
+      expect(result[:success]).to be true
+    end
+
+    it "parses Korean function names with return type validation" do
+      source = <<~TRB
+        def 계산하기(값: Integer): Integer
+          값 * 2
+        end
+      TRB
+      input_file = File.join(tmpdir, "korean2.trb")
+      File.write(input_file, source)
+
+      result = compiler.compile_with_diagnostics(input_file)
+      expect(result[:diagnostics]).to be_empty
+      expect(result[:success]).to be true
+    end
+  end
 end

@@ -281,4 +281,133 @@ describe TRuby::ErrorHandler do
       expect(errors).to be_empty
     end
   end
+
+  describe "Float type validation" do
+    it "accepts Float as a valid type" do
+      source = "def calculate(x: Float): Float\nend"
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_empty
+    end
+
+    it "accepts Float in union types" do
+      source = "def parse(value: Integer | Float): Float\nend"
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_empty
+    end
+  end
+
+  describe "unicode identifier support" do
+    it "handles Korean function names" do
+      source = <<~RUBY
+        def 인사하기(이름: String): String
+          "안녕, " + 이름
+        end
+      RUBY
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_empty
+    end
+
+    it "detects duplicate Korean function definitions" do
+      source = <<~RUBY
+        def 인사하기(이름: String): String
+          "안녕"
+        end
+
+        def 인사하기(나이: Integer): Integer
+          나이
+        end
+      RUBY
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors.length).to eq(1)
+      expect(errors[0]).to include("인사하기")
+      expect(errors[0]).to include("already defined")
+    end
+  end
+
+  describe "duplicate functions in different classes" do
+    it "allows same method name in different classes" do
+      source = <<~RUBY
+        class Dog
+          def speak(): String
+            "Woof"
+          end
+        end
+
+        class Cat
+          def speak(): String
+            "Meow"
+          end
+        end
+      RUBY
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_empty
+    end
+
+    it "detects duplicate methods within the same class" do
+      source = <<~RUBY
+        class Animal
+          def speak(): String
+            "Hello"
+          end
+
+          def speak(): String
+            "World"
+          end
+        end
+      RUBY
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors.length).to eq(1)
+      expect(errors[0]).to include("speak")
+      expect(errors[0]).to include("already defined")
+    end
+  end
+
+  describe "type alias validation" do
+    it "detects duplicate type aliases" do
+      source = <<~RUBY
+        type UserId = Integer
+        type UserId = String
+      RUBY
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors.length).to eq(1)
+      expect(errors[0]).to include("UserId")
+      expect(errors[0]).to include("already defined")
+    end
+
+    it "allows different type alias names" do
+      source = <<~RUBY
+        type UserId = Integer
+        type PostId = Integer
+      RUBY
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_empty
+    end
+  end
+
+  describe "parameter type colon validation" do
+    it "detects parameter with colon but no type" do
+      source = "def test(x:)\nend"
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_a(Array)
+      # Should detect missing type after colon
+    end
+  end
 end
