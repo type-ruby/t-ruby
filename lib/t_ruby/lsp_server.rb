@@ -122,6 +122,8 @@ module TRuby
       @initialized = false
       @shutdown_requested = false
       @type_alias_registry = TypeAliasRegistry.new
+      # Use Compiler for unified diagnostics (same as CLI)
+      @compiler = Compiler.new
     end
 
     # Main run loop for the LSP server
@@ -368,114 +370,55 @@ module TRuby
                         })
     end
 
-    def analyze_document(text)
-      diagnostics = []
+    def analyze_document(text, uri: nil)
+      # Use unified Compiler.analyze for diagnostics
+      # This ensures CLI and LSP show the same errors
+      file_path = uri ? uri_to_path(uri) : "<source>"
+      compiler_diagnostics = @compiler.analyze(text, file: file_path)
 
-      # Use ErrorHandler to check for errors
-      error_handler = ErrorHandler.new(text)
-      errors = error_handler.check
-
-      errors.each do |error|
-        # Parse line number from error message
-        next unless error =~ /^Line (\d+):\s*(.+)$/
-
-        line_num = Regexp.last_match(1).to_i - 1 # LSP uses 0-based line numbers
-        message = Regexp.last_match(2)
-
-        diagnostics << create_diagnostic(line_num, message, DiagnosticSeverity::ERROR)
-      end
-
-      # Additional validation using Parser
-      begin
-        parser = Parser.new(text)
-        result = parser.parse
-
-        # Validate type aliases
-        validate_type_aliases(result[:type_aliases] || [], diagnostics, text)
-
-        # Validate function types
-        validate_functions(result[:functions] || [], diagnostics, text)
-      rescue StandardError => e
-        diagnostics << create_diagnostic(0, "Parse error: #{e.message}", DiagnosticSeverity::ERROR)
-      end
-
-      diagnostics
+      # Convert TRuby::Diagnostic objects to LSP diagnostic format
+      compiler_diagnostics.map { |d| diagnostic_to_lsp(d) }
     end
 
-    def validate_type_aliases(type_aliases, diagnostics, text)
-      lines = text.split("\n")
-      registry = TypeAliasRegistry.new
+    # Convert TRuby::Diagnostic to LSP diagnostic format
+    def diagnostic_to_lsp(diagnostic)
+      # LSP uses 0-based line numbers
+      line = (diagnostic.line || 1) - 1
+      line = 0 if line.negative?
 
-      type_aliases.each do |alias_info|
-        line_num = find_line_number(lines, /^\s*type\s+#{Regexp.escape(alias_info[:name])}\s*=/)
-        next unless line_num
+      col = (diagnostic.column || 1) - 1
+      col = 0 if col.negative?
 
-        begin
-          registry.register(alias_info[:name], alias_info[:definition])
-        rescue DuplicateTypeAliasError => e
-          diagnostics << create_diagnostic(line_num, e.message, DiagnosticSeverity::ERROR)
-        rescue CircularTypeAliasError => e
-          diagnostics << create_diagnostic(line_num, e.message, DiagnosticSeverity::ERROR)
-        end
-      end
+      end_col = diagnostic.end_column ? diagnostic.end_column - 1 : col + 1
+
+      severity = case diagnostic.severity
+                 when :error then DiagnosticSeverity::ERROR
+                 when :warning then DiagnosticSeverity::WARNING
+                 when :info then DiagnosticSeverity::INFORMATION
+                 else DiagnosticSeverity::ERROR
+                 end
+
+      lsp_diag = {
+        "range" => {
+          "start" => { "line" => line, "character" => col },
+          "end" => { "line" => line, "character" => end_col },
+        },
+        "severity" => severity,
+        "source" => "t-ruby",
+        "message" => diagnostic.message,
+      }
+
+      # Add error code if available
+      lsp_diag["code"] = diagnostic.code if diagnostic.code
+
+      lsp_diag
     end
 
-    def validate_functions(functions, diagnostics, text)
-      lines = text.split("\n")
+    def uri_to_path(uri)
+      # Convert file:// URI to filesystem path
+      return uri unless uri.start_with?("file://")
 
-      functions.each do |func|
-        line_num = find_line_number(lines, /^\s*def\s+#{Regexp.escape(func[:name])}\s*\(/)
-        next unless line_num
-
-        # Validate return type
-        if func[:return_type] && !valid_type?(func[:return_type])
-          diagnostics << create_diagnostic(
-            line_num,
-            "Unknown return type '#{func[:return_type]}'",
-            DiagnosticSeverity::WARNING
-          )
-        end
-
-        # Validate parameter types
-        func[:params]&.each do |param|
-          next unless param[:type] && !valid_type?(param[:type])
-
-          diagnostics << create_diagnostic(
-            line_num,
-            "Unknown parameter type '#{param[:type]}' for '#{param[:name]}'",
-            DiagnosticSeverity::WARNING
-          )
-        end
-      end
-    end
-
-    def find_line_number(lines, pattern)
-      lines.each_with_index do |line, idx|
-        return idx if line.match?(pattern)
-      end
-      nil
-    end
-
-    def valid_type?(type_str)
-      return true if type_str.nil?
-
-      # Handle union types
-      if type_str.include?("|")
-        return type_str.split("|").map(&:strip).all? { |t| valid_type?(t) }
-      end
-
-      # Handle intersection types
-      if type_str.include?("&")
-        return type_str.split("&").map(&:strip).all? { |t| valid_type?(t) }
-      end
-
-      # Handle generic types
-      if type_str.include?("<")
-        base_type = type_str.split("<").first
-        return BUILT_IN_TYPES.include?(base_type) || @type_alias_registry.valid_type?(base_type)
-      end
-
-      BUILT_IN_TYPES.include?(type_str) || @type_alias_registry.valid_type?(type_str)
+      uri.sub(%r{^file://}, "")
     end
 
     def create_diagnostic(line, message, severity)

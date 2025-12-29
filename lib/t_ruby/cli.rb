@@ -211,29 +211,22 @@ module TRuby
     end
 
     def compile(input_file, config_path: nil)
-      reporter = ErrorReporter.new(formatter: DiagnosticFormatter.new(use_colors: $stdout.tty?))
-      source = File.read(input_file) if input_file && File.exist?(input_file)
       config = Config.new(config_path)
       compiler = Compiler.new(config)
 
-      output_path = compiler.compile(input_file)
-      puts "Compiled: #{input_file} -> #{output_path}"
-    rescue TypeCheckError => e
-      reporter.add_type_check_error(e, file: input_file, source: source)
-      puts reporter.report
-      exit 1
-    rescue ParseError => e
-      reporter.add_parse_error(e, file: input_file, source: source)
-      puts reporter.report
-      exit 1
-    rescue Scanner::ScanError => e
-      reporter.add_scan_error(e, file: input_file, source: source)
-      puts reporter.report
-      exit 1
-    rescue ArgumentError => e
-      # For non-compilation errors (file not found, etc.), use simple format
-      puts "Error: #{e.message}"
-      exit 1
+      result = compiler.compile_with_diagnostics(input_file)
+
+      if result[:success]
+        puts "Compiled: #{input_file} -> #{result[:output_path]}"
+      else
+        formatter = DiagnosticFormatter.new(use_colors: $stdout.tty?)
+        result[:diagnostics].each do |diagnostic|
+          puts formatter.format(diagnostic)
+        end
+        puts
+        puts formatter.send(:format_summary, result[:diagnostics])
+        exit 1
+      end
     end
 
     # Extract config path from --config or -c flag

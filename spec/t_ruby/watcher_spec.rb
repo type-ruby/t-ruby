@@ -66,9 +66,9 @@ describe TRuby::Watcher do
       end
     end
 
-    describe "#format_error" do
+    describe "#create_generic_diagnostic" do
       it "returns Diagnostic with file, line, column, and message" do
-        diagnostic = watcher.send(:format_error, "test.trb", "syntax error")
+        diagnostic = watcher.send(:create_generic_diagnostic, "test.trb", "syntax error")
 
         expect(diagnostic).to be_a(TRuby::Diagnostic)
         expect(diagnostic.file).to eq("test.trb")
@@ -78,13 +78,13 @@ describe TRuby::Watcher do
       end
 
       it "extracts line number from error message if available" do
-        diagnostic = watcher.send(:format_error, "test.trb", "error on line 42")
+        diagnostic = watcher.send(:create_generic_diagnostic, "test.trb", "error on line 42")
         expect(diagnostic.line).to eq(42)
       end
 
-      it "includes error code TR1001" do
-        diagnostic = watcher.send(:format_error, "test.trb", "syntax error")
-        expect(diagnostic.code).to eq("TR1001")
+      it "includes error code TR0001" do
+        diagnostic = watcher.send(:create_generic_diagnostic, "test.trb", "syntax error")
+        expect(diagnostic.code).to eq("TR0001")
       end
     end
   end
@@ -148,7 +148,7 @@ describe TRuby::Watcher do
           result = watcher.send(:compile_file, input_file)
 
           expect(result[:success]).to be true
-          expect(result[:errors]).to be_empty
+          expect(result[:diagnostics]).to be_empty
         end
       end
 
@@ -157,7 +157,7 @@ describe TRuby::Watcher do
         result = watcher.send(:compile_file, "/nonexistent/file.trb")
 
         expect(result[:success]).to be false
-        expect(result[:errors]).not_to be_empty
+        expect(result[:diagnostics]).not_to be_empty
       end
     end
   end

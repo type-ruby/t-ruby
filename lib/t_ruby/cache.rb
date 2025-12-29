@@ -318,7 +318,7 @@ module TRuby
     def needs_compile?(file_path)
       return true unless File.exist?(file_path)
 
-      current_hash = file_hash(file_path)
+      current_hash = compute_file_hash(file_path)
       stored_hash = @file_hashes[file_path]
 
       return true if stored_hash.nil? || stored_hash != current_hash
@@ -333,7 +333,7 @@ module TRuby
       return @compiled_files[file_path] unless needs_compile?(file_path)
 
       result = @compiler.compile(file_path)
-      @file_hashes[file_path] = file_hash(file_path)
+      @file_hashes[file_path] = compute_file_hash(file_path)
       @compiled_files[file_path] = result
 
       result
@@ -365,9 +365,14 @@ module TRuby
       @cache.stats # Just accessing for potential cleanup
     end
 
+    # Update file hash after external compile (for watcher integration)
+    def update_file_hash(file_path)
+      @file_hashes[file_path] = compute_file_hash(file_path)
+    end
+
     private
 
-    def file_hash(file_path)
+    def compute_file_hash(file_path)
       return nil unless File.exist?(file_path)
 
       Digest::SHA256.hexdigest(File.read(file_path))
@@ -683,27 +688,52 @@ module TRuby
     end
 
     # Compile all with cross-file checking
+    # Returns diagnostics using unified Diagnostic format
     def compile_all_with_checking(file_paths)
       results = {}
-      errors = []
+      all_diagnostics = []
 
       # First pass: compile and register all files
       file_paths.each do |file_path|
-        results[file_path] = compile_with_ir(file_path)
-      rescue StandardError => e
-        errors << { file: file_path, error: e.message }
+        source = File.exist?(file_path) ? File.read(file_path) : nil
+
+        begin
+          results[file_path] = compile_with_ir(file_path)
+        rescue TypeCheckError => e
+          all_diagnostics << Diagnostic.from_type_check_error(e, file: file_path, source: source)
+        rescue ParseError => e
+          all_diagnostics << Diagnostic.from_parse_error(e, file: file_path, source: source)
+        rescue Scanner::ScanError => e
+          all_diagnostics << Diagnostic.from_scan_error(e, file: file_path, source: source)
+        rescue StandardError => e
+          all_diagnostics << Diagnostic.new(
+            code: "TR0001",
+            message: e.message,
+            file: file_path,
+            line: 1,
+            column: 1
+          )
+        end
       end
 
       # Second pass: cross-file type checking
       if @cross_file_checker
         check_result = @cross_file_checker.check_all
-        errors.concat(check_result[:errors])
+        check_result[:errors].each do |e|
+          all_diagnostics << Diagnostic.new(
+            code: "TR2002",
+            message: e[:message],
+            file: e[:file],
+            line: 1,
+            column: 1
+          )
+        end
       end
 
       {
         results: results,
-        errors: errors,
-        success: errors.empty?,
+        diagnostics: all_diagnostics,
+        success: all_diagnostics.empty?,
       }
     end
 

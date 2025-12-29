@@ -15,6 +15,9 @@ module TRuby
     # Visibility modifiers for method definitions
     VISIBILITY_PATTERN = '(?:(?:private|protected|public)\s+)?'
 
+    # TODO: Replace regex-based parsing with TokenDeclarationParser
+    # See: lib/t_ruby/parser_combinator/token/token_declaration_parser.rb
+
     attr_reader :source, :ir_program
 
     def initialize(source, parse_body: true)
@@ -118,7 +121,7 @@ module TRuby
     # 최상위 함수를 본문까지 포함하여 파싱
     def parse_function_with_body(start_index)
       line = @lines[start_index]
-      func_info = parse_function_definition(line)
+      func_info = parse_function_definition(line, line_number: start_index + 1)
       return [nil, start_index] unless func_info
 
       # Add location info (1-based line number, column is 1 + indentation)
@@ -177,13 +180,14 @@ module TRuby
       }
     end
 
-    def parse_function_definition(line)
+    def parse_function_definition(line, line_number: 1) # rubocop:disable Lint/UnusedMethodArgument
       # Match methods with or without parentheses
       # def foo(params): Type   - with params and return type
       # def foo(): Type         - no params but with return type
       # def foo(params)         - with params, no return type
       # def foo                  - no params, no return type
       # Also supports visibility modifiers: private def, protected def, public def
+
       match = line.match(/^\s*(?:(private|protected|public)\s+)?def\s+(#{METHOD_NAME_PATTERN})\s*(?:\((.*?)\))?\s*(?::\s*(.+?))?\s*$/)
       return nil unless match
 
@@ -553,7 +557,7 @@ module TRuby
     # 클래스 내부의 메서드를 본문까지 포함하여 파싱
     def parse_method_in_class(start_index, class_end)
       line = @lines[start_index]
-      method_info = parse_function_definition(line)
+      method_info = parse_function_definition(line, line_number: start_index + 1)
       return [nil, start_index] unless method_info
 
       # Add location info (1-based line number, column is 1 + indentation)

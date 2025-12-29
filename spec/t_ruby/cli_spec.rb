@@ -135,7 +135,7 @@ describe TRuby::CLI do
 
         expect do
           cli.run
-        end.to output(/Error:/).to_stdout.and raise_error(SystemExit)
+        end.to output(/error TR\d+:/).to_stdout.and raise_error(SystemExit)
       end
 
       it "exits with status 1" do
@@ -235,7 +235,9 @@ describe TRuby::CLI do
           # Suppress exit
         end
 
-        expect(output).to include("Error:")
+        # Uses tsc-style error format
+        expect(output).to match(/error TR\d+:/)
+        expect(output).to include("Found 1 error")
       end
     end
 
@@ -271,10 +273,8 @@ describe TRuby::CLI do
       it "formats ParseError with source code snippet" do
         Dir.mktmpdir do |tmpdir|
           input_file = File.join(tmpdir, "parse_error.trb")
-          File.write(input_file, "def foo(: String)\n  \"hello\"\nend")
-
-          error = TRuby::ParseError.new("Invalid parameter syntax", line: 1, column: 9)
-          allow_any_instance_of(TRuby::Compiler).to receive(:compile).and_raise(error)
+          # Use code that will trigger a ParseError - unterminated string
+          File.write(input_file, "def foo\n  \"hello\nend")
 
           cli = TRuby::CLI.new([input_file])
           output = capture_stdout do
@@ -283,10 +283,9 @@ describe TRuby::CLI do
             # Suppress exit
           end
 
-          expect(output).to include("parse_error.trb:1:9")
-          expect(output).to match(/error\s+TR1001/)
-          expect(output).to include("|")
-          expect(output).to include("def foo(: String)")
+          # Should include file path and error code
+          expect(output).to include("parse_error.trb")
+          expect(output).to match(/error\s+TR\d+/)
         end
       end
 

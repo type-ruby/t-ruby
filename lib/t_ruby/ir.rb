@@ -672,6 +672,26 @@ module TRuby
       end
     end
 
+    # Hash literal type: { key: Type, key2: Type }
+    class HashLiteralType < TypeNode
+      attr_accessor :fields # Array of { name: String, type: TypeNode }
+
+      def initialize(fields:, **opts)
+        super(**opts)
+        @fields = fields
+      end
+
+      def to_rbs
+        # Hash literal types in RBS are represented as Hash[Symbol, untyped] or specific record types
+        "Hash[Symbol, untyped]"
+      end
+
+      def to_trb
+        field_strs = @fields.map { |f| "#{f[:name]}: #{f[:type].to_trb}" }
+        "{ #{field_strs.join(", ")} }"
+      end
+    end
+
     #==========================================================================
     # Visitor Pattern
     #==========================================================================
