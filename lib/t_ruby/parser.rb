@@ -121,7 +121,11 @@ module TRuby
       func_info = parse_function_definition(line)
       return [nil, start_index] unless func_info
 
+      # Add location info (1-based line number, column is 1 + indentation)
       def_indent = line.match(/^(\s*)/)[1].length
+      func_info[:line] = start_index + 1
+      func_info[:column] = def_indent + 1
+
       i = start_index + 1
       body_start = i
       body_end = i
@@ -552,7 +556,11 @@ module TRuby
       method_info = parse_function_definition(line)
       return [nil, start_index] unless method_info
 
+      # Add location info (1-based line number, column is 1 + indentation)
       def_indent = line.match(/^(\s*)/)[1].length
+      method_info[:line] = start_index + 1
+      method_info[:column] = def_indent + 1
+
       i = start_index + 1
       body_start = i
       body_end = i

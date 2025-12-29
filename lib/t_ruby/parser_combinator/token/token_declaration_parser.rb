@@ -64,6 +64,11 @@ module TRuby
       end
 
       def parse_method_def(tokens, position, visibility: :public)
+        # Capture def token's location before consuming
+        def_token = tokens[position]
+        def_line = def_token.line
+        def_column = def_token.column
+
         position += 1 # consume 'def'
 
         # Parse method name (identifier or operator)
@@ -125,7 +130,8 @@ module TRuby
           params: params,
           return_type: return_type,
           body: body_result.value,
-          visibility: visibility
+          visibility: visibility,
+          location: "#{def_line}:#{def_column}"
         )
         TokenParseResult.success(node, tokens, position)
       end

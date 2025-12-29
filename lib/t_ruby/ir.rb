@@ -792,12 +792,16 @@ module TRuby
         # 본문 IR이 있으면 사용 (BodyParser에서 파싱됨)
         body = info[:body_ir]
 
+        # Build location string from line/column info
+        location = info[:line] && info[:column] ? "#{info[:line]}:#{info[:column]}" : nil
+
         MethodDef.new(
           name: info[:name],
           params: params,
           return_type: info[:return_type] ? parse_type(info[:return_type]) : nil,
           body: body,
-          visibility: info[:visibility] || :public
+          visibility: info[:visibility] || :public,
+          location: location
         )
       end
 
