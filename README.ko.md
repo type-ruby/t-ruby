@@ -279,6 +279,16 @@ watch:
 
 기여를 환영합니다! 이슈와 풀 리퀘스트를 자유롭게 제출해 주세요.
 
+## ❤️ T-Ruby 후원하기
+
+T-Ruby가 유용하다면, 프로젝트의 지속적인 개발과 실험을 위해 후원을 고려해 주세요.
+
+<p align="center">
+  <a href="https://github.com/sponsors/type-ruby">
+    <img src="https://img.shields.io/badge/Sponsor-❤️-ea4aaa" alt="Sponsor" />
+  </a>
+</p>
+
 ## 라이선스
 
-[MIT](./LICENSE)
+[BSD 2-Clause](./LICENSE)

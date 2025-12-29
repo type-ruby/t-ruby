@@ -284,6 +284,16 @@ See [ROADMAP.md](./ROADMAP.md) for details.
 
 Contributions are welcome! Please feel free to submit issues and pull requests.
 
+## ❤️ Support T-Ruby
+
+If you find T-Ruby useful, consider sponsoring the project to support ongoing development and experimentation.
+
+<p align="center">
+  <a href="https://github.com/sponsors/type-ruby">
+    <img src="https://img.shields.io/badge/Sponsor-❤️-ea4aaa" alt="Sponsor" />
+  </a>
+</p>
+
 ## License
 
-[MIT](./LICENSE)
+[BSD 2-Clause](./LICENSE)
