@@ -564,4 +564,610 @@ RSpec.describe TRuby::SMT do
       expect(result).to be_a(TRuby::SMT::Or)
     end
   end
+
+  # Additional coverage tests
+  describe "Formula base class" do
+    it "raises NotImplementedError for free_variables" do
+      formula = TRuby::SMT::Formula.new
+      expect { formula.free_variables }.to raise_error(NotImplementedError)
+    end
+
+    it "raises NotImplementedError for substitute" do
+      formula = TRuby::SMT::Formula.new
+      expect { formula.substitute({}) }.to raise_error(NotImplementedError)
+    end
+
+    it "raises NotImplementedError for to_cnf" do
+      formula = TRuby::SMT::Formula.new
+      expect { formula.to_cnf }.to raise_error(NotImplementedError)
+    end
+  end
+
+  describe TRuby::SMT::BoolConst do
+    it "returns empty set for free_variables" do
+      expect(TRuby::SMT::TRUE.free_variables).to eq(Set.new)
+    end
+
+    it "returns self for substitute" do
+      result = TRuby::SMT::TRUE.substitute({ "x" => TRuby::SMT::FALSE })
+      expect(result).to eq(TRuby::SMT::TRUE)
+    end
+
+    it "returns CNF for to_cnf" do
+      expect(TRuby::SMT::TRUE.to_cnf).to eq([[]])
+    end
+
+    it "returns string for to_s" do
+      expect(TRuby::SMT::TRUE.to_s).to eq("true")
+      expect(TRuby::SMT::FALSE.to_s).to eq("false")
+    end
+  end
+
+  describe TRuby::SMT::Variable do
+    it "has consistent hash based on name" do
+      v1 = var("x")
+      v2 = var("x")
+      expect(v1.hash).to eq(v2.hash)
+    end
+
+    it "implements eql? for hash key equality" do
+      v1 = var("x")
+      v2 = var("x")
+      expect(v1.eql?(v2)).to be true
+    end
+
+    it "returns name for to_s" do
+      v = var("my_var")
+      expect(v.to_s).to eq("my_var")
+    end
+  end
+
+  describe TRuby::SMT::Not do
+    it "returns operand free_variables" do
+      v = var("x")
+      neg = !v
+      expect(neg.free_variables).to eq(Set.new(["x"]))
+    end
+
+    it "substitutes in operand" do
+      v = var("x")
+      neg = !v
+      result = neg.substitute({ "x" => TRuby::SMT::TRUE })
+      expect(result.operand).to eq(TRuby::SMT::TRUE)
+    end
+
+    it "converts double negation to CNF" do
+      v = var("x")
+      double_neg = TRuby::SMT::Not.new(TRuby::SMT::Not.new(v))
+      cnf = double_neg.to_cnf
+      expect(cnf).to eq([["x"]])
+    end
+
+    it "converts negation of And to CNF (De Morgan)" do
+      x = var("x")
+      y = var("y")
+      neg_and = TRuby::SMT::Not.new(x & y)
+      cnf = neg_and.to_cnf
+      expect(cnf).to be_a(Array)
+    end
+
+    it "converts negation of Or to CNF (De Morgan)" do
+      x = var("x")
+      y = var("y")
+      neg_or = TRuby::SMT::Not.new(x | y)
+      cnf = neg_or.to_cnf
+      expect(cnf).to eq([["!x"], ["!y"]])
+    end
+
+    it "converts negation of unknown to CNF" do
+      bool = TRuby::SMT::TRUE
+      neg = TRuby::SMT::Not.new(bool)
+      cnf = neg.to_cnf
+      expect(cnf).to be_a(Array)
+    end
+
+    it "returns string for to_s" do
+      v = var("x")
+      neg = !v
+      expect(neg.to_s).to eq("!x")
+    end
+  end
+
+  describe TRuby::SMT::And do
+    it "returns combined free_variables" do
+      x = var("x")
+      y = var("y")
+      conj = x & y
+      expect(conj.free_variables).to eq(Set.new(%w[x y]))
+    end
+
+    it "creates new And when simplify produces neither TRUE nor FALSE" do
+      x = var("x")
+      y = var("y")
+      result = (x & y).simplify
+      expect(result).to be_a(TRuby::SMT::And)
+    end
+
+    it "implements ==" do
+      x = var("x")
+      y = var("y")
+      a1 = x & y
+      a2 = x & y
+      expect(a1 == a2).to be true
+    end
+
+    it "returns string for to_s" do
+      x = var("x")
+      y = var("y")
+      expect((x & y).to_s).to eq("(x && y)")
+    end
+  end
+
+  describe TRuby::SMT::Or do
+    it "returns combined free_variables" do
+      x = var("x")
+      y = var("y")
+      disj = x | y
+      expect(disj.free_variables).to eq(Set.new(%w[x y]))
+    end
+
+    it "substitutes in both operands" do
+      x = var("x")
+      y = var("y")
+      disj = x | y
+      result = disj.substitute({ "x" => TRuby::SMT::TRUE })
+      expect(result.left).to eq(TRuby::SMT::TRUE)
+    end
+
+    it "implements ==" do
+      x = var("x")
+      y = var("y")
+      o1 = x | y
+      o2 = x | y
+      expect(o1 == o2).to be true
+    end
+
+    it "returns string for to_s" do
+      x = var("x")
+      y = var("y")
+      expect((x | y).to_s).to eq("(x || y)")
+    end
+  end
+
+  describe TRuby::SMT::Implies do
+    it "returns combined free_variables" do
+      x = var("x")
+      y = var("y")
+      impl = x.implies(y)
+      expect(impl.free_variables).to eq(Set.new(%w[x y]))
+    end
+
+    it "substitutes in both operands" do
+      x = var("x")
+      y = var("y")
+      impl = x.implies(y)
+      result = impl.substitute({ "x" => TRuby::SMT::TRUE })
+      expect(result.antecedent).to eq(TRuby::SMT::TRUE)
+    end
+
+    it "converts to CNF" do
+      x = var("x")
+      y = var("y")
+      impl = x.implies(y)
+      cnf = impl.to_cnf
+      expect(cnf).to be_a(Array)
+    end
+
+    it "implements ==" do
+      x = var("x")
+      y = var("y")
+      i1 = x.implies(y)
+      i2 = x.implies(y)
+      expect(i1 == i2).to be true
+    end
+
+    it "returns string for to_s" do
+      x = var("x")
+      y = var("y")
+      expect(x.implies(y).to_s).to eq("(x -> y)")
+    end
+  end
+
+  describe TRuby::SMT::Iff do
+    it "returns combined free_variables" do
+      x = var("x")
+      y = var("y")
+      iff = x.iff(y)
+      expect(iff.free_variables).to eq(Set.new(%w[x y]))
+    end
+
+    it "substitutes in both operands" do
+      x = var("x")
+      y = var("y")
+      iff = x.iff(y)
+      result = iff.substitute({ "x" => TRuby::SMT::TRUE })
+      expect(result.left).to eq(TRuby::SMT::TRUE)
+    end
+
+    it "simplifies to conjunction of implications" do
+      x = var("x")
+      y = var("y")
+      iff = x.iff(y)
+      simplified = iff.simplify
+      # A <-> B = (A -> B) & (B -> A) which simplifies to And with Or operands
+      expect(simplified).to be_a(TRuby::SMT::And)
+    end
+
+    it "converts to CNF" do
+      x = var("x")
+      y = var("y")
+      iff = x.iff(y)
+      cnf = iff.to_cnf
+      expect(cnf).to be_a(Array)
+    end
+
+    it "implements ==" do
+      x = var("x")
+      y = var("y")
+      iff1 = x.iff(y)
+      iff2 = x.iff(y)
+      expect(iff1 == iff2).to be true
+    end
+
+    it "returns string for to_s" do
+      x = var("x")
+      y = var("y")
+      expect(x.iff(y).to_s).to eq("(x <-> y)")
+    end
+  end
+
+  describe TRuby::SMT::TypeVar do
+    it "substitutes when binding exists" do
+      t = type_var("T")
+      concrete_type = concrete("String")
+      result = t.substitute({ "T" => concrete_type })
+      expect(result).to eq(concrete_type)
+    end
+
+    it "returns self when no binding" do
+      t = type_var("T")
+      result = t.substitute({ "X" => concrete("String") })
+      expect(result).to eq(t)
+    end
+
+    it "converts to CNF" do
+      t = type_var("T")
+      expect(t.to_cnf).to eq([["T"]])
+    end
+
+    it "has consistent hash" do
+      t1 = type_var("T")
+      t2 = type_var("T")
+      expect(t1.hash).to eq(t2.hash)
+    end
+
+    it "implements eql?" do
+      t1 = type_var("T")
+      t2 = type_var("T")
+      expect(t1.eql?(t2)).to be true
+    end
+
+    it "returns name for to_s" do
+      t = type_var("MyType")
+      expect(t.to_s).to eq("MyType")
+    end
+  end
+
+  describe TRuby::SMT::Subtype do
+    it "substitutes with concrete types" do
+      sub = subtype(concrete("Integer"), concrete("Numeric"))
+      result = sub.substitute({ "Integer" => concrete("Float") })
+      expect(result.subtype.name).to eq("Integer")
+    end
+
+    it "substitutes type vars" do
+      t1 = type_var("T1")
+      t2 = type_var("T2")
+      sub = subtype(t1, t2)
+      result = sub.substitute({ "T1" => concrete("String") })
+      expect(result.subtype.name).to eq("String")
+    end
+
+    it "returns string for to_s" do
+      t1 = type_var("T1")
+      t2 = type_var("T2")
+      expect(subtype(t1, t2).to_s).to eq("T1 <: T2")
+    end
+
+    it "converts to CNF" do
+      t1 = type_var("T1")
+      t2 = type_var("T2")
+      cnf = subtype(t1, t2).to_cnf
+      expect(cnf).to eq([["T1<:T2"]])
+    end
+  end
+
+  describe TRuby::SMT::TypeEqual do
+    it "substitutes type vars" do
+      t1 = type_var("T1")
+      t2 = type_var("T2")
+      eq = type_equal(t1, t2)
+      result = eq.substitute({ "T1" => concrete("String") })
+      expect(result.left.name).to eq("String")
+    end
+
+    it "returns string for to_s" do
+      t1 = type_var("T1")
+      t2 = type_var("T2")
+      expect(type_equal(t1, t2).to_s).to eq("T1 = T2")
+    end
+
+    it "converts to CNF" do
+      t1 = type_var("T1")
+      t2 = type_var("T2")
+      cnf = type_equal(t1, t2).to_cnf
+      expect(cnf).to eq([["T1=T2"]])
+    end
+  end
+
+  describe TRuby::SMT::HasProperty do
+    it "returns free_variables from type_var and property_type" do
+      t = type_var("T")
+      pt = type_var("PT")
+      prop = has_property(t, "name", pt)
+      expect(prop.free_variables).to eq(Set.new(%w[T PT]))
+    end
+
+    it "substitutes type_var and property_type" do
+      t = type_var("T")
+      pt = type_var("PT")
+      prop = has_property(t, "name", pt)
+      result = prop.substitute({ "T" => concrete("User"), "PT" => concrete("String") })
+      expect(result.type_var.name).to eq("User")
+      expect(result.property_type.name).to eq("String")
+    end
+
+    it "converts to CNF" do
+      t = type_var("T")
+      pt = concrete("String")
+      prop = has_property(t, "name", pt)
+      cnf = prop.to_cnf
+      expect(cnf).to eq([["T.name:String"]])
+    end
+
+    it "returns string for to_s" do
+      t = type_var("T")
+      pt = concrete("String")
+      prop = has_property(t, "name", pt)
+      expect(prop.to_s).to eq("T has name: String")
+    end
+  end
+
+  describe TRuby::SMT::ConcreteType do
+    it "has consistent hash based on name" do
+      t1 = concrete("String")
+      t2 = concrete("String")
+      expect(t1.hash).to eq(t2.hash)
+    end
+
+    it "implements eql?" do
+      t1 = concrete("String")
+      t2 = concrete("String")
+      expect(t1.eql?(t2)).to be true
+    end
+
+    it "returns name for to_s" do
+      t = concrete("MyClass")
+      expect(t.to_s).to eq("MyClass")
+    end
+  end
+
+  describe TRuby::SMT::TypeInferenceEngine do
+    let(:engine) { described_class.new }
+
+    describe "#infer_expression" do
+      it "infers array literal type" do
+        arr = TRuby::IR::ArrayLiteral.new(
+          elements: [
+            TRuby::IR::Literal.new(value: 1, literal_type: :integer),
+            TRuby::IR::Literal.new(value: 2, literal_type: :integer),
+          ]
+        )
+        result = engine.infer_expression(arr)
+        expect(result.name).to eq("Array")
+      end
+
+      it "handles empty array literal" do
+        arr = TRuby::IR::ArrayLiteral.new(elements: [])
+        result = engine.infer_expression(arr)
+        expect(result.name).to eq("Array")
+      end
+
+      it "creates fresh var for unknown expression" do
+        # Using a generic struct as unknown expression type
+        unknown = Struct.new(:type).new(:unknown)
+        result = engine.infer_expression(unknown)
+        expect(result).to be_a(TRuby::SMT::TypeVar)
+      end
+
+      it "handles method call without receiver" do
+        call = TRuby::IR::MethodCall.new(
+          receiver: nil,
+          method_name: "some_method"
+        )
+        result = engine.infer_expression(call)
+        expect(result).to be_a(TRuby::SMT::TypeVar)
+      end
+
+      it "handles comparison operators" do
+        cmp = TRuby::IR::BinaryOp.new(
+          operator: "==",
+          left: TRuby::IR::Literal.new(value: 1, literal_type: :integer),
+          right: TRuby::IR::Literal.new(value: 2, literal_type: :integer)
+        )
+        result = engine.infer_expression(cmp)
+        expect(result.name).to eq("Boolean")
+      end
+
+      it "handles logical operators" do
+        logical = TRuby::IR::BinaryOp.new(
+          operator: "&&",
+          left: TRuby::IR::Literal.new(value: true, literal_type: :boolean),
+          right: TRuby::IR::Literal.new(value: false, literal_type: :boolean)
+        )
+        result = engine.infer_expression(logical)
+        expect(result.name).to eq("Boolean")
+      end
+
+      it "handles unknown operators" do
+        unknown_op = TRuby::IR::BinaryOp.new(
+          operator: "**",
+          left: TRuby::IR::Literal.new(value: 2, literal_type: :integer),
+          right: TRuby::IR::Literal.new(value: 3, literal_type: :integer)
+        )
+        result = engine.infer_expression(unknown_op)
+        expect(result).to be_a(TRuby::SMT::TypeVar)
+      end
+    end
+
+    describe "#infer_statement" do
+      it "handles assignment with type annotation" do
+        assign = TRuby::IR::Assignment.new(
+          target: "x",
+          value: TRuby::IR::Literal.new(value: 42, literal_type: :integer),
+          type_annotation: TRuby::IR::SimpleType.new(name: "Numeric")
+        )
+        # Need to set up method context
+        engine.infer_statement(assign, TRuby::SMT::ConcreteType.new("Object"))
+        expect(engine.type_env["x"]).to be_a(TRuby::SMT::ConcreteType)
+      end
+
+      it "handles conditional statements" do
+        cond = TRuby::IR::Conditional.new(
+          condition: TRuby::IR::Literal.new(value: true, literal_type: :boolean),
+          then_branch: TRuby::IR::Block.new(statements: []),
+          else_branch: TRuby::IR::Block.new(statements: [])
+        )
+        engine.infer_statement(cond, TRuby::SMT::ConcreteType.new("Object"))
+        # Should not raise
+      end
+    end
+
+    describe "#infer_method with generic types" do
+      it "handles generic type annotations" do
+        method = TRuby::IR::MethodDef.new(
+          name: "get_first",
+          params: [
+            TRuby::IR::Parameter.new(
+              name: "arr",
+              type_annotation: TRuby::IR::GenericType.new(base: "Array", type_args: ["T"])
+            ),
+          ],
+          return_type: nil
+        )
+
+        result = engine.infer_method(method)
+        expect(result[:success]).to be true
+      end
+
+      it "handles union type annotations" do
+        method = TRuby::IR::MethodDef.new(
+          name: "process",
+          params: [
+            TRuby::IR::Parameter.new(
+              name: "val",
+              type_annotation: TRuby::IR::UnionType.new(types: %w[String Integer])
+            ),
+          ],
+          return_type: nil
+        )
+
+        result = engine.infer_method(method)
+        expect(result[:success]).to be true
+      end
+
+      it "handles nullable type annotations" do
+        method = TRuby::IR::MethodDef.new(
+          name: "maybe_string",
+          params: [
+            TRuby::IR::Parameter.new(
+              name: "val",
+              type_annotation: TRuby::IR::NullableType.new(inner_type: "String")
+            ),
+          ],
+          return_type: nil
+        )
+
+        result = engine.infer_method(method)
+        expect(result[:success]).to be true
+      end
+
+      it "handles unknown type annotation" do
+        unknown_type = Struct.new(:type).new(:unknown)
+        method = TRuby::IR::MethodDef.new(
+          name: "test",
+          params: [
+            TRuby::IR::Parameter.new(name: "val", type_annotation: unknown_type),
+          ],
+          return_type: nil
+        )
+
+        result = engine.infer_method(method)
+        expect(result[:success]).to be true
+      end
+    end
+
+    describe "#infer_body" do
+      it "handles Return directly" do
+        ret = TRuby::IR::Return.new(
+          value: TRuby::IR::Literal.new(value: "test", literal_type: :string)
+        )
+        # Should not raise
+        engine.infer_body(ret, TRuby::SMT::ConcreteType.new("String"))
+      end
+    end
+
+    describe "literal type inference" do
+      it "infers all literal types" do
+        literals = [
+          [:string, "String"],
+          [:integer, "Integer"],
+          [:float, "Float"],
+          [:boolean, "Boolean"],
+          [:symbol, "Symbol"],
+          [:nil, "nil"],
+          [:array, "Array"],
+          [:hash, "Hash"],
+          [:unknown, "Object"],
+        ]
+
+        literals.each do |lit_type, expected_type|
+          lit = TRuby::IR::Literal.new(value: nil, literal_type: lit_type)
+          result = engine.infer_expression(lit)
+          expect(result.name).to eq(expected_type), "Expected #{lit_type} to infer as #{expected_type}"
+        end
+      end
+    end
+  end
+
+  describe TRuby::SMT::ConstraintSolver do
+    let(:solver) { described_class.new }
+
+    describe "unification edge cases" do
+      it "fails unification on incompatible concrete types" do
+        solver.add_equal(concrete("String"), concrete("Integer"))
+        result = solver.solve
+        expect(result[:success]).to be false
+      end
+
+      it "handles occurs check" do
+        # T = Array[T] would cause infinite recursion
+        t = solver.fresh_var
+        # Create a scenario where occurs check matters
+        solver.add_equal(t, t)
+        result = solver.solve
+        expect(result[:success]).to be true
+      end
+    end
+  end
 end

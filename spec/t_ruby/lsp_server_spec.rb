@@ -555,4 +555,586 @@ RSpec.describe TRuby::LSPServer do
       expect(response["id"]).to eq(42)
     end
   end
+
+  describe "textDocument/semanticTokens/full" do
+    before do
+      send_request("initialize", {})
+    end
+
+    it "returns semantic tokens for type aliases" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "type UserId = String",
+                          },
+                        })
+
+      response = send_request("textDocument/semanticTokens/full", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                              })
+
+      expect(response["result"]["data"]).to be_an(Array)
+    end
+
+    it "returns semantic tokens for interfaces" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "interface Printable\n  to_s: String\nend",
+                          },
+                        })
+
+      response = send_request("textDocument/semanticTokens/full", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                              })
+
+      expect(response["result"]["data"]).to be_an(Array)
+    end
+
+    it "returns semantic tokens for functions" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def greet(name: String): void\n  puts name\nend",
+                          },
+                        })
+
+      response = send_request("textDocument/semanticTokens/full", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                              })
+
+      expect(response["result"]["data"]).to be_an(Array)
+    end
+
+    it "returns empty data for unknown document" do
+      response = send_request("textDocument/semanticTokens/full", {
+                                "textDocument" => { "uri" => "file:///unknown.trb" },
+                              })
+
+      expect(response["result"]["data"]).to eq([])
+    end
+  end
+
+  describe "completion contexts" do
+    before do
+      send_request("initialize", {})
+    end
+
+    it "provides completions after pipe for union types" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def test(x: String | ): void\nend",
+                          },
+                        })
+
+      response = send_request("textDocument/completion", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 21 },
+                              })
+
+      items = response["result"]["items"]
+      expect(items).not_to be_empty
+    end
+
+    it "provides completions after ampersand for intersection types" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def test(x: Readable & ): void\nend",
+                          },
+                        })
+
+      response = send_request("textDocument/completion", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 23 },
+                              })
+
+      items = response["result"]["items"]
+      expect(items).not_to be_empty
+    end
+
+    it "provides completions after generic bracket" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def test(x: Array< ): void\nend",
+                          },
+                        })
+
+      response = send_request("textDocument/completion", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 19 },
+                              })
+
+      items = response["result"]["items"]
+      expect(items).not_to be_empty
+    end
+
+    it "provides no completions during def name" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def mymethod",
+                          },
+                        })
+
+      response = send_request("textDocument/completion", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 12 },
+                              })
+
+      items = response["result"]["items"]
+      labels = items.map { |i| i["label"] }
+      # Should not include standard type completions during def naming
+      expect(labels).not_to include("type", "interface")
+    end
+
+    it "provides interface completions from document" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "interface Readable\n  read: String\nend\ndef test(r: ): void\nend",
+                          },
+                        })
+
+      response = send_request("textDocument/completion", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 3, "character" => 13 },
+                              })
+
+      items = response["result"]["items"]
+      labels = items.map { |i| i["label"] }
+      expect(labels).to include("Readable")
+    end
+
+    it "returns empty for unknown document" do
+      response = send_request("textDocument/completion", {
+                                "textDocument" => { "uri" => "file:///unknown.trb" },
+                                "position" => { "line" => 0, "character" => 0 },
+                              })
+
+      expect(response["result"]["items"]).to eq([])
+    end
+  end
+
+  describe "hover edge cases" do
+    before { send_request("initialize", {}) }
+
+    it "returns nil for empty line" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "\n\n\n",
+                          },
+                        })
+
+      response = send_request("textDocument/hover", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 1, "character" => 0 },
+                              })
+
+      expect(response["result"]).to be_nil
+    end
+
+    it "returns nil for position beyond line length" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "def test",
+                          },
+                        })
+
+      response = send_request("textDocument/hover", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 100 },
+                              })
+
+      expect(response["result"]).to be_nil
+    end
+
+    it "shows interface members in hover" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "interface Runnable\n  run: void\n  stop: void\nend",
+                          },
+                        })
+
+      response = send_request("textDocument/hover", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 11 },
+                              })
+
+      expect(response["result"]["contents"]["value"]).to include("Interface")
+      expect(response["result"]["contents"]["value"]).to include("Runnable")
+    end
+  end
+
+  describe "definition edge cases" do
+    before { send_request("initialize", {}) }
+
+    it "returns nil for unknown document" do
+      response = send_request("textDocument/definition", {
+                                "textDocument" => { "uri" => "file:///unknown.trb" },
+                                "position" => { "line" => 0, "character" => 0 },
+                              })
+
+      expect(response["result"]).to be_nil
+    end
+
+    it "returns nil for undefined symbol" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "unknown_symbol",
+                          },
+                        })
+
+      response = send_request("textDocument/definition", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 5 },
+                              })
+
+      expect(response["result"]).to be_nil
+    end
+
+    it "returns nil for empty word" do
+      send_notification("textDocument/didOpen", {
+                          "textDocument" => {
+                            "uri" => "file:///test.trb",
+                            "version" => 1,
+                            "text" => "   ",
+                          },
+                        })
+
+      response = send_request("textDocument/definition", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 0, "character" => 1 },
+                              })
+
+      expect(response["result"]).to be_nil
+    end
+  end
+
+  describe "LSP constants" do
+    it "defines VERSION" do
+      expect(TRuby::LSPServer::VERSION).to be_a(String)
+    end
+
+    it "defines error codes" do
+      expect(TRuby::LSPServer::ErrorCodes::PARSE_ERROR).to eq(-32_700)
+      expect(TRuby::LSPServer::ErrorCodes::INVALID_REQUEST).to eq(-32_600)
+      expect(TRuby::LSPServer::ErrorCodes::METHOD_NOT_FOUND).to eq(-32_601)
+      expect(TRuby::LSPServer::ErrorCodes::INVALID_PARAMS).to eq(-32_602)
+      expect(TRuby::LSPServer::ErrorCodes::INTERNAL_ERROR).to eq(-32_603)
+      expect(TRuby::LSPServer::ErrorCodes::SERVER_NOT_INITIALIZED).to eq(-32_002)
+      expect(TRuby::LSPServer::ErrorCodes::UNKNOWN_ERROR_CODE).to eq(-32_001)
+    end
+
+    it "defines completion item kinds" do
+      expect(TRuby::LSPServer::CompletionItemKind::CLASS).to eq(7)
+      expect(TRuby::LSPServer::CompletionItemKind::INTERFACE).to eq(8)
+      expect(TRuby::LSPServer::CompletionItemKind::KEYWORD).to eq(14)
+      expect(TRuby::LSPServer::CompletionItemKind::FUNCTION).to eq(3)
+    end
+
+    it "defines diagnostic severity" do
+      expect(TRuby::LSPServer::DiagnosticSeverity::ERROR).to eq(1)
+      expect(TRuby::LSPServer::DiagnosticSeverity::WARNING).to eq(2)
+      expect(TRuby::LSPServer::DiagnosticSeverity::INFORMATION).to eq(3)
+      expect(TRuby::LSPServer::DiagnosticSeverity::HINT).to eq(4)
+    end
+
+    it "defines semantic token types" do
+      expect(TRuby::LSPServer::SemanticTokenTypes::TYPE).to eq(1)
+      expect(TRuby::LSPServer::SemanticTokenTypes::INTERFACE).to eq(4)
+      expect(TRuby::LSPServer::SemanticTokenTypes::FUNCTION).to eq(12)
+      expect(TRuby::LSPServer::SemanticTokenTypes::KEYWORD).to eq(15)
+    end
+
+    it "defines semantic token modifiers" do
+      expect(TRuby::LSPServer::SemanticTokenModifiers::DECLARATION).to eq(0x01)
+      expect(TRuby::LSPServer::SemanticTokenModifiers::DEFINITION).to eq(0x02)
+      expect(TRuby::LSPServer::SemanticTokenModifiers::DEFAULT_LIBRARY).to eq(0x200)
+    end
+
+    it "defines built-in types list" do
+      expect(TRuby::LSPServer::BUILT_IN_TYPES).to include("String", "Integer", "Boolean")
+    end
+
+    it "defines type keywords list" do
+      expect(TRuby::LSPServer::TYPE_KEYWORDS).to include("type", "interface", "def", "end")
+    end
+
+    it "defines semantic token type names" do
+      expect(TRuby::LSPServer::SEMANTIC_TOKEN_TYPES).to include("type", "interface", "function", "keyword")
+    end
+
+    it "defines semantic token modifier names" do
+      expect(TRuby::LSPServer::SEMANTIC_TOKEN_MODIFIERS).to include("declaration", "definition", "defaultLibrary")
+    end
+  end
+
+  describe "send_notification" do
+    it "sends notification without id" do
+      server.send(:send_notification, "window/logMessage", { "message" => "test" })
+
+      output.rewind
+      response_text = output.read
+
+      expect(response_text).to include("window/logMessage")
+      expect(response_text).not_to include('"id"')
+    end
+  end
+
+  describe "uri_to_path" do
+    it "converts file URI to path" do
+      path = server.send(:uri_to_path, "file:///Users/test/project/test.trb")
+      expect(path).to eq("/Users/test/project/test.trb")
+    end
+
+    it "returns non-file URIs unchanged" do
+      uri = "https://example.com/test"
+      expect(server.send(:uri_to_path, uri)).to eq(uri)
+    end
+  end
+
+  describe "create_diagnostic" do
+    it "creates LSP diagnostic format" do
+      diagnostic = server.send(:create_diagnostic, 5, "Test error", TRuby::LSPServer::DiagnosticSeverity::ERROR)
+
+      expect(diagnostic["range"]["start"]["line"]).to eq(5)
+      expect(diagnostic["message"]).to eq("Test error")
+      expect(diagnostic["severity"]).to eq(1)
+      expect(diagnostic["source"]).to eq("t-ruby")
+    end
+  end
+
+  describe "keyword_documentation" do
+    it "provides documentation for type keyword" do
+      doc = server.send(:keyword_documentation, "type")
+      expect(doc).to include("type alias")
+    end
+
+    it "provides documentation for interface keyword" do
+      doc = server.send(:keyword_documentation, "interface")
+      expect(doc).to include("interface")
+    end
+
+    it "provides documentation for def keyword" do
+      doc = server.send(:keyword_documentation, "def")
+      expect(doc).to include("function")
+    end
+
+    it "provides documentation for end keyword" do
+      doc = server.send(:keyword_documentation, "end")
+      expect(doc).to include("End")
+    end
+
+    it "returns keyword itself for unknown" do
+      doc = server.send(:keyword_documentation, "unknown")
+      expect(doc).to eq("unknown")
+    end
+  end
+
+  describe "extract_word_at_position" do
+    it "extracts word at cursor" do
+      line = "def hello"
+      word = server.send(:extract_word_at_position, line, 5)
+      expect(word).to eq("hello")
+    end
+
+    it "returns nil for position beyond line" do
+      line = "short"
+      word = server.send(:extract_word_at_position, line, 100)
+      expect(word).to be_nil
+    end
+
+    it "handles generic types with brackets" do
+      line = "Array<String>"
+      word = server.send(:extract_word_at_position, line, 0)
+      expect(word).to include("Array")
+    end
+  end
+
+  describe "word_range" do
+    it "calculates word range" do
+      range = server.send(:word_range, 10, "def hello", 5, "hello")
+
+      expect(range["start"]["line"]).to eq(10)
+      expect(range["end"]["line"]).to eq(10)
+    end
+  end
+
+  describe "diagnostic_to_lsp" do
+    it "converts TRuby diagnostic to LSP format" do
+      diagnostic = TRuby::Diagnostic.new(
+        code: "TR0001",
+        message: "Test error",
+        file: "test.trb",
+        line: 10,
+        column: 5,
+        severity: :error
+      )
+
+      lsp_diag = server.send(:diagnostic_to_lsp, diagnostic)
+
+      expect(lsp_diag["range"]["start"]["line"]).to eq(9) # 0-based
+      expect(lsp_diag["range"]["start"]["character"]).to eq(4) # 0-based
+      expect(lsp_diag["severity"]).to eq(TRuby::LSPServer::DiagnosticSeverity::ERROR)
+      expect(lsp_diag["code"]).to eq("TR0001")
+    end
+
+    it "handles warning severity" do
+      diagnostic = TRuby::Diagnostic.new(
+        code: "TR0002",
+        message: "Warning",
+        file: "test.trb",
+        line: 1,
+        column: 1,
+        severity: :warning
+      )
+
+      lsp_diag = server.send(:diagnostic_to_lsp, diagnostic)
+      expect(lsp_diag["severity"]).to eq(TRuby::LSPServer::DiagnosticSeverity::WARNING)
+    end
+
+    it "handles info severity" do
+      diagnostic = TRuby::Diagnostic.new(
+        code: "TR0003",
+        message: "Info",
+        file: "test.trb",
+        line: 1,
+        column: 1,
+        severity: :info
+      )
+
+      lsp_diag = server.send(:diagnostic_to_lsp, diagnostic)
+      expect(lsp_diag["severity"]).to eq(TRuby::LSPServer::DiagnosticSeverity::INFORMATION)
+    end
+
+    it "handles negative line numbers" do
+      diagnostic = TRuby::Diagnostic.new(
+        code: "TR0001",
+        message: "Error",
+        file: "test.trb",
+        line: -1,
+        column: -1,
+        severity: :error
+      )
+
+      lsp_diag = server.send(:diagnostic_to_lsp, diagnostic)
+      expect(lsp_diag["range"]["start"]["line"]).to eq(0)
+      expect(lsp_diag["range"]["start"]["character"]).to eq(0)
+    end
+  end
+
+  describe "analyze_document" do
+    it "analyzes document and returns diagnostics" do
+      diagnostics = server.send(:analyze_document, "def test(: String): void\nend")
+      expect(diagnostics).to be_an(Array)
+    end
+
+    it "returns empty array for valid code" do
+      diagnostics = server.send(:analyze_document, "def test(name: String): void\nend")
+      expect(diagnostics).to eq([])
+    end
+  end
+
+  describe "encode_tokens" do
+    it "encodes tokens with delta encoding" do
+      raw_tokens = [
+        [0, 0, 4, 15, 1],  # line 0, char 0, length 4, keyword, declaration
+        [0, 5, 5, 12, 2],  # line 0, char 5, length 5, function, definition
+        [1, 0, 3, 15, 0],  # line 1, char 0, length 3, keyword
+      ]
+
+      encoded = server.send(:encode_tokens, raw_tokens)
+
+      expect(encoded).to eq([
+                              0, 0, 4, 15, 1,    # First token (no delta)
+                              0, 5, 5, 12, 2,    # Same line, delta char = 5
+                              1, 0, 3, 15, 0,    # Next line, char resets
+                            ])
+    end
+
+    it "handles empty tokens" do
+      encoded = server.send(:encode_tokens, [])
+      expect(encoded).to eq([])
+    end
+  end
+
+  describe "add_type_tokens" do
+    it "adds tokens for built-in types" do
+      raw_tokens = []
+      server.send(:add_type_tokens, raw_tokens, "def test(name: String)", 0, "String")
+
+      expect(raw_tokens).not_to be_empty
+    end
+
+    it "handles generic types" do
+      raw_tokens = []
+      server.send(:add_type_tokens, raw_tokens, "def test(arr: Array<String>)", 0, "Array<String>")
+
+      expect(raw_tokens).not_to be_empty
+    end
+
+    it "handles union types" do
+      raw_tokens = []
+      server.send(:add_type_tokens, raw_tokens, "def test(x: String | Integer)", 0, "String | Integer")
+
+      expect(raw_tokens).not_to be_empty
+    end
+
+    it "handles intersection types" do
+      raw_tokens = []
+      server.send(:add_type_tokens, raw_tokens, "def test(x: A & B)", 0, "A & B")
+
+      expect(raw_tokens).not_to be_empty
+    end
+
+    it "handles nil type string" do
+      raw_tokens = []
+      server.send(:add_type_tokens, raw_tokens, "def test", 0, nil)
+
+      expect(raw_tokens).to be_empty
+    end
+  end
+
+  describe "generate_semantic_tokens" do
+    it "generates tokens for complete code" do
+      code = <<~TRBY
+        type UserId = String
+        interface Printable
+          print: void
+        end
+        def greet(name: String): void
+          puts name
+        end
+      TRBY
+
+      tokens = server.send(:generate_semantic_tokens, code)
+
+      expect(tokens).to be_an(Array)
+      expect(tokens.length).to be > 0
+    end
+
+    it "handles empty code" do
+      tokens = server.send(:generate_semantic_tokens, "")
+      expect(tokens).to eq([])
+    end
+  end
 end

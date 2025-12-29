@@ -410,4 +410,108 @@ describe TRuby::ErrorHandler do
       # Should detect missing type after colon
     end
   end
+
+  describe "complex parameter types" do
+    it "handles Hash type with braces in parameters" do
+      source = "def process(config: Hash{String => Integer}): Integer\nend"
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_a(Array)
+    end
+
+    it "handles multiple complex parameters" do
+      source = "def complex(arr: Array<String>, hash: Hash{Symbol => Integer}, block: Proc<String>): void\nend"
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_a(Array)
+    end
+
+    it "handles nested generic types" do
+      source = "def nested(data: Array<Hash<String, Array<Integer>>>): void\nend"
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_a(Array)
+    end
+  end
+
+  describe "return type validation" do
+    it "detects unknown simple return type" do
+      source = "def test(): UnknownReturnType\nend"
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors.any? { |e| e.include?("Unknown return type") }).to be true
+    end
+
+    it "allows type alias as return type" do
+      source = <<~RUBY
+        type UserId = Integer
+        def get_user_id(): UserId
+        end
+      RUBY
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_empty
+    end
+
+    it "allows interface as return type" do
+      source = <<~RUBY
+        interface Printable
+          to_string: String
+        end
+        def get_printable(): Printable
+        end
+      RUBY
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_empty
+    end
+  end
+
+  describe "end of class detection" do
+    it "handles end statement closing class" do
+      source = <<~RUBY
+        class MyClass
+          def method1(): String
+            "test"
+          end
+        end
+      RUBY
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_empty
+    end
+
+    it "handles top-level end closing class scope" do
+      source = "class A\n  def x: String\n    \"y\"\n  end\nend\ndef z: Integer\n  1\nend"
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_a(Array)
+    end
+  end
+
+  describe "angle bracket counting" do
+    it "handles arrow operators in type definitions" do
+      source = "def transform(f: (Integer) -> String): (String) -> Boolean\nend"
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_a(Array)
+    end
+
+    it "handles comparison operators with <>" do
+      source = "def compare(a: Array<Integer>): Array<String>\nend"
+      handler = TRuby::ErrorHandler.new(source)
+
+      errors = handler.check
+      expect(errors).to be_a(Array)
+    end
+  end
 end

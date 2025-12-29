@@ -514,4 +514,339 @@ RSpec.describe TRuby::IR do
       expect(visited).to eq(["Test"])
     end
   end
+
+  # Additional coverage tests for Node methods
+  describe "Node methods" do
+    describe TRuby::IR::Node do
+      it "accepts visitor" do
+        visitor = double("Visitor")
+        node = described_class.new
+        expect(visitor).to receive(:visit).with(node)
+        node.accept(visitor)
+      end
+
+      it "returns empty children by default" do
+        node = described_class.new
+        expect(node.children).to eq([])
+      end
+
+      it "transforms with block" do
+        node = described_class.new
+        result = node.transform { |_n| "transformed" }
+        expect(result).to eq("transformed")
+      end
+    end
+
+    describe TRuby::IR::Interface do
+      it "returns members as children" do
+        member = TRuby::IR::InterfaceMember.new(
+          name: "method1",
+          type_signature: TRuby::IR::SimpleType.new(name: "String")
+        )
+        interface = described_class.new(name: "Test", members: [member])
+        expect(interface.children).to eq([member])
+      end
+    end
+
+    describe TRuby::IR::ClassDecl do
+      it "returns body as children" do
+        method = TRuby::IR::MethodDef.new(name: "foo")
+        class_decl = described_class.new(name: "MyClass", body: [method])
+        expect(class_decl.children).to eq([method])
+      end
+    end
+
+    describe TRuby::IR::ModuleDecl do
+      it "returns body as children" do
+        method = TRuby::IR::MethodDef.new(name: "helper")
+        module_decl = described_class.new(name: "Helpers", body: [method])
+        expect(module_decl.children).to eq([method])
+      end
+    end
+
+    describe TRuby::IR::MethodDef do
+      it "returns body as children when present" do
+        body = TRuby::IR::Block.new(statements: [])
+        method = described_class.new(name: "test", body: body)
+        expect(method.children).to eq([body])
+      end
+
+      it "returns empty array when body is nil" do
+        method = described_class.new(name: "test", body: nil)
+        expect(method.children).to eq([])
+      end
+    end
+
+    describe TRuby::IR::Block do
+      it "returns statements as children" do
+        stmt1 = TRuby::IR::Return.new
+        stmt2 = TRuby::IR::Return.new
+        block = described_class.new(statements: [stmt1, stmt2])
+        expect(block.children).to eq([stmt1, stmt2])
+      end
+    end
+
+    describe TRuby::IR::Assignment do
+      it "returns value as children" do
+        value = TRuby::IR::Literal.new(value: 42, literal_type: :integer)
+        assignment = described_class.new(target: "x", value: value)
+        expect(assignment.children).to eq([value])
+      end
+    end
+
+    describe TRuby::IR::MethodCall do
+      it "returns receiver, block and arguments as children" do
+        receiver = TRuby::IR::VariableRef.new(name: "obj")
+        arg = TRuby::IR::Literal.new(value: 1, literal_type: :integer)
+        block = TRuby::IR::Block.new
+        call = described_class.new(
+          receiver: receiver,
+          method_name: "foo",
+          arguments: [arg],
+          block: block
+        )
+        expect(call.children).to include(receiver, block, arg)
+      end
+    end
+
+    describe TRuby::IR::InterpolatedString do
+      it "returns parts as children" do
+        part1 = TRuby::IR::Literal.new(value: "hello ", literal_type: :string)
+        part2 = TRuby::IR::VariableRef.new(name: "name")
+        str = described_class.new(parts: [part1, part2])
+        expect(str.children).to eq([part1, part2])
+      end
+    end
+
+    describe TRuby::IR::ArrayLiteral do
+      it "returns elements as children" do
+        elem1 = TRuby::IR::Literal.new(value: 1, literal_type: :integer)
+        elem2 = TRuby::IR::Literal.new(value: 2, literal_type: :integer)
+        arr = described_class.new(elements: [elem1, elem2])
+        expect(arr.children).to eq([elem1, elem2])
+      end
+    end
+
+    describe TRuby::IR::HashPair do
+      it "returns key and value as children" do
+        key = TRuby::IR::Literal.new(value: :foo, literal_type: :symbol)
+        value = TRuby::IR::Literal.new(value: 1, literal_type: :integer)
+        pair = described_class.new(key: key, value: value)
+        expect(pair.children).to eq([key, value])
+      end
+    end
+
+    describe TRuby::IR::Conditional do
+      it "returns condition, then_branch, and else_branch as children" do
+        condition = TRuby::IR::Literal.new(value: true, literal_type: :boolean)
+        then_branch = TRuby::IR::Return.new
+        else_branch = TRuby::IR::Return.new
+        cond = described_class.new(
+          condition: condition,
+          then_branch: then_branch,
+          else_branch: else_branch
+        )
+        expect(cond.children).to eq([condition, then_branch, else_branch])
+      end
+    end
+
+    describe TRuby::IR::CaseExpr do
+      it "returns subject, else_clause, and when_clauses as children" do
+        subject = TRuby::IR::VariableRef.new(name: "x")
+        when_clause = TRuby::IR::WhenClause.new(
+          patterns: [TRuby::IR::Literal.new(value: 1, literal_type: :integer)],
+          body: TRuby::IR::Return.new
+        )
+        else_clause = TRuby::IR::Return.new
+        case_expr = described_class.new(
+          subject: subject,
+          when_clauses: [when_clause],
+          else_clause: else_clause
+        )
+        expect(case_expr.children).to include(subject, else_clause, when_clause)
+      end
+    end
+
+    describe TRuby::IR::WhenClause do
+      it "returns body and patterns as children" do
+        pattern = TRuby::IR::Literal.new(value: 1, literal_type: :integer)
+        body = TRuby::IR::Return.new
+        when_clause = described_class.new(patterns: [pattern], body: body)
+        expect(when_clause.children).to include(body, pattern)
+      end
+    end
+
+    describe TRuby::IR::Loop do
+      it "returns condition and body as children" do
+        condition = TRuby::IR::Literal.new(value: true, literal_type: :boolean)
+        body = TRuby::IR::Block.new
+        loop_node = described_class.new(kind: :while, condition: condition, body: body)
+        expect(loop_node.children).to eq([condition, body])
+      end
+    end
+
+    describe TRuby::IR::ForLoop do
+      it "returns iterable and body as children" do
+        iterable = TRuby::IR::VariableRef.new(name: "arr")
+        body = TRuby::IR::Block.new
+        for_loop = described_class.new(variable: "x", iterable: iterable, body: body)
+        expect(for_loop.children).to eq([iterable, body])
+      end
+    end
+
+    describe TRuby::IR::Return do
+      it "returns value as children when present" do
+        value = TRuby::IR::Literal.new(value: 42, literal_type: :integer)
+        ret = described_class.new(value: value)
+        expect(ret.children).to eq([value])
+      end
+
+      it "returns empty array when value is nil" do
+        ret = described_class.new(value: nil)
+        expect(ret.children).to eq([])
+      end
+    end
+
+    describe TRuby::IR::BinaryOp do
+      it "returns left and right as children" do
+        left = TRuby::IR::Literal.new(value: 1, literal_type: :integer)
+        right = TRuby::IR::Literal.new(value: 2, literal_type: :integer)
+        op = described_class.new(operator: "+", left: left, right: right)
+        expect(op.children).to eq([left, right])
+      end
+    end
+
+    describe TRuby::IR::UnaryOp do
+      it "returns operand as children" do
+        operand = TRuby::IR::Literal.new(value: true, literal_type: :boolean)
+        op = described_class.new(operator: "!", operand: operand)
+        expect(op.children).to eq([operand])
+      end
+    end
+
+    describe TRuby::IR::TypeCast do
+      it "returns expression as children" do
+        expr = TRuby::IR::VariableRef.new(name: "x")
+        cast = described_class.new(
+          expression: expr,
+          target_type: TRuby::IR::SimpleType.new(name: "String")
+        )
+        expect(cast.children).to eq([expr])
+      end
+    end
+
+    describe TRuby::IR::TypeGuard do
+      it "returns expression as children" do
+        expr = TRuby::IR::VariableRef.new(name: "x")
+        guard = described_class.new(expression: expr, type_check: "String")
+        expect(guard.children).to eq([expr])
+      end
+    end
+
+    describe TRuby::IR::Lambda do
+      it "returns body as children" do
+        body = TRuby::IR::Block.new
+        lambda_node = described_class.new(body: body)
+        expect(lambda_node.children).to eq([body])
+      end
+    end
+
+    describe TRuby::IR::BeginBlock do
+      it "returns body, clauses as children" do
+        body = TRuby::IR::Block.new
+        rescue_clause = TRuby::IR::RescueClause.new(body: TRuby::IR::Block.new)
+        else_clause = TRuby::IR::Block.new
+        ensure_clause = TRuby::IR::Block.new
+        begin_block = described_class.new(
+          body: body,
+          rescue_clauses: [rescue_clause],
+          else_clause: else_clause,
+          ensure_clause: ensure_clause
+        )
+        expect(begin_block.children).to include(body, else_clause, ensure_clause, rescue_clause)
+      end
+    end
+
+    describe TRuby::IR::RescueClause do
+      it "returns body as children" do
+        body = TRuby::IR::Block.new
+        rescue_clause = described_class.new(body: body)
+        expect(rescue_clause.children).to eq([body])
+      end
+    end
+  end
+
+  # TypeNode base class
+  describe TRuby::IR::TypeNode do
+    it "raises NotImplementedError for to_rbs" do
+      node = described_class.new
+      expect { node.to_rbs }.to raise_error(NotImplementedError)
+    end
+
+    it "raises NotImplementedError for to_trb" do
+      node = described_class.new
+      expect { node.to_trb }.to raise_error(NotImplementedError)
+    end
+  end
+
+  # LiteralType
+  describe TRuby::IR::LiteralType do
+    it "converts to RBS format" do
+      type = described_class.new(value: "hello")
+      expect(type.to_rbs).to eq('"hello"')
+    end
+
+    it "converts to TRB format" do
+      type = described_class.new(value: 42)
+      expect(type.to_trb).to eq("42")
+    end
+  end
+
+  # HashLiteralType
+  describe TRuby::IR::HashLiteralType do
+    it "converts to RBS format" do
+      type = described_class.new(
+        fields: [{ name: "foo", type: TRuby::IR::SimpleType.new(name: "String") }]
+      )
+      expect(type.to_rbs).to eq("Hash[Symbol, untyped]")
+    end
+
+    it "converts to TRB format" do
+      type = described_class.new(
+        fields: [
+          { name: "foo", type: TRuby::IR::SimpleType.new(name: "String") },
+          { name: "bar", type: TRuby::IR::SimpleType.new(name: "Integer") },
+        ]
+      )
+      expect(type.to_trb).to eq("{ foo: String, bar: Integer }")
+    end
+  end
+
+  # Visitor class
+  describe TRuby::IR::Visitor do
+    it "visits children when method not defined" do
+      visitor = TRuby::IR::Visitor.new
+      stmt = TRuby::IR::Return.new(value: TRuby::IR::Literal.new(value: 1, literal_type: :integer))
+      block = TRuby::IR::Block.new(statements: [stmt])
+
+      # Should not raise
+      visitor.visit(block)
+    end
+
+    it "visit_children visits all children" do
+      visited = []
+      visitor = Class.new(TRuby::IR::Visitor) do
+        define_method(:visit_literal) do |node|
+          visited << node.value
+        end
+      end.new
+
+      stmt1 = TRuby::IR::Literal.new(value: 1, literal_type: :integer)
+      stmt2 = TRuby::IR::Literal.new(value: 2, literal_type: :integer)
+      block = TRuby::IR::Block.new(statements: [stmt1, stmt2])
+
+      visitor.visit_children(block)
+      expect(visited).to eq([1, 2])
+    end
+  end
 end

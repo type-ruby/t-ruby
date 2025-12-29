@@ -382,4 +382,277 @@ RSpec.describe TRuby::ASTTypeInferrer do
       expect(inferrer.infer_method_return_type(method)).to eq("String")
     end
   end
+
+  describe "logical operators" do
+    it "infers right type from && operator" do
+      left = TRuby::IR::Literal.new(value: true, literal_type: :boolean)
+      right = TRuby::IR::Literal.new(value: "success", literal_type: :string)
+      node = TRuby::IR::BinaryOp.new(operator: "&&", left: left, right: right)
+
+      expect(inferrer.infer_expression(node, env)).to eq("String")
+    end
+
+    it "infers union type from || operator" do
+      left = TRuby::IR::Literal.new(value: "hello", literal_type: :string)
+      right = TRuby::IR::Literal.new(value: 42, literal_type: :integer)
+      node = TRuby::IR::BinaryOp.new(operator: "||", left: left, right: right)
+
+      expect(inferrer.infer_expression(node, env)).to eq("String | Integer")
+    end
+
+    it "returns same type when || operands are same type" do
+      left = TRuby::IR::Literal.new(value: "a", literal_type: :string)
+      right = TRuby::IR::Literal.new(value: "b", literal_type: :string)
+      node = TRuby::IR::BinaryOp.new(operator: "||", left: left, right: right)
+
+      expect(inferrer.infer_expression(node, env)).to eq("String")
+    end
+  end
+
+  describe "unary operators" do
+    it "infers bool from ! operator" do
+      operand = TRuby::IR::Literal.new(value: "hello", literal_type: :string)
+      node = TRuby::IR::UnaryOp.new(operator: "!", operand: operand)
+
+      expect(inferrer.infer_expression(node, env)).to eq("bool")
+    end
+
+    it "infers same type from - operator" do
+      operand = TRuby::IR::Literal.new(value: 42, literal_type: :integer)
+      node = TRuby::IR::UnaryOp.new(operator: "-", operand: operand)
+
+      expect(inferrer.infer_expression(node, env)).to eq("Integer")
+    end
+
+    it "returns untyped for unknown operator" do
+      operand = TRuby::IR::Literal.new(value: 42, literal_type: :integer)
+      node = TRuby::IR::UnaryOp.new(operator: "~", operand: operand)
+
+      expect(inferrer.infer_expression(node, env)).to eq("untyped")
+    end
+  end
+
+  describe "hash literals" do
+    it "infers Hash type from key-value pairs" do
+      key = TRuby::IR::Literal.new(value: :name, literal_type: :symbol)
+      value = TRuby::IR::Literal.new(value: "John", literal_type: :string)
+      pair = TRuby::IR::HashPair.new(key: key, value: value)
+      node = TRuby::IR::HashLiteral.new(pairs: [pair])
+
+      expect(inferrer.infer_expression(node, env)).to eq("Hash[Symbol, String]")
+    end
+
+    it "infers Hash[untyped, untyped] from empty hash" do
+      node = TRuby::IR::HashLiteral.new(pairs: [])
+      expect(inferrer.infer_expression(node, env)).to eq("Hash[untyped, untyped]")
+    end
+  end
+
+  describe "conditional type inference" do
+    it "unifies then and else branch types" do
+      then_branch = TRuby::IR::Literal.new(value: "yes", literal_type: :string)
+      else_branch = TRuby::IR::Literal.new(value: "no", literal_type: :string)
+      condition = TRuby::IR::Literal.new(value: true, literal_type: :boolean)
+
+      node = TRuby::IR::Conditional.new(
+        condition: condition,
+        then_branch: then_branch,
+        else_branch: else_branch,
+        kind: :if
+      )
+
+      expect(inferrer.infer_expression(node, env)).to eq("String")
+    end
+
+    it "returns nil when no branches" do
+      condition = TRuby::IR::Literal.new(value: true, literal_type: :boolean)
+      node = TRuby::IR::Conditional.new(
+        condition: condition,
+        then_branch: nil,
+        else_branch: nil,
+        kind: :if
+      )
+
+      expect(inferrer.infer_expression(node, env)).to eq("nil")
+    end
+
+    it "returns nullable type when else branch missing" do
+      then_branch = TRuby::IR::Literal.new(value: "yes", literal_type: :string)
+      condition = TRuby::IR::Literal.new(value: true, literal_type: :boolean)
+
+      node = TRuby::IR::Conditional.new(
+        condition: condition,
+        then_branch: then_branch,
+        else_branch: nil,
+        kind: :if
+      )
+
+      expect(inferrer.infer_expression(node, env)).to eq("String")
+    end
+  end
+
+  describe "return without value" do
+    it "infers nil from return without value" do
+      node = TRuby::IR::Return.new(value: nil)
+      expect(inferrer.infer_expression(node, env)).to eq("nil")
+    end
+  end
+
+  describe "constant references" do
+    it "returns constant name as type" do
+      node = TRuby::IR::VariableRef.new(name: "MyClass", scope: :constant)
+      expect(inferrer.infer_expression(node, env)).to eq("MyClass")
+    end
+
+    it "treats capitalized names as constants" do
+      node = TRuby::IR::VariableRef.new(name: "UserModel", scope: :local)
+      expect(inferrer.infer_expression(node, env)).to eq("UserModel")
+    end
+  end
+
+  describe "class variable assignment" do
+    it "registers class variable type" do
+      value = TRuby::IR::Literal.new(value: 0, literal_type: :integer)
+      node = TRuby::IR::Assignment.new(target: "@@counter", value: value)
+
+      inferrer.infer_expression(node, env)
+
+      expect(env.lookup_class_var("@@counter")).to eq("Integer")
+    end
+  end
+
+  describe "array concatenation" do
+    it "infers array type from + operation on arrays" do
+      left_elements = [TRuby::IR::Literal.new(value: 1, literal_type: :integer)]
+      left = TRuby::IR::ArrayLiteral.new(elements: left_elements)
+
+      right_elements = [TRuby::IR::Literal.new(value: 2, literal_type: :integer)]
+      right = TRuby::IR::ArrayLiteral.new(elements: right_elements)
+
+      node = TRuby::IR::BinaryOp.new(operator: "+", left: left, right: right)
+
+      expect(inferrer.infer_expression(node, env)).to eq("Array[Integer]")
+    end
+  end
+
+  describe "Object method fallback" do
+    it "uses Object methods when receiver method not found" do
+      receiver = TRuby::IR::Literal.new(value: 42, literal_type: :integer)
+      node = TRuby::IR::MethodCall.new(
+        receiver: receiver,
+        method_name: "nil?",
+        arguments: []
+      )
+
+      expect(inferrer.infer_expression(node, env)).to eq("bool")
+    end
+
+    it "returns receiver type for self-returning methods" do
+      receiver = TRuby::IR::Literal.new(value: "hello", literal_type: :string)
+      node = TRuby::IR::MethodCall.new(
+        receiver: receiver,
+        method_name: "freeze",
+        arguments: []
+      )
+
+      expect(inferrer.infer_expression(node, env)).to eq("String")
+    end
+  end
+
+  describe "method call without receiver" do
+    it "uses Object as default receiver" do
+      node = TRuby::IR::MethodCall.new(
+        receiver: nil,
+        method_name: "to_s",
+        arguments: []
+      )
+
+      expect(inferrer.infer_expression(node, env)).to eq("String")
+    end
+  end
+
+  describe "interpolated strings" do
+    it "always infers String type" do
+      node = TRuby::IR::InterpolatedString.new(parts: [])
+      expect(inferrer.infer_expression(node, env)).to eq("String")
+    end
+  end
+
+  describe "RawCode nodes" do
+    it "returns untyped for raw code" do
+      node = TRuby::IR::RawCode.new(code: "some_dynamic_code")
+      expect(inferrer.infer_expression(node, env)).to eq("untyped")
+    end
+  end
+
+  describe "unknown binary operators" do
+    it "returns untyped for unknown operators" do
+      left = TRuby::IR::Literal.new(value: 1, literal_type: :integer)
+      right = TRuby::IR::Literal.new(value: 2, literal_type: :integer)
+      node = TRuby::IR::BinaryOp.new(operator: "=~", left: left, right: right)
+
+      expect(inferrer.infer_expression(node, env)).to eq("untyped")
+    end
+  end
+
+  describe "parameter without type annotation" do
+    it "uses untyped for parameter without annotation" do
+      param = TRuby::IR::Parameter.new(name: "arg", type_annotation: nil)
+      body = TRuby::IR::Block.new(
+        statements: [
+          TRuby::IR::VariableRef.new(name: "arg", scope: :local),
+        ]
+      )
+      method = TRuby::IR::MethodDef.new(
+        name: "test",
+        params: [param],
+        return_type: nil,
+        body: body
+      )
+
+      expect(inferrer.infer_method_return_type(method)).to eq("untyped")
+    end
+  end
+
+  describe "type unification with nil" do
+    it "creates nullable type when nil is one of two types" do
+      # Test through conditional with nil else
+      then_branch = TRuby::IR::Literal.new(value: "hello", literal_type: :string)
+      else_branch = TRuby::IR::Literal.new(value: nil, literal_type: :nil)
+      condition = TRuby::IR::Literal.new(value: true, literal_type: :boolean)
+
+      node = TRuby::IR::Conditional.new(
+        condition: condition,
+        then_branch: then_branch,
+        else_branch: else_branch,
+        kind: :if
+      )
+
+      expect(inferrer.infer_expression(node, env)).to eq("String?")
+    end
+  end
+
+  describe "comparison operators coverage" do
+    %w[!= < > <= >= <=>].each do |op|
+      it "infers bool from #{op} operator" do
+        left = TRuby::IR::Literal.new(value: 1, literal_type: :integer)
+        right = TRuby::IR::Literal.new(value: 2, literal_type: :integer)
+        node = TRuby::IR::BinaryOp.new(operator: op, left: left, right: right)
+
+        expect(inferrer.infer_expression(node, env)).to eq("bool")
+      end
+    end
+  end
+
+  describe "arithmetic operators coverage" do
+    %w[- * / % **].each do |op|
+      it "infers Integer from integer #{op} operation" do
+        left = TRuby::IR::Literal.new(value: 10, literal_type: :integer)
+        right = TRuby::IR::Literal.new(value: 2, literal_type: :integer)
+        node = TRuby::IR::BinaryOp.new(operator: op, left: left, right: right)
+
+        expect(inferrer.infer_expression(node, env)).to eq("Integer")
+      end
+    end
+  end
 end

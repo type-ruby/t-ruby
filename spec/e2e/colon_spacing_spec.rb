@@ -415,4 +415,55 @@ RSpec.describe "Colon Spacing Validation E2E" do
       expect(result[:success]).to be true
     end
   end
+
+  describe "Invalid method name syntax" do
+    context "method name with spaces" do
+      it "rejects method name containing spaces (unexpected identifier)" do
+        # def 함수명 자체가 올바르지_않은_경우 (n: Integer, s: String): Integer
+        # '함수명' becomes the method name, '자체가' is unexpected
+        source = <<~TRB
+          def 함수명 자체가 올바르지_않은_경우 (n: Integer, s: String): Integer
+              n
+          end
+        TRB
+        input_file = File.join(tmpdir, "invalid_method_name.trb")
+        File.write(input_file, source)
+
+        result = compiler.compile_with_diagnostics(input_file)
+        expect(result[:success]).to be false
+        expect(result[:diagnostics].any? { |d| d.message.include?("method names cannot contain spaces") }).to be true
+      end
+
+      it "rejects ASCII method name with spaces" do
+        source = <<~TRB
+          def method name with spaces(n: Integer): Integer
+              n
+          end
+        TRB
+        input_file = File.join(tmpdir, "invalid_ascii_method_name.trb")
+        File.write(input_file, source)
+
+        result = compiler.compile_with_diagnostics(input_file)
+        expect(result[:success]).to be false
+        expect(result[:diagnostics].any? { |d| d.message.include?("method names cannot contain spaces") }).to be true
+      end
+
+      it "reports accurate error message with method name and unexpected token" do
+        source = <<~TRB
+          def foo bar(x: Integer): Integer
+              x
+          end
+        TRB
+        input_file = File.join(tmpdir, "method_name_error_message.trb")
+        File.write(input_file, source)
+
+        result = compiler.compile_with_diagnostics(input_file)
+        expect(result[:success]).to be false
+        error = result[:diagnostics].find { |d| d.message.include?("cannot contain spaces") }
+        expect(error).not_to be_nil
+        expect(error.message).to include("'bar'") # The unexpected token
+        expect(error.message).to include("'foo'") # The parsed method name
+      end
+    end
+  end
 end

@@ -171,6 +171,20 @@ module TRuby
         method_name = tokens[position].value
         position += 1
 
+        # Check for unexpected tokens after method name (indicates space in method name)
+        if position < tokens.length
+          next_token = tokens[position]
+          # After method name, only these are valid: ( : newline end
+          # If we see an identifier, it means there was a space in the method name
+          if next_token.type == :identifier
+            return TokenParseResult.failure(
+              "Unexpected token '#{next_token.value}' after method name '#{method_name}' - method names cannot contain spaces",
+              tokens,
+              position
+            )
+          end
+        end
+
         # Parse parameters
         params = []
         if position < tokens.length && tokens[position].type == :lparen
