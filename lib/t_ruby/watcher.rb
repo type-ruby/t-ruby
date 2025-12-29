@@ -286,7 +286,6 @@ module TRuby
 
     def format_error(file, message)
       # Parse error message for line/column info if available
-      # Format: file:line:col - error TRB0001: message
       line = 1
       col = 1
 
@@ -295,23 +294,27 @@ module TRuby
         line = ::Regexp.last_match(1).to_i
       end
 
-      {
-        file: file,
-        line: line,
-        col: col,
+      # Create Diagnostic for consistent formatting
+      source = File.read(file) if File.exist?(file)
+      source_line = source&.split("\n")&.at(line - 1)
+
+      Diagnostic.new(
+        code: "TR1001",
         message: message,
-      }
+        file: relative_path(file),
+        line: line,
+        column: col,
+        source_line: source_line
+      )
     end
 
-    def print_errors(errors)
-      errors.each do |error|
+    def print_errors(diagnostics)
+      return if diagnostics.empty?
+
+      formatter = DiagnosticFormatter.new(use_colors: @use_colors)
+      diagnostics.each do |diagnostic|
         puts
-        # TypeScript-style error format: file:line:col - error TSXXXX: message
-        location = "#{colorize(:cyan,
-                               relative_path(error[:file]))}:#{colorize(:yellow,
-                                                                        error[:line])}:#{colorize(:yellow,
-                                                                                                  error[:col])}"
-        puts "#{location} - #{colorize(:red, "error")} #{colorize(:gray, "TRB0001")}: #{error[:message]}"
+        puts formatter.format(diagnostic)
       end
     end
 

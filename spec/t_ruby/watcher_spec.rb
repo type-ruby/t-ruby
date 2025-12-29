@@ -67,20 +67,24 @@ describe TRuby::Watcher do
     end
 
     describe "#format_error" do
-      it "returns error hash with file, line, col, and message" do
-        error = watcher.send(:format_error, "test.trb", "syntax error")
+      it "returns Diagnostic with file, line, column, and message" do
+        diagnostic = watcher.send(:format_error, "test.trb", "syntax error")
 
-        expect(error).to include(
-          file: "test.trb",
-          line: 1,
-          col: 1,
-          message: "syntax error"
-        )
+        expect(diagnostic).to be_a(TRuby::Diagnostic)
+        expect(diagnostic.file).to eq("test.trb")
+        expect(diagnostic.line).to eq(1)
+        expect(diagnostic.column).to eq(1)
+        expect(diagnostic.message).to eq("syntax error")
       end
 
       it "extracts line number from error message if available" do
-        error = watcher.send(:format_error, "test.trb", "error on line 42")
-        expect(error[:line]).to eq(42)
+        diagnostic = watcher.send(:format_error, "test.trb", "error on line 42")
+        expect(diagnostic.line).to eq(42)
+      end
+
+      it "includes error code TR1001" do
+        diagnostic = watcher.send(:format_error, "test.trb", "syntax error")
+        expect(diagnostic.code).to eq("TR1001")
       end
     end
   end
