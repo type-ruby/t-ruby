@@ -238,6 +238,110 @@ describe TRuby::CLI do
         expect(output).to include("Error:")
       end
     end
+
+    context "tsc-style error formatting" do
+      it "formats TypeCheckError with file:line:col format" do
+        Dir.mktmpdir do |tmpdir|
+          input_file = File.join(tmpdir, "type_error.trb")
+          File.write(input_file, "def greet(name: String): String\n  name\nend")
+
+          error = TRuby::TypeCheckError.new(
+            message: "Type mismatch",
+            location: "#{input_file}:3:5",
+            expected: "String",
+            actual: "Integer"
+          )
+          allow_any_instance_of(TRuby::Compiler).to receive(:compile).and_raise(error)
+
+          cli = TRuby::CLI.new([input_file])
+          output = capture_stdout do
+            cli.run
+          rescue SystemExit
+            # Suppress exit
+          end
+
+          # Should include tsc-style format
+          expect(output).to include("type_error.trb:3:5")
+          expect(output).to match(/error\s+TR2001/)
+          expect(output).to include("Type mismatch")
+          expect(output).to include("Found 1 error")
+        end
+      end
+
+      it "formats ParseError with source code snippet" do
+        Dir.mktmpdir do |tmpdir|
+          input_file = File.join(tmpdir, "parse_error.trb")
+          File.write(input_file, "def foo(: String)\n  \"hello\"\nend")
+
+          error = TRuby::ParseError.new("Invalid parameter syntax", line: 1, column: 9)
+          allow_any_instance_of(TRuby::Compiler).to receive(:compile).and_raise(error)
+
+          cli = TRuby::CLI.new([input_file])
+          output = capture_stdout do
+            cli.run
+          rescue SystemExit
+            # Suppress exit
+          end
+
+          expect(output).to include("parse_error.trb:1:9")
+          expect(output).to match(/error\s+TR1001/)
+          expect(output).to include("|")
+          expect(output).to include("def foo(: String)")
+        end
+      end
+
+      it "formats ScanError with error marker" do
+        Dir.mktmpdir do |tmpdir|
+          input_file = File.join(tmpdir, "scan_error.trb")
+          File.write(input_file, "puts unterminated_var")
+
+          error = TRuby::Scanner::ScanError.new("Unterminated string", line: 1, column: 6, position: 5)
+          allow_any_instance_of(TRuby::Compiler).to receive(:compile).and_raise(error)
+
+          cli = TRuby::CLI.new([input_file])
+          output = capture_stdout do
+            cli.run
+          rescue SystemExit
+            # Suppress exit
+          end
+
+          expect(output).to include("scan_error.trb:1:6")
+          expect(output).to include("Unterminated string")
+          # Marker should cover "unterminated_var" (16 chars)
+          expect(output).to include("~")
+        end
+      end
+
+      it "includes Expected/Actual context for type errors" do
+        Dir.mktmpdir do |tmpdir|
+          input_file = File.join(tmpdir, "context.trb")
+          File.write(input_file, "greet(123)")
+
+          error = TRuby::TypeCheckError.new(
+            message: "Argument type mismatch",
+            location: "#{input_file}:1:7",
+            expected: "String",
+            actual: "Integer",
+            suggestion: "Use .to_s to convert"
+          )
+          allow_any_instance_of(TRuby::Compiler).to receive(:compile).and_raise(error)
+
+          cli = TRuby::CLI.new([input_file])
+          output = capture_stdout do
+            cli.run
+          rescue SystemExit
+            # Suppress exit
+          end
+
+          expect(output).to include("Expected:")
+          expect(output).to include("String")
+          expect(output).to include("Actual:")
+          expect(output).to include("Integer")
+          expect(output).to include("Suggestion:")
+          expect(output).to include("Use .to_s to convert")
+        end
+      end
+    end
   end
 
   # Helper to capture stdout

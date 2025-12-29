@@ -211,15 +211,27 @@ module TRuby
     end
 
     def compile(input_file, config_path: nil)
+      reporter = ErrorReporter.new(formatter: DiagnosticFormatter.new(use_colors: $stdout.tty?))
+      source = File.read(input_file) if input_file && File.exist?(input_file)
       config = Config.new(config_path)
       compiler = Compiler.new(config)
 
       output_path = compiler.compile(input_file)
       puts "Compiled: #{input_file} -> #{output_path}"
     rescue TypeCheckError => e
-      puts "Type error: #{e.message}"
+      reporter.add_type_check_error(e, file: input_file, source: source)
+      puts reporter.report
+      exit 1
+    rescue ParseError => e
+      reporter.add_parse_error(e, file: input_file, source: source)
+      puts reporter.report
+      exit 1
+    rescue Scanner::ScanError => e
+      reporter.add_scan_error(e, file: input_file, source: source)
+      puts reporter.report
       exit 1
     rescue ArgumentError => e
+      # For non-compilation errors (file not found, etc.), use simple format
       puts "Error: #{e.message}"
       exit 1
     end
