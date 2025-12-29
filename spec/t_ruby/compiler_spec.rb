@@ -567,4 +567,137 @@ describe TRuby::Compiler do
       end
     end
   end
+
+  describe "#compile_with_diagnostics" do
+    it "returns success result for valid code" do
+      Dir.mktmpdir do |tmpdir|
+        input_file = File.join(tmpdir, "valid.trb")
+        File.write(input_file, <<~TRB)
+          def greet(name: String): String
+            "Hello, \#{name}!"
+          end
+        TRB
+
+        allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:rbs_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+
+        compiler = TRuby::Compiler.new(config)
+        result = compiler.compile_with_diagnostics(input_file)
+
+        expect(result[:success]).to be true
+        expect(result[:diagnostics]).to be_empty
+      end
+    end
+
+    it "returns diagnostics for colon spacing errors" do
+      Dir.mktmpdir do |tmpdir|
+        input_file = File.join(tmpdir, "invalid.trb")
+        # Space before colon is invalid
+        File.write(input_file, <<~TRB)
+          def broken() : String
+            "test"
+          end
+        TRB
+
+        allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:rbs_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+
+        compiler = TRuby::Compiler.new(config)
+        result = compiler.compile_with_diagnostics(input_file)
+
+        expect(result[:success]).to be false
+        expect(result[:diagnostics]).not_to be_empty
+        expect(result[:diagnostics].first).to be_a(TRuby::Diagnostic)
+        expect(result[:diagnostics].first.code).to eq("TR1003")
+      end
+    end
+
+    it "returns diagnostics for file not found" do
+      Dir.mktmpdir do |tmpdir|
+        nonexistent_file = File.join(tmpdir, "does_not_exist.trb")
+
+        allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+
+        compiler = TRuby::Compiler.new(config)
+        result = compiler.compile_with_diagnostics(nonexistent_file)
+
+        expect(result[:success]).to be false
+        expect(result[:diagnostics]).not_to be_empty
+        expect(result[:diagnostics].first.message).to include("not found")
+      end
+    end
+
+    it "returns diagnostics for invalid extension" do
+      Dir.mktmpdir do |tmpdir|
+        invalid_file = File.join(tmpdir, "test.txt")
+        File.write(invalid_file, "puts 'hello'")
+
+        allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+
+        compiler = TRuby::Compiler.new(config)
+        result = compiler.compile_with_diagnostics(invalid_file)
+
+        expect(result[:success]).to be false
+        expect(result[:diagnostics]).not_to be_empty
+        expect(result[:diagnostics].first.message).to include("Expected .trb or .rb")
+      end
+    end
+
+    it "returns diagnostics for type check errors" do
+      Dir.mktmpdir do |tmpdir|
+        input_file = File.join(tmpdir, "type_error.trb")
+        File.write(input_file, <<~TRB)
+          def get_number(): Integer
+            "not a number"
+          end
+        TRB
+
+        allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:rbs_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+        allow_any_instance_of(TRuby::Config).to receive(:type_check?).and_return(true)
+
+        compiler = TRuby::Compiler.new(config)
+        result = compiler.compile_with_diagnostics(input_file)
+
+        expect(result[:success]).to be false
+        expect(result[:diagnostics]).not_to be_empty
+      end
+    end
+
+    it "returns multiple diagnostics when there are multiple errors" do
+      Dir.mktmpdir do |tmpdir|
+        input_file = File.join(tmpdir, "multi_error.trb")
+        File.write(input_file, <<~TRB)
+          def error1() : String
+            "test"
+          end
+
+          def error2():String
+            "test"
+          end
+        TRB
+
+        allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:rbs_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+
+        compiler = TRuby::Compiler.new(config)
+        result = compiler.compile_with_diagnostics(input_file)
+
+        expect(result[:success]).to be false
+        expect(result[:diagnostics].length).to be >= 2
+      end
+    end
+  end
 end

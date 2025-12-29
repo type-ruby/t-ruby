@@ -214,14 +214,19 @@ module TRuby
       config = Config.new(config_path)
       compiler = Compiler.new(config)
 
-      output_path = compiler.compile(input_file)
-      puts "Compiled: #{input_file} -> #{output_path}"
-    rescue TypeCheckError => e
-      puts "Type error: #{e.message}"
-      exit 1
-    rescue ArgumentError => e
-      puts "Error: #{e.message}"
-      exit 1
+      result = compiler.compile_with_diagnostics(input_file)
+
+      if result[:success]
+        puts "Compiled: #{input_file} -> #{result[:output_path]}"
+      else
+        formatter = DiagnosticFormatter.new(use_colors: $stdout.tty?)
+        result[:diagnostics].each do |diagnostic|
+          puts formatter.format(diagnostic)
+        end
+        puts
+        puts formatter.send(:format_summary, result[:diagnostics])
+        exit 1
+      end
     end
 
     # Extract config path from --config or -c flag

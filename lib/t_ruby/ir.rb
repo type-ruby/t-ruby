@@ -672,6 +672,26 @@ module TRuby
       end
     end
 
+    # Hash literal type: { key: Type, key2: Type }
+    class HashLiteralType < TypeNode
+      attr_accessor :fields # Array of { name: String, type: TypeNode }
+
+      def initialize(fields:, **opts)
+        super(**opts)
+        @fields = fields
+      end
+
+      def to_rbs
+        # Hash literal types in RBS are represented as Hash[Symbol, untyped] or specific record types
+        "Hash[Symbol, untyped]"
+      end
+
+      def to_trb
+        field_strs = @fields.map { |f| "#{f[:name]}: #{f[:type].to_trb}" }
+        "{ #{field_strs.join(", ")} }"
+      end
+    end
+
     #==========================================================================
     # Visitor Pattern
     #==========================================================================
@@ -792,12 +812,16 @@ module TRuby
         # 본문 IR이 있으면 사용 (BodyParser에서 파싱됨)
         body = info[:body_ir]
 
+        # Build location string from line/column info
+        location = info[:line] && info[:column] ? "#{info[:line]}:#{info[:column]}" : nil
+
         MethodDef.new(
           name: info[:name],
           params: params,
           return_type: info[:return_type] ? parse_type(info[:return_type]) : nil,
           body: body,
-          visibility: info[:visibility] || :public
+          visibility: info[:visibility] || :public,
+          location: location
         )
       end
 

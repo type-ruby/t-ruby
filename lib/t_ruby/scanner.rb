@@ -148,7 +148,7 @@ module TRuby
         scan_instance_or_class_variable
       when "$"
         scan_global_variable
-      when /[a-z_]/i
+      when /[a-z_\p{L}]/i
         scan_identifier_or_keyword
       when /[0-9]/
         scan_number
@@ -470,7 +470,8 @@ module TRuby
       start_column = @column
 
       value = ""
-      while @position < @source.length && current_char =~ /[a-zA-Z0-9_]/
+      # Support Unicode letters (\p{L}) and numbers (\p{N}) in identifiers
+      while @position < @source.length && current_char =~ /[\p{L}\p{N}_]/
         value += current_char
         advance
       end
@@ -484,7 +485,7 @@ module TRuby
       # 키워드인지 확인
       if KEYWORDS.key?(value)
         Token.new(KEYWORDS[value], value, start_pos, @position, start_line, start_column)
-      elsif value[0] =~ /[A-Z]/
+      elsif value[0] =~ /\p{Lu}/ # Unicode uppercase letter
         Token.new(:constant, value, start_pos, @position, start_line, start_column)
       else
         Token.new(:identifier, value, start_pos, @position, start_line, start_column)

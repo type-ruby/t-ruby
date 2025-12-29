@@ -33,6 +33,7 @@ module TRuby
       @error_count = 0
       @file_count = 0
       @use_colors = $stdout.tty?
+      @file_diagnostics = {} # Cache diagnostics per file for incremental updates
 
       # Enhanced features
       @incremental = incremental
@@ -138,48 +139,27 @@ module TRuby
     def compile_all
       @error_count = 0
       @file_count = 0
-      errors = []
+      @file_diagnostics = {} # Reset diagnostics cache on full compile
 
       trb_files = find_trb_files
       rb_files = find_rb_files
       all_files = trb_files + rb_files
       @file_count = all_files.size
 
-      if @incremental && @cross_file_check
-        # Use enhanced incremental compiler with cross-file checking
-        result = @incremental_compiler.compile_all_with_checking(trb_files)
-        errors = result[:errors].map { |e| format_error(e[:file], e[:error] || e[:message]) }
-        @error_count = errors.size
-        @stats[:total_compilations] += trb_files.size
-
-        # Also compile .rb files
-        rb_files.each do |file|
-          result = compile_file(file)
-          errors.concat(result[:errors]) if result[:errors].any?
-        end
-      elsif @parallel && all_files.size > 1
-        # Parallel compilation
-        results = @parallel_processor.process_files(all_files) do |file|
-          compile_file(file)
-        end
-        results.each do |result|
-          errors.concat(result[:errors]) if result[:errors]&.any?
-        end
-      else
-        # Sequential compilation
-        all_files.each do |file|
-          result = compile_file(file)
-          errors.concat(result[:errors]) if result[:errors].any?
-        end
+      # Use unified compile_with_diagnostics for all files
+      # Note: compile_file increments @stats[:total_compilations] internally
+      all_files.each do |file|
+        result = compile_file(file)
+        # Cache diagnostics per file
+        @file_diagnostics[file] = result[:diagnostics] || []
       end
 
-      print_errors(errors)
+      all_diagnostics = @file_diagnostics.values.flatten
+      print_errors(all_diagnostics)
       print_summary
     end
 
     def compile_files_incremental(files)
-      @error_count = 0
-      errors = []
       compiled_count = 0
 
       if @incremental
@@ -187,7 +167,8 @@ module TRuby
           if @incremental_compiler.needs_compile?(file)
             @stats[:total_compilations] += 1
             result = compile_file_with_ir(file)
-            errors.concat(result[:errors]) if result[:errors].any?
+            # Update cached diagnostics for this file
+            @file_diagnostics[file] = result[:diagnostics] || []
             compiled_count += 1
           else
             @stats[:incremental_hits] += 1
@@ -199,56 +180,59 @@ module TRuby
         if @cross_file_check && @incremental_compiler.cross_file_checker
           check_result = @incremental_compiler.cross_file_checker.check_all
           check_result[:errors].each do |e|
-            errors << format_error(e[:file], e[:message])
+            # Add cross-file errors (these are not file-specific)
+            @file_diagnostics[:cross_file] ||= []
+            @file_diagnostics[:cross_file] << create_diagnostic_from_cross_file_error(e)
           end
         end
       else
         files.each do |file|
           result = compile_file(file)
-          errors.concat(result[:errors]) if result[:errors].any?
+          # Update cached diagnostics for this file
+          @file_diagnostics[file] = result[:diagnostics] || []
           compiled_count += 1
         end
       end
 
+      # Collect all diagnostics from cache (includes unchanged files' errors)
+      all_diagnostics = @file_diagnostics.values.flatten
+
+      # Update error count from all cached diagnostics
+      @error_count = all_diagnostics.size
+
       @file_count = compiled_count
-      print_errors(errors)
+      print_errors(all_diagnostics)
       print_summary
       print_watching_message
     end
 
     def compile_file_with_ir(file)
-      result = { file: file, errors: [], success: false }
+      # Use unified compile_with_diagnostics from Compiler (same as compile_file)
+      # This ensures incremental compile returns the same diagnostics as full compile
+      compile_result = @compiler.compile_with_diagnostics(file)
 
-      begin
-        @incremental_compiler.compile_with_ir(file)
-        result[:success] = true
-      rescue ArgumentError => e
-        @error_count += 1
-        result[:errors] << format_error(file, e.message)
-      rescue StandardError => e
-        @error_count += 1
-        result[:errors] << format_error(file, e.message)
-      end
+      # Update incremental compiler's file hash to track changes
+      @incremental_compiler&.update_file_hash(file)
 
-      result
+      {
+        file: file,
+        diagnostics: compile_result[:diagnostics],
+        success: compile_result[:success],
+      }
     end
 
     def compile_file(file)
-      result = { file: file, errors: [], success: false }
+      # Use unified compile_with_diagnostics from Compiler
+      compile_result = @compiler.compile_with_diagnostics(file)
 
-      begin
-        @compiler.compile(file)
-        result[:success] = true
-        @stats[:total_compilations] += 1
-      rescue ArgumentError => e
-        @error_count += 1
-        result[:errors] << format_error(file, e.message)
-      rescue StandardError => e
-        @error_count += 1
-        result[:errors] << format_error(file, e.message)
-      end
+      @error_count += compile_result[:diagnostics].size
+      @stats[:total_compilations] += 1
 
-      result
+      {
+        file: file,
+        diagnostics: compile_result[:diagnostics],
+        success: compile_result[:success],
+      }
     end
 
     def find_trb_files
@@ -284,9 +268,15 @@ module TRuby
       files.uniq
     end
 
-    def format_error(file, message)
-      # Parse error message for line/column info if available
-      # Format: file:line:col - error TRB0001: message
+    # Create a Diagnostic for cross-file check errors
+    def create_diagnostic_from_cross_file_error(error)
+      file = error[:file]
+      source = File.exist?(file) ? File.read(file) : nil
+      create_generic_diagnostic(file, error[:message], source)
+    end
+
+    # Create a generic Diagnostic for standard errors
+    def create_generic_diagnostic(file, message, source = nil)
       line = 1
       col = 1
 
@@ -295,23 +285,25 @@ module TRuby
         line = ::Regexp.last_match(1).to_i
       end
 
-      {
-        file: file,
-        line: line,
-        col: col,
+      source_line = source&.split("\n")&.at(line - 1)
+
+      Diagnostic.new(
+        code: "TR0001",
         message: message,
-      }
+        file: relative_path(file),
+        line: line,
+        column: col,
+        source_line: source_line
+      )
     end
 
-    def print_errors(errors)
-      errors.each do |error|
+    def print_errors(diagnostics)
+      return if diagnostics.empty?
+
+      formatter = DiagnosticFormatter.new(use_colors: @use_colors)
+      diagnostics.each do |diagnostic|
         puts
-        # TypeScript-style error format: file:line:col - error TSXXXX: message
-        location = "#{colorize(:cyan,
-                               relative_path(error[:file]))}:#{colorize(:yellow,
-                                                                        error[:line])}:#{colorize(:yellow,
-                                                                                                  error[:col])}"
-        puts "#{location} - #{colorize(:red, "error")} #{colorize(:gray, "TRB0001")}: #{error[:message]}"
+        puts formatter.format(diagnostic)
       end
     end
 

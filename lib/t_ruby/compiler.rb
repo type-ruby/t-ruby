@@ -76,6 +76,161 @@ module TRuby
       output_path
     end
 
+    # Compile a file and return result with diagnostics
+    # This is the unified compilation interface for CLI and Watcher
+    # @param input_path [String] Path to the input file
+    # @return [Hash] Result with :success, :output_path, :diagnostics keys
+    def compile_with_diagnostics(input_path)
+      source = File.exist?(input_path) ? File.read(input_path) : nil
+      all_diagnostics = []
+
+      # Run analyze first to get all diagnostics (colon spacing, etc.)
+      if source
+        all_diagnostics = analyze(source, file: input_path)
+      end
+
+      begin
+        output_path = compile(input_path)
+        # Compilation succeeded, but we may still have diagnostics from analyze
+        {
+          success: all_diagnostics.empty?,
+          output_path: all_diagnostics.empty? ? output_path : nil,
+          diagnostics: all_diagnostics,
+        }
+      rescue TypeCheckError => e
+        # Skip if already reported by analyze (same message and location)
+        new_diag = Diagnostic.from_type_check_error(e, file: input_path, source: source)
+        unless all_diagnostics.any? { |d| d.message == new_diag.message && d.line == new_diag.line }
+          all_diagnostics << new_diag
+        end
+        {
+          success: false,
+          output_path: nil,
+          diagnostics: all_diagnostics,
+        }
+      rescue ParseError => e
+        new_diag = Diagnostic.from_parse_error(e, file: input_path, source: source)
+        unless all_diagnostics.any? { |d| d.message == new_diag.message && d.line == new_diag.line }
+          all_diagnostics << new_diag
+        end
+        {
+          success: false,
+          output_path: nil,
+          diagnostics: all_diagnostics,
+        }
+      rescue Scanner::ScanError => e
+        new_diag = Diagnostic.from_scan_error(e, file: input_path, source: source)
+        unless all_diagnostics.any? { |d| d.message == new_diag.message && d.line == new_diag.line }
+          all_diagnostics << new_diag
+        end
+        {
+          success: false,
+          output_path: nil,
+          diagnostics: all_diagnostics,
+        }
+      rescue ArgumentError => e
+        all_diagnostics << Diagnostic.new(
+          code: "TR0001",
+          message: e.message,
+          file: input_path,
+          severity: Diagnostic::SEVERITY_ERROR
+        )
+        {
+          success: false,
+          output_path: nil,
+          diagnostics: all_diagnostics,
+        }
+      end
+    end
+
+    # Analyze source code without compiling - returns diagnostics only
+    # This is the unified analysis interface for LSP and other tools
+    # @param source [String] T-Ruby source code
+    # @param file [String] File path for error reporting (optional)
+    # @return [Array<Diagnostic>] Array of diagnostic objects
+    def analyze(source, file: "<source>")
+      diagnostics = []
+      source_lines = source.split("\n")
+
+      # Run ErrorHandler checks (syntax validation, duplicate definitions, etc.)
+      error_handler = ErrorHandler.new(source)
+      errors = error_handler.check
+      errors.each do |error|
+        # Parse line number from "Line N: message" format
+        next unless error =~ /^Line (\d+):\s*(.+)$/
+
+        line_num = Regexp.last_match(1).to_i
+        message = Regexp.last_match(2)
+        source_line = source_lines[line_num - 1] if line_num.positive?
+        diagnostics << Diagnostic.new(
+          code: "TR1002",
+          message: message,
+          file: file,
+          line: line_num,
+          column: 1,
+          source_line: source_line,
+          severity: Diagnostic::SEVERITY_ERROR
+        )
+      end
+
+      # Run TokenDeclarationParser for colon spacing and declaration syntax validation
+      begin
+        scanner = Scanner.new(source)
+        tokens = scanner.scan_all
+        decl_parser = ParserCombinator::TokenDeclarationParser.new
+        decl_parser.parse_program(tokens)
+
+        if decl_parser.has_errors?
+          decl_parser.errors.each do |err|
+            source_line = source_lines[err.line - 1] if err.line.positive? && err.line <= source_lines.length
+            diagnostics << Diagnostic.new(
+              code: "TR1003",
+              message: err.message,
+              file: file,
+              line: err.line,
+              column: err.column,
+              source_line: source_line,
+              severity: Diagnostic::SEVERITY_ERROR
+            )
+          end
+        end
+      rescue Scanner::ScanError
+        # Scanner errors will be caught below in the main parse section
+      rescue StandardError
+        # Ignore TokenDeclarationParser errors for now - regex parser is authoritative
+      end
+
+      begin
+        # Parse source with regex-based parser for IR generation
+        parser = Parser.new(source)
+        parser.parse
+
+        # Run type checking if enabled and IR is available
+        if type_check? && parser.ir_program
+          begin
+            check_types(parser.ir_program, file)
+          rescue TypeCheckError => e
+            diagnostics << Diagnostic.from_type_check_error(e, file: file, source: source)
+          end
+        end
+      rescue ParseError => e
+        diagnostics << Diagnostic.from_parse_error(e, file: file, source: source)
+      rescue Scanner::ScanError => e
+        diagnostics << Diagnostic.from_scan_error(e, file: file, source: source)
+      rescue StandardError => e
+        diagnostics << Diagnostic.new(
+          code: "TR0001",
+          message: e.message,
+          file: file,
+          line: 1,
+          column: 1,
+          severity: Diagnostic::SEVERITY_ERROR
+        )
+      end
+
+      diagnostics
+    end
+
     # Compile T-Ruby source code from a string (useful for WASM/playground)
     # @param source [String] T-Ruby source code
     # @param options [Hash] Options for compilation

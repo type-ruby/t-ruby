@@ -509,4 +509,295 @@ RSpec.describe TRuby::ParserCombinator do
       expect(result.value).to eq(42)
     end
   end
+
+  describe TRuby::ParserCombinator::Lookahead do
+    include TRuby::ParserCombinator::DSL
+
+    it "succeeds without consuming input" do
+      parser = literal("hello").lookahead
+      result = parser.parse("hello world")
+
+      expect(result.success?).to be true
+      expect(result.value).to eq("hello")
+      expect(result.position).to eq(0) # Position should not advance
+    end
+
+    it "returns failure when inner parser fails" do
+      parser = literal("hello").lookahead
+      result = parser.parse("world")
+
+      expect(result.failure?).to be true
+    end
+  end
+
+  describe TRuby::ParserCombinator::NotFollowedBy do
+    include TRuby::ParserCombinator::DSL
+
+    it "succeeds when inner parser fails" do
+      parser = literal("foo").not_followed_by
+      result = parser.parse("bar")
+
+      expect(result.success?).to be true
+      expect(result.value).to be_nil
+    end
+
+    it "fails when inner parser succeeds" do
+      parser = literal("foo").not_followed_by
+      result = parser.parse("foobar")
+
+      expect(result.failure?).to be true
+      expect(result.error).to include("Unexpected")
+    end
+  end
+
+  describe TRuby::ParserCombinator::FlatMap do
+    include TRuby::ParserCombinator::DSL
+
+    it "chains parsers based on result" do
+      # Parse a digit, then parse that many 'a' characters
+      parser = digit.flat_map { |n| literal("a" * n.to_i) }
+      result = parser.parse("3aaa")
+
+      expect(result.success?).to be true
+      expect(result.value).to eq("aaa")
+    end
+
+    it "returns failure if first parser fails" do
+      parser = digit.flat_map { |n| literal("a" * n.to_i) }
+      result = parser.parse("xaaa")
+
+      expect(result.failure?).to be true
+    end
+
+    it "returns failure if chained parser fails" do
+      parser = digit.flat_map { |n| literal("a" * n.to_i) }
+      result = parser.parse("3aa") # Only 2 'a's, needs 3
+
+      expect(result.failure?).to be true
+    end
+  end
+
+  describe TRuby::ParserCombinator::Pure do
+    it "always succeeds with the given value" do
+      parser = TRuby::ParserCombinator::Pure.new(42)
+      result = parser.parse("anything")
+
+      expect(result.success?).to be true
+      expect(result.value).to eq(42)
+      expect(result.position).to eq(0)
+    end
+  end
+
+  describe TRuby::ParserCombinator::Fail do
+    it "always fails with the given message" do
+      parser = TRuby::ParserCombinator::Fail.new("custom error")
+      result = parser.parse("anything")
+
+      expect(result.failure?).to be true
+      expect(result.error).to eq("custom error")
+    end
+  end
+
+  describe TRuby::ParserCombinator::ParseResult, "#flat_map" do
+    it "transforms successful result with function" do
+      result = described_class.success(5, "input", 1)
+      mapped = result.flat_map { |v, rem, pos| described_class.success(v * 2, rem, pos + 1) }
+
+      expect(mapped.success?).to be true
+      expect(mapped.value).to eq(10)
+      expect(mapped.position).to eq(2)
+    end
+
+    it "returns same failure without calling block" do
+      result = described_class.failure("error", "input", 1)
+      block_called = false
+      mapped = result.flat_map { |_v, _r, _p| block_called = true }
+
+      expect(mapped.failure?).to be true
+      expect(block_called).to be false
+    end
+  end
+
+  describe TRuby::ParserCombinator::Parser, "#label" do
+    include TRuby::ParserCombinator::DSL
+
+    it "adds descriptive label to error" do
+      parser = digit.label("a digit")
+      result = parser.parse("abc")
+
+      expect(result.failure?).to be true
+      expect(result.error).to include("digit")
+    end
+  end
+
+  describe "Token-based parsers" do
+    # Helper to create mock tokens
+    def mock_token(type, value)
+      double("Token", type: type, value: value)
+    end
+
+    describe TRuby::ParserCombinator::TokenParseResult do
+      describe "#map" do
+        it "transforms successful result" do
+          result = described_class.success(5, [], 1)
+          mapped = result.map { |v| v * 2 }
+
+          expect(mapped.success?).to be true
+          expect(mapped.value).to eq(10)
+        end
+
+        it "returns same failure" do
+          result = described_class.failure("error", [], 1)
+          mapped = result.map { |v| v * 2 }
+
+          expect(mapped.failure?).to be true
+        end
+      end
+    end
+
+    describe TRuby::ParserCombinator::TokenMany1 do
+      it "parses one or more tokens" do
+        tokens = [
+          mock_token(:IDENT, "a"),
+          mock_token(:IDENT, "b"),
+          mock_token(:IDENT, "c"),
+          mock_token(:OTHER, "x"),
+        ]
+
+        inner_parser = Class.new(TRuby::ParserCombinator::TokenParser) do
+          def parse(tokens, position = 0)
+            return TRuby::ParserCombinator::TokenParseResult.failure("end", tokens, position) if position >= tokens.length
+
+            token = tokens[position]
+            if token.type == :IDENT
+              TRuby::ParserCombinator::TokenParseResult.success(token.value, tokens, position + 1)
+            else
+              TRuby::ParserCombinator::TokenParseResult.failure("not ident", tokens, position)
+            end
+          end
+        end.new
+
+        parser = TRuby::ParserCombinator::TokenMany1.new(inner_parser)
+        result = parser.parse(tokens, 0)
+
+        expect(result.success?).to be true
+        expect(result.value).to eq(%w[a b c])
+        expect(result.position).to eq(3)
+      end
+
+      it "fails when no matches" do
+        tokens = [mock_token(:OTHER, "x")]
+
+        inner_parser = Class.new(TRuby::ParserCombinator::TokenParser) do
+          def parse(tokens, position = 0)
+            TRuby::ParserCombinator::TokenParseResult.failure("no match", tokens, position)
+          end
+        end.new
+
+        parser = TRuby::ParserCombinator::TokenMany1.new(inner_parser)
+        result = parser.parse(tokens, 0)
+
+        expect(result.failure?).to be true
+      end
+    end
+
+    describe TRuby::ParserCombinator::TokenSepBy1 do
+      it "parses items separated by delimiter" do
+        tokens = [
+          mock_token(:IDENT, "a"),
+          mock_token(:COMMA, ","),
+          mock_token(:IDENT, "b"),
+          mock_token(:COMMA, ","),
+          mock_token(:IDENT, "c"),
+        ]
+
+        item_parser = Class.new(TRuby::ParserCombinator::TokenParser) do
+          def parse(tokens, position = 0)
+            return TRuby::ParserCombinator::TokenParseResult.failure("end", tokens, position) if position >= tokens.length
+
+            token = tokens[position]
+            if token.type == :IDENT
+              TRuby::ParserCombinator::TokenParseResult.success(token.value, tokens, position + 1)
+            else
+              TRuby::ParserCombinator::TokenParseResult.failure("not ident", tokens, position)
+            end
+          end
+        end.new
+
+        delim_parser = Class.new(TRuby::ParserCombinator::TokenParser) do
+          def parse(tokens, position = 0)
+            return TRuby::ParserCombinator::TokenParseResult.failure("end", tokens, position) if position >= tokens.length
+
+            token = tokens[position]
+            if token.type == :COMMA
+              TRuby::ParserCombinator::TokenParseResult.success(token.value, tokens, position + 1)
+            else
+              TRuby::ParserCombinator::TokenParseResult.failure("not comma", tokens, position)
+            end
+          end
+        end.new
+
+        parser = TRuby::ParserCombinator::TokenSepBy1.new(item_parser, delim_parser)
+        result = parser.parse(tokens, 0)
+
+        expect(result.success?).to be true
+        expect(result.value).to eq(%w[a b c])
+      end
+
+      it "fails when first item fails" do
+        tokens = [mock_token(:COMMA, ",")]
+
+        item_parser = Class.new(TRuby::ParserCombinator::TokenParser) do
+          def parse(tokens, position = 0)
+            TRuby::ParserCombinator::TokenParseResult.failure("no item", tokens, position)
+          end
+        end.new
+
+        delim_parser = Class.new(TRuby::ParserCombinator::TokenParser) do
+          def parse(tokens, position = 0)
+            TRuby::ParserCombinator::TokenParseResult.success(",", tokens, position + 1)
+          end
+        end.new
+
+        parser = TRuby::ParserCombinator::TokenSepBy1.new(item_parser, delim_parser)
+        result = parser.parse(tokens, 0)
+
+        expect(result.failure?).to be true
+      end
+    end
+
+    describe TRuby::ParserCombinator::TokenLabel do
+      it "adds label to error message on failure" do
+        tokens = [mock_token(:OTHER, "x")]
+
+        inner_parser = Class.new(TRuby::ParserCombinator::TokenParser) do
+          def parse(tokens, position = 0)
+            TRuby::ParserCombinator::TokenParseResult.failure("generic error", tokens, position)
+          end
+        end.new
+
+        parser = TRuby::ParserCombinator::TokenLabel.new(inner_parser, "identifier")
+        result = parser.parse(tokens, 0)
+
+        expect(result.failure?).to be true
+        expect(result.error).to include("Expected identifier")
+      end
+
+      it "returns success unchanged" do
+        tokens = [mock_token(:IDENT, "foo")]
+
+        inner_parser = Class.new(TRuby::ParserCombinator::TokenParser) do
+          def parse(tokens, position = 0)
+            TRuby::ParserCombinator::TokenParseResult.success("foo", tokens, position + 1)
+          end
+        end.new
+
+        parser = TRuby::ParserCombinator::TokenLabel.new(inner_parser, "identifier")
+        result = parser.parse(tokens, 0)
+
+        expect(result.success?).to be true
+        expect(result.value).to eq("foo")
+      end
+    end
+  end
 end
