@@ -835,84 +835,16 @@ module TRuby
         return nil unless type_str
 
         type_str = type_str.strip
+        return nil if type_str.empty?
 
-        # Use ParserCombinator::TypeParser for proper array shorthand support
-        # Falls back to legacy parsing if TypeParser is not available
+        # Use ParserCombinator::TypeParser for all type parsing
+        # Supports: simple types, generics, array shorthand, union, intersection, function types
         @type_parser ||= TRuby::ParserCombinator::TypeParser.new
         result = @type_parser.parse(type_str)
         return result[:type] if result[:success]
 
-        # Legacy parsing fallback
-
-        # Union type
-        if type_str.include?("|")
-          types = type_str.split("|").map { |t| parse_type(t.strip) }
-          return UnionType.new(types: types)
-        end
-
-        # Intersection type
-        if type_str.include?("&")
-          types = type_str.split("&").map { |t| parse_type(t.strip) }
-          return IntersectionType.new(types: types)
-        end
-
-        # Nullable type
-        if type_str.end_with?("?")
-          inner = parse_type(type_str[0..-2])
-          return NullableType.new(inner_type: inner)
-        end
-
-        # Generic type
-        if type_str.include?("<") && type_str.include?(">")
-          match = type_str.match(/^(\w+)<(.+)>$/)
-          if match
-            base = match[1]
-            args = parse_generic_args(match[2])
-            return GenericType.new(base: base, type_args: args)
-          end
-        end
-
-        # Function type
-        if type_str.include?("->")
-          match = type_str.match(/^\((.*)?\)\s*->\s*(.+)$/)
-          if match
-            param_types = match[1] ? match[1].split(",").map { |t| parse_type(t.strip) } : []
-            return_type = parse_type(match[2])
-            return FunctionType.new(param_types: param_types, return_type: return_type)
-          end
-        end
-
-        # Simple type
+        # Fallback for unparseable types - return as SimpleType
         SimpleType.new(name: type_str)
-      end
-
-      def parse_generic_args(args_str)
-        args = []
-        current = ""
-        depth = 0
-
-        args_str.each_char do |char|
-          case char
-          when "<"
-            depth += 1
-            current += char
-          when ">"
-            depth -= 1
-            current += char
-          when ","
-            if depth.zero?
-              args << parse_type(current.strip)
-              current = ""
-            else
-              current += char
-            end
-          else
-            current += char
-          end
-        end
-
-        args << parse_type(current.strip) unless current.empty?
-        args
       end
     end
 
