@@ -781,6 +781,7 @@ module TRuby
         end
 
         # Check for tuple type: (Type, Type) -> ReturnType
+        # or parenthesized type: (String | Integer)[]
         if tokens[position].type == :lparen
           position += 1
           param_types = []
@@ -811,6 +812,11 @@ module TRuby
 
             node = IR::FunctionType.new(param_types: param_types, return_type: return_result.value)
             return TokenParseResult.success(node, tokens, return_result.position)
+          elsif param_types.length == 1
+            # Single type in parentheses: (String | Integer)
+            # Check for postfix operators like [] or ?
+            type = param_types[0]
+            return parse_postfix_type_operators(tokens, position, type)
           else
             node = IR::TupleType.new(element_types: param_types)
             return TokenParseResult.success(node, tokens, position)
@@ -825,6 +831,13 @@ module TRuby
         # Simple type or generic type
         type_name = tokens[position].value
         position += 1
+
+        # Handle type names ending with ? (e.g., "String?" scanned as single token)
+        # This happens because Ruby allows ? in method/identifier names
+        is_nullable_from_name = type_name.end_with?("?")
+        if is_nullable_from_name
+          type_name = type_name.chomp("?")
+        end
 
         # Check for generic arguments: Type<Args>
         if position < tokens.length && tokens[position].type == :lt
@@ -848,17 +861,46 @@ module TRuby
           position += 1
 
           node = IR::GenericType.new(base: type_name, type_args: type_args)
-          TokenParseResult.success(node, tokens, position)
-        elsif position < tokens.length && tokens[position].type == :question
-          # Check for nullable: Type?
-          position += 1
-          inner = IR::SimpleType.new(name: type_name)
-          node = IR::NullableType.new(inner_type: inner)
-          TokenParseResult.success(node, tokens, position)
+          # Wrap in NullableType if the original type name ended with ?
+          node = IR::NullableType.new(inner_type: node) if is_nullable_from_name
+          # Apply postfix operators ([] or ?) to generic types too
+          parse_postfix_type_operators(tokens, position, node)
         else
+          # Simple type - apply postfix operators
           node = IR::SimpleType.new(name: type_name)
-          TokenParseResult.success(node, tokens, position)
+          # Wrap in NullableType if the original type name ended with ?
+          node = IR::NullableType.new(inner_type: node) if is_nullable_from_name
+          parse_postfix_type_operators(tokens, position, node)
         end
+      end
+
+      # Parse postfix type operators: [] (array shorthand) and ? (nullable)
+      # Handles patterns like:
+      #   String[]     => Array<String>
+      #   Integer[][]  => Array<Array<Integer>>
+      #   String[]?    => NullableType(Array<String>)
+      #   String?[]    => Array<NullableType(String)>
+      #   (A | B)[]    => Array<UnionType(A, B)>
+      def parse_postfix_type_operators(tokens, position, type)
+        loop do
+          break if position >= tokens.length
+
+          case tokens[position].type
+          when :lbracket
+            # Check for [] (empty brackets for array shorthand)
+            break unless tokens[position + 1]&.type == :rbracket
+
+            position += 2
+            type = IR::GenericType.new(base: "Array", type_args: [type])
+          when :question
+            position += 1
+            type = IR::NullableType.new(inner_type: type)
+          else
+            break
+          end
+        end
+
+        TokenParseResult.success(type, tokens, position)
       end
 
       # Parse hash literal type: { key: Type, key2: Type }

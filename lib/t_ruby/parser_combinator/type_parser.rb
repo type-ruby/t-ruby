@@ -81,9 +81,24 @@ module TRuby
           generic_type
         )
 
-        # With optional nullable suffix
-        base_type = (primary_type >> nullable_suffix.optional).map do |(type, nullable)|
-          nullable ? IR::NullableType.new(inner_type: type) : type
+        # Array shorthand suffix: [] (can be repeated for nested arrays)
+        array_suffix = string("[]")
+
+        # Postfix operators: ([] | ?)*
+        # Handles: String[], Integer[][], String[]?, String?[], etc.
+        postfix_op = array_suffix | nullable_suffix
+
+        base_type = (primary_type >> postfix_op.many).map do |(initial_type, ops)|
+          ops.reduce(initial_type) do |type, op|
+            case op
+            when "[]"
+              IR::GenericType.new(base: "Array", type_args: [type])
+            when "?"
+              IR::NullableType.new(inner_type: type)
+            else
+              type
+            end
+          end
         end
 
         # Union type: Type | Type | ...

@@ -238,7 +238,7 @@ watch:
 
 - **타입 어노테이션** — 파라미터와 리턴 타입, 컴파일 시 제거됨
 - **유니온 타입** — `String | Integer | nil`
-- **제네릭** — `Array<User>`, `Hash<String, Integer>`
+- **제네릭** — `User[]`, `Array<User>`, `Hash<String, Integer>`
 - **인터페이스** — 객체 간 계약 정의
 - **타입 별칭** — `type UserID = Integer`
 - **RBS 생성** — Steep, Ruby LSP, Sorbet과 연동

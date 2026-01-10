@@ -243,7 +243,7 @@ watch:
 
 - **Type annotations** — Parameter and return types, erased at compile time
 - **Union types** — `String | Integer | nil`
-- **Generics** — `Array<User>`, `Hash<String, Integer>`
+- **Generics** — `User[]`, `Array<User>`, `Hash<String, Integer>`
 - **Interfaces** — Define contracts between objects
 - **Type aliases** — `type UserID = Integer`
 - **RBS generation** — Works with Steep, Ruby LSP, Sorbet
