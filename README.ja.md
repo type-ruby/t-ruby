@@ -238,7 +238,7 @@ watch:
 
 - **型アノテーション** — パラメータと戻り値の型、コンパイル時に削除
 - **ユニオン型** — `String | Integer | nil`
-- **ジェネリクス** — `Array<User>`, `Hash<String, Integer>`
+- **ジェネリクス** — `User[]`, `Array<User>`, `Hash<String, Integer>`
 - **インターフェース** — オブジェクト間の契約を定義
 - **型エイリアス** — `type UserID = Integer`
 - **RBS 生成** — Steep、Ruby LSP、Sorbet と連携

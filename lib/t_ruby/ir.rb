@@ -646,7 +646,13 @@ module TRuby
       end
 
       def to_rbs
-        "#{@inner_type.to_rbs}?"
+        inner_rbs = @inner_type.to_rbs
+        # Simple types can use ? suffix, complex types need (Type | nil) form
+        if @inner_type.is_a?(SimpleType)
+          "#{inner_rbs}?"
+        else
+          "(#{inner_rbs} | nil)"
+        end
       end
 
       def to_trb
@@ -829,6 +835,14 @@ module TRuby
         return nil unless type_str
 
         type_str = type_str.strip
+
+        # Use ParserCombinator::TypeParser for proper array shorthand support
+        # Falls back to legacy parsing if TypeParser is not available
+        @type_parser ||= TRuby::ParserCombinator::TypeParser.new
+        result = @type_parser.parse(type_str)
+        return result[:type] if result[:success]
+
+        # Legacy parsing fallback
 
         # Union type
         if type_str.include?("|")
