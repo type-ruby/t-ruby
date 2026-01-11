@@ -13,6 +13,7 @@ module TRuby
         trc --watch, -w          Watch input files and recompile on change
         trc --decl <file.trb>    Generate .d.trb declaration file
         trc --lsp                Start LSP server (for IDE integration)
+        trc run <file.trb>       Run a .trb file directly (delegates to t-ruby)
         trc update               Update t-ruby to the latest version
         trc --version, -v        Show version (and check for updates)
         trc --help, -h           Show this help
@@ -27,6 +28,7 @@ module TRuby
         trc --watch hello.trb    Watch specific file for changes
         trc --decl hello.trb     Generate hello.d.trb declaration file
         trc --lsp                Start language server for VS Code
+        trc run hello.trb        Run hello.trb directly without compilation
     HELP
 
     def self.run(args)
@@ -61,6 +63,11 @@ module TRuby
 
       if @args.include?("--lsp")
         start_lsp_server
+        return
+      end
+
+      if @args.first == "run"
+        run_direct
         return
       end
 
@@ -184,6 +191,16 @@ module TRuby
     def start_lsp_server
       server = LSPServer.new
       server.run
+    end
+
+    def run_direct
+      remaining_args = @args[1..] || []
+
+      # Find t-ruby executable path
+      t_ruby_bin = File.expand_path("../../bin/t-ruby", __dir__)
+
+      # Execute t-ruby (replaces current process)
+      exec(t_ruby_bin, *remaining_args)
     end
 
     def start_watch_mode

@@ -29,6 +29,7 @@ require_relative "t_ruby/declaration_generator"
 require_relative "t_ruby/compiler"
 require_relative "t_ruby/lsp_server"
 require_relative "t_ruby/watcher"
+require_relative "t_ruby/runner"
 require_relative "t_ruby/cli"
 
 # Milestone 4: Advanced Features
