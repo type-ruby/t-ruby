@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir["lib/**/*.rb", "bin/*", "LICENSE", "README.md"]
   spec.bindir = "bin"
-  spec.executables = ["trc", "t-ruby"]
+  spec.executables = %w[trc t-ruby]
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
