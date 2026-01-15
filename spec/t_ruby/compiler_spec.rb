@@ -769,5 +769,27 @@ describe TRuby::Compiler do
         expect(output_content).to include("yield(item, 0)")
       end
     end
+
+    it "compiles yield as expression (assignment)" do
+      Dir.mktmpdir do |tmpdir|
+        input_file = File.join(tmpdir, "test.trb")
+        File.write(input_file, <<~TRB)
+          def transform
+            result = yield(value)
+            result
+          end
+        TRB
+
+        allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+
+        compiler = TRuby::Compiler.new(config)
+        output_path = compiler.compile(input_file)
+
+        output_content = File.read(output_path)
+        expect(output_content).to include("result = yield(value)")
+      end
+    end
   end
 end

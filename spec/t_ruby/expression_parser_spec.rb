@@ -516,4 +516,34 @@ RSpec.describe TRuby::ParserCombinator::ExpressionParser do
       expect(result.value.method_name).to eq("[]")
     end
   end
+
+  describe "yield expressions" do
+    it "parses yield without arguments as expression" do
+      scanner = TRuby::Scanner.new("yield")
+      result = parser.parse_expression(scanner.scan_all, 0)
+
+      expect(result.success?).to be true
+      expect(result.value).to be_a(TRuby::IR::Yield)
+      expect(result.value.arguments).to be_empty
+    end
+
+    it "parses yield with parenthesized arguments" do
+      scanner = TRuby::Scanner.new("yield(1, 2)")
+      result = parser.parse_expression(scanner.scan_all, 0)
+
+      expect(result.success?).to be true
+      expect(result.value).to be_a(TRuby::IR::Yield)
+      expect(result.value.arguments.length).to eq(2)
+    end
+
+    it "parses yield in assignment context" do
+      # This tests that yield can appear on RHS of assignment
+      scanner = TRuby::Scanner.new("yield(x)")
+      result = parser.parse_expression(scanner.scan_all, 0)
+
+      expect(result.success?).to be true
+      expect(result.value).to be_a(TRuby::IR::Yield)
+      expect(result.value.arguments.length).to eq(1)
+    end
+  end
 end
