@@ -361,6 +361,45 @@ RSpec.describe TRuby::ParserCombinator do
         expect(result[:type].return_type.name).to eq("Boolean")
       end
 
+      it "parses Proc type with single parameter" do
+        result = parser.parse("Proc(Integer) -> String")
+        expect(result[:success]).to be true
+        expect(result[:type]).to be_a(TRuby::IR::FunctionType)
+        expect(result[:type].param_types.length).to eq(1)
+        expect(result[:type].param_types.first.name).to eq("Integer")
+        expect(result[:type].return_type.name).to eq("String")
+      end
+
+      it "parses Proc type with multiple parameters" do
+        result = parser.parse("Proc(String, Integer) -> Boolean")
+        expect(result[:success]).to be true
+        expect(result[:type]).to be_a(TRuby::IR::FunctionType)
+        expect(result[:type].param_types.length).to eq(2)
+        expect(result[:type].return_type.name).to eq("Boolean")
+      end
+
+      it "parses Proc type with no parameters" do
+        result = parser.parse("Proc() -> void")
+        expect(result[:success]).to be true
+        expect(result[:type]).to be_a(TRuby::IR::FunctionType)
+        expect(result[:type].param_types).to be_empty
+        expect(result[:type].return_type.name).to eq("void")
+      end
+
+      it "parses Proc type with generic return type" do
+        result = parser.parse("Proc(Integer) -> Array<String>")
+        expect(result[:success]).to be true
+        expect(result[:type]).to be_a(TRuby::IR::FunctionType)
+        expect(result[:type].return_type).to be_a(TRuby::IR::GenericType)
+        expect(result[:type].return_type.base).to eq("Array")
+      end
+
+      it "converts Proc type to correct RBS format" do
+        result = parser.parse("Proc(String, Integer) -> Boolean")
+        expect(result[:success]).to be true
+        expect(result[:type].to_rbs).to eq("^(String, Integer) -> Boolean")
+      end
+
       it "parses tuple type" do
         result = parser.parse("[String, Integer, Boolean]")
         expect(result[:success]).to be true

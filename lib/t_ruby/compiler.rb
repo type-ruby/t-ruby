@@ -656,21 +656,119 @@ module TRuby
     def erase_parameter_types(source)
       result = source.dup
 
-      # Match function definitions and remove type annotations from parameters
-      # Also supports visibility modifiers: private def, protected def, public def
-      result.gsub!(/^(\s*#{TRuby::VISIBILITY_PATTERN}def\s+#{TRuby::METHOD_NAME_PATTERN}\s*\()([^)]+)(\)\s*)(?::\s*[^\n]+)?(\s*$)/) do |_match|
-        indent = ::Regexp.last_match(1)
-        params = ::Regexp.last_match(2)
-        close_paren = ::Regexp.last_match(3)
-        ending = ::Regexp.last_match(4)
+      # Process each method definition individually
+      # to handle nested parentheses in types like Proc(Integer) -> String
+      lines = result.lines
+      output_lines = []
+      i = 0
 
-        # Remove type annotations from each parameter
-        cleaned_params = remove_param_types(params)
+      while i < lines.length
+        line = lines[i]
 
-        "#{indent}#{cleaned_params}#{close_paren.rstrip}#{ending}"
+        # Check if line starts a method definition
+        if (match = line.match(/^(\s*#{TRuby::VISIBILITY_PATTERN}def\s+#{TRuby::METHOD_NAME_PATTERN}\s*\()/))
+          prefix = match[1]
+          rest_of_line = line[match.end(0)..]
+          start_line = i
+
+          # Collect the full parameter section (may span multiple lines)
+          param_text = rest_of_line
+          paren_depth = 1
+          brace_depth = 0
+          bracket_depth = 0
+          found_close = false
+
+          # Find matching closing paren within current line first
+          param_text.each_char do |char|
+            case char
+            when "(" then paren_depth += 1
+            when ")"
+              paren_depth -= 1
+              if paren_depth.zero? && brace_depth.zero?
+                found_close = true
+                break
+              end
+            when "{" then brace_depth += 1
+            when "}" then brace_depth -= 1
+            when "[" then bracket_depth += 1
+            when "]" then bracket_depth -= 1
+            end
+          end
+
+          # If not found, continue to next lines
+          while !found_close && i + 1 < lines.length
+            i += 1
+            param_text += lines[i]
+            lines[i].each_char do |char|
+              case char
+              when "(" then paren_depth += 1
+              when ")"
+                paren_depth -= 1
+                if paren_depth.zero? && brace_depth.zero?
+                  found_close = true
+                  break
+                end
+              when "{" then brace_depth += 1
+              when "}" then brace_depth -= 1
+              when "[" then bracket_depth += 1
+              when "]" then bracket_depth -= 1
+              end
+            end
+          end
+
+          # Extract params and remainder
+          params, remainder = extract_balanced_params(param_text)
+
+          if params && found_close
+            cleaned_params = remove_param_types(params)
+            remainder = remainder.sub(/^\s*:\s*[^\n]+/, "")
+            output_lines << "#{prefix}#{cleaned_params})#{remainder}"
+          else
+            # Couldn't process, keep original lines
+            (start_line..i).each { |j| output_lines << lines[j] }
+          end
+        else
+          output_lines << line
+        end
+
+        i += 1
       end
 
-      result
+      output_lines.join
+    end
+
+    # Extract parameters from string, handling nested parentheses and braces
+    # Returns [params_string, remainder] or [nil, nil] if no match
+    def extract_balanced_params(str)
+      paren_depth = 1  # We're already past the opening paren
+      brace_depth = 0
+      bracket_depth = 0
+      pos = 0
+
+      str.each_char.with_index do |char, i|
+        case char
+        when "("
+          paren_depth += 1
+        when ")"
+          paren_depth -= 1
+          if paren_depth.zero? && brace_depth.zero? && bracket_depth.zero?
+            pos = i
+            break
+          end
+        when "{"
+          brace_depth += 1
+        when "}"
+          brace_depth -= 1
+        when "["
+          bracket_depth += 1
+        when "]"
+          bracket_depth -= 1
+        end
+      end
+
+      return [nil, nil] if paren_depth != 0
+
+      [str[0...pos], str[(pos + 1)..]]
     end
 
     # Remove type annotations from parameter list

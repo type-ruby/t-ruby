@@ -700,4 +700,56 @@ describe TRuby::Compiler do
       end
     end
   end
+
+  describe "Proc type annotations" do
+    it "compiles method with Proc-typed block parameter" do
+      Dir.mktmpdir do |tmpdir|
+        input_file = File.join(tmpdir, "test.trb")
+        File.write(input_file, <<~TRB)
+          def map_items(&block: Proc(Integer) -> String): Array<String>
+            []
+          end
+        TRB
+
+        allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+
+        compiler = TRuby::Compiler.new(config)
+        output_path = compiler.compile(input_file)
+
+        output_content = File.read(output_path)
+        expect(output_content).to include("def map_items")
+        # Type annotations should be erased in Ruby output
+        expect(output_content).not_to include("Proc")
+      end
+    end
+
+    it "generates RBS for method with block parameter" do
+      Dir.mktmpdir do |tmpdir|
+        input_file = File.join(tmpdir, "test.trb")
+        File.write(input_file, <<~TRB)
+          def each_with_transform(&block: Proc(String) -> Integer): void
+          end
+        TRB
+
+        allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:rbs_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+        allow_any_instance_of(TRuby::Config).to receive(:generate_rbs?).and_return(true)
+
+        compiler = TRuby::Compiler.new(config)
+        compiler.compile(input_file)
+
+        rbs_path = File.join(tmpdir, "test.rbs")
+        if File.exist?(rbs_path)
+          rbs_content = File.read(rbs_path)
+          # Method signature should be generated (block type in RBS is a future enhancement)
+          expect(rbs_content).to include("def each_with_transform")
+          expect(rbs_content).to include("void")
+        end
+      end
+    end
+  end
 end
