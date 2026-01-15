@@ -811,7 +811,8 @@ module TRuby
         params = (info[:params] || []).map do |param|
           Parameter.new(
             name: param[:name],
-            type_annotation: param[:type] ? parse_type(param[:type]) : nil
+            type_annotation: param[:ir_type] || (param[:type] ? parse_type(param[:type]) : nil),
+            kind: param[:kind] || :required
           )
         end
 
@@ -1021,10 +1022,23 @@ module TRuby
       end
 
       def visit_method_def(node)
-        params = node.params.map do |param|
+        # Separate block params from regular params
+        regular_params = node.params.reject { |p| p.kind == :block }
+        block_param = node.params.find { |p| p.kind == :block }
+
+        params = regular_params.map do |param|
           type = param.type_annotation&.to_rbs || "untyped"
           "#{param.name}: #{type}"
         end.join(", ")
+
+        # Build block signature if block param has FunctionType annotation
+        block_sig = nil
+        if block_param&.type_annotation.is_a?(FunctionType)
+          func_type = block_param.type_annotation
+          block_params = func_type.param_types.map(&:to_rbs).join(", ")
+          block_return = func_type.return_type.to_rbs
+          block_sig = "{ (#{block_params}) -> #{block_return} }"
+        end
 
         # 반환 타입: 명시적 타입 > 추론된 타입 > untyped
         return_type = node.return_type&.to_rbs
@@ -1041,7 +1055,13 @@ module TRuby
 
         return_type ||= "untyped"
         visibility_prefix = format_visibility(node.visibility)
-        emit("#{visibility_prefix}def #{node.name}: (#{params}) -> #{return_type}")
+
+        # Include block signature in RBS output: (params) { block } -> return
+        if block_sig
+          emit("#{visibility_prefix}def #{node.name}: (#{params}) #{block_sig} -> #{return_type}")
+        else
+          emit("#{visibility_prefix}def #{node.name}: (#{params}) -> #{return_type}")
+        end
       end
 
       def visit_class_decl(node)
