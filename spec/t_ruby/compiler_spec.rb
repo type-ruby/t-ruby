@@ -22,12 +22,7 @@ describe TRuby::Compiler do
           input_file = File.join(tmpdir, "test.trb")
           File.write(input_file, "puts 'Hello, world!'")
 
-          # Create a custom config with output in tmpdir
-          {
-            "emit" => { "rb" => true, "rbs" => false, "dtrb" => false },
-            "paths" => { "src" => "./src", "out" => tmpdir },
-            "strict" => { "rbs_compat" => true, "null_safety" => false, "inference" => "basic" },
-          }
+          # Mock config to use tmpdir as output
           allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
           allow_any_instance_of(TRuby::Config).to receive(:src_dir).and_return("./src")
 

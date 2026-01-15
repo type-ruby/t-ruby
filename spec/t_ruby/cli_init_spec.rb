@@ -78,7 +78,7 @@ describe TRuby::CLI do
 
     it "reports project already initialized when everything exists" do
       Dir.chdir(tmpdir) do
-        File.write("trbconfig.yml", "emit:\n  rb: true\n")
+        File.write("trbconfig.yml", "source:\n  include: [src]\n")
         Dir.mkdir("src")
         Dir.mkdir("build")
 
