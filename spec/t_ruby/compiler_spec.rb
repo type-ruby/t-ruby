@@ -700,4 +700,74 @@ describe TRuby::Compiler do
       end
     end
   end
+
+  describe "yield compilation" do
+    it "compiles method with yield without arguments to Ruby" do
+      Dir.mktmpdir do |tmpdir|
+        input_file = File.join(tmpdir, "test.trb")
+        File.write(input_file, <<~TRB)
+          def each_twice
+            yield
+            yield
+          end
+        TRB
+
+        allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+
+        compiler = TRuby::Compiler.new(config)
+        output_path = compiler.compile(input_file)
+
+        output_content = File.read(output_path)
+        expect(output_content).to include("def each_twice")
+        expect(output_content).to include("yield")
+        expect(output_content.scan("yield").length).to eq(2)
+      end
+    end
+
+    it "compiles yield with single argument" do
+      Dir.mktmpdir do |tmpdir|
+        input_file = File.join(tmpdir, "test.trb")
+        File.write(input_file, <<~TRB)
+          def map_values
+            yield(1)
+            yield(2)
+          end
+        TRB
+
+        allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+
+        compiler = TRuby::Compiler.new(config)
+        output_path = compiler.compile(input_file)
+
+        output_content = File.read(output_path)
+        expect(output_content).to include("yield(1)")
+        expect(output_content).to include("yield(2)")
+      end
+    end
+
+    it "compiles yield with multiple arguments" do
+      Dir.mktmpdir do |tmpdir|
+        input_file = File.join(tmpdir, "test.trb")
+        File.write(input_file, <<~TRB)
+          def each_with_index
+            yield(item, 0)
+          end
+        TRB
+
+        allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+        allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+
+        compiler = TRuby::Compiler.new(config)
+        output_path = compiler.compile(input_file)
+
+        output_content = File.read(output_path)
+        expect(output_content).to include("yield(item, 0)")
+      end
+    end
+  end
 end

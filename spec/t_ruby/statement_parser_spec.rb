@@ -346,4 +346,70 @@ RSpec.describe TRuby::ParserCombinator::StatementParser do
       end
     end
   end
+
+  describe "yield statements" do
+    describe "yield without arguments" do
+      let(:source) { "yield" }
+
+      it "parses yield without arguments" do
+        result = parser.parse_statement(tokens, 0)
+
+        expect(result.success?).to be true
+        expect(result.value).to be_a(TRuby::IR::Yield)
+        expect(result.value.arguments).to be_empty
+      end
+    end
+
+    describe "yield with single argument" do
+      let(:source) { "yield 42" }
+
+      it "parses yield with expression" do
+        result = parser.parse_statement(tokens, 0)
+
+        expect(result.success?).to be true
+        expect(result.value).to be_a(TRuby::IR::Yield)
+        expect(result.value.arguments.length).to eq(1)
+        expect(result.value.arguments.first).to be_a(TRuby::IR::Literal)
+        expect(result.value.arguments.first.value).to eq(42)
+      end
+    end
+
+    describe "yield with multiple arguments" do
+      let(:source) { "yield a, b, c" }
+
+      it "parses yield with multiple arguments" do
+        result = parser.parse_statement(tokens, 0)
+
+        expect(result.success?).to be true
+        expect(result.value).to be_a(TRuby::IR::Yield)
+        expect(result.value.arguments.length).to eq(3)
+      end
+    end
+
+    describe "yield with complex expression" do
+      let(:source) { "yield x + 1" }
+
+      it "parses yield with binary operation" do
+        result = parser.parse_statement(tokens, 0)
+
+        expect(result.success?).to be true
+        expect(result.value).to be_a(TRuby::IR::Yield)
+        expect(result.value.arguments.first).to be_a(TRuby::IR::BinaryOp)
+      end
+    end
+
+    describe "yield with modifier" do
+      let(:source) { "yield x if condition" }
+
+      it "parses yield with if modifier" do
+        result = parser.parse_statement(tokens, 0)
+
+        expect(result.success?).to be true
+        expect(result.value).to be_a(TRuby::IR::Conditional)
+        expect(result.value.kind).to eq(:if)
+        expect(result.value.then_branch).to be_a(TRuby::IR::Block)
+        expect(result.value.then_branch.statements.first).to be_a(TRuby::IR::Yield)
+      end
+    end
+  end
 end
