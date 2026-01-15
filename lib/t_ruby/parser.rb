@@ -344,17 +344,19 @@ module TRuby
 
     # Block parameter parsing: &block or &block: Proc(T) -> R
     def parse_block_parameter(param)
-      # &name or &name: Type
-      match = param.match(/^&(\w+)(?::\s*(.+?))?$/)
+      # &name or &name? or &name: Type or &name?: Type
+      match = param.match(/^&(\w+)(\?)?(?::\s*(.+?))?$/)
       return nil unless match
 
       param_name = match[1]
-      type_str = match[2]&.strip
+      optional = !match[2].nil?
+      type_str = match[3]&.strip
 
       result = {
         name: param_name,
         type: type_str,
         kind: :block,
+        optional: optional,
       }
 
       if type_str

@@ -147,19 +147,21 @@ module TRuby
 
     # Method parameter
     class Parameter < Node
-      attr_accessor :name, :type_annotation, :default_value, :kind, :interface_ref
+      attr_accessor :name, :type_annotation, :default_value, :kind, :interface_ref, :optional
 
       # kind: :required, :optional, :rest, :keyrest, :block, :keyword
       # :keyword - 키워드 인자 (구조분해): { name: String } → def foo(name:)
       # :keyrest - 더블 스플랫: **opts: Type → def foo(**opts)
       # interface_ref - interface 참조 타입 (예: }: UserParams 부분)
-      def initialize(name:, type_annotation: nil, default_value: nil, kind: :required, interface_ref: nil, **opts)
+      # optional - for block params: true if block is optional (&block?)
+      def initialize(name:, type_annotation: nil, default_value: nil, kind: :required, interface_ref: nil, optional: false, **opts)
         super(**opts)
         @name = name
         @type_annotation = type_annotation
         @default_value = default_value
         @kind = kind
         @interface_ref = interface_ref
+        @optional = optional
       end
     end
 
@@ -826,7 +828,8 @@ module TRuby
           Parameter.new(
             name: param[:name],
             type_annotation: param[:ir_type] || (param[:type] ? parse_type(param[:type]) : nil),
-            kind: param[:kind] || :required
+            kind: param[:kind] || :required,
+            optional: param[:optional] || false
           )
         end
 
@@ -1060,7 +1063,9 @@ module TRuby
           func_type = block_param.type_annotation
           block_params = func_type.param_types.map(&:to_rbs).join(", ")
           block_return = func_type.return_type.to_rbs
-          block_sig = "{ (#{block_params}) -> #{block_return} }"
+          # Use ?{ } for optional blocks, { } for required blocks
+          prefix = block_param.optional ? "?" : ""
+          block_sig = "#{prefix}{ (#{block_params}) -> #{block_return} }"
         end
 
         # 반환 타입: 명시적 타입 > 추론된 타입 > untyped
