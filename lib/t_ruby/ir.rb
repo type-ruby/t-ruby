@@ -615,22 +615,40 @@ module TRuby
 
     # Function/Proc type ((String, Integer) -> Boolean)
     class FunctionType < TypeNode
-      attr_accessor :param_types, :return_type
+      attr_accessor :param_types, :return_type, :callable_kind
 
-      def initialize(return_type:, param_types: [], **opts)
+      # callable_kind: :proc, :lambda, or nil (generic function type)
+      def initialize(return_type:, param_types: [], callable_kind: nil, **opts)
         super(**opts)
         @param_types = param_types
         @return_type = return_type
+        @callable_kind = callable_kind
       end
 
       def to_rbs
+        # RBS doesn't distinguish between Proc and Lambda
         params = @param_types.map(&:to_rbs).join(", ")
         "^(#{params}) -> #{@return_type.to_rbs}"
       end
 
       def to_trb
         params = @param_types.map(&:to_trb).join(", ")
-        "(#{params}) -> #{@return_type.to_trb}"
+        case @callable_kind
+        when :proc
+          "Proc(#{params}) -> #{@return_type.to_trb}"
+        when :lambda
+          "Lambda(#{params}) -> #{@return_type.to_trb}"
+        else
+          "(#{params}) -> #{@return_type.to_trb}"
+        end
+      end
+
+      def proc?
+        @callable_kind == :proc
+      end
+
+      def lambda?
+        @callable_kind == :lambda
       end
     end
 
