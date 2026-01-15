@@ -384,6 +384,61 @@ describe TRuby::Compiler do
           end.to raise_error(TRuby::TypeCheckError)
         end
       end
+
+      it "raises TypeCheckError when yield argument count mismatches block signature" do
+        Dir.mktmpdir do |tmpdir|
+          input_file = File.join(tmpdir, "yield_mismatch.trb")
+          File.write(input_file, <<~RUBY)
+            def each(&block: Proc(Integer, String) -> void): void
+              yield 1
+            end
+          RUBY
+
+          allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+          allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => false })
+          allow_any_instance_of(TRuby::Config).to receive(:type_check?).and_return(true)
+
+          compiler = TRuby::Compiler.new(config)
+
+          error = nil
+          begin
+            compiler.compile(input_file)
+          rescue TRuby::TypeCheckError => e
+            error = e
+          end
+
+          expect(error).to be_a(TRuby::TypeCheckError)
+          expect(error.message).to include("yield")
+          expect(error.message).to include("2 argument")
+          expect(error.message).to include("1 argument")
+        end
+      end
+
+      it "passes when yield argument count matches block signature" do
+        Dir.mktmpdir do |tmpdir|
+          input_file = File.join(tmpdir, "yield_match.trb")
+          File.write(input_file, <<~RUBY)
+            def each(&block: Proc(Integer) -> void): void
+              yield 1
+              yield 2
+            end
+          RUBY
+
+          allow_any_instance_of(TRuby::Config).to receive(:out_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:ruby_dir).and_return(tmpdir)
+          allow_any_instance_of(TRuby::Config).to receive(:source_include).and_return([tmpdir])
+          allow_any_instance_of(TRuby::Config).to receive(:compiler).and_return({ "generate_rbs" => false })
+          allow_any_instance_of(TRuby::Config).to receive(:type_check?).and_return(true)
+
+          compiler = TRuby::Compiler.new(config)
+
+          expect do
+            compiler.compile(input_file)
+          end.not_to raise_error
+        end
+      end
     end
 
     context "with directory structure preservation" do

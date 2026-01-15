@@ -382,9 +382,13 @@ module TRuby
         case decl
         when IR::MethodDef
           check_method_return_type(decl, nil, file_path)
+          check_yield_arguments(decl, nil, file_path)
         when IR::ClassDecl
           decl.body.each do |member|
-            check_method_return_type(member, decl, file_path) if member.is_a?(IR::MethodDef)
+            next unless member.is_a?(IR::MethodDef)
+
+            check_method_return_type(member, decl, file_path)
+            check_yield_arguments(member, decl, file_path)
           end
         end
       end
@@ -420,6 +424,66 @@ module TRuby
         expected: declared_type,
         actual: inferred_type
       )
+    end
+
+    # Check yield statements match block parameter signature
+    # @param method [IR::MethodDef] method to check
+    # @param class_def [IR::ClassDecl, nil] containing class if any
+    # @param file_path [String] source file path for error messages
+    def check_yield_arguments(method, class_def, file_path)
+      # Find block parameter with FunctionType annotation
+      block_param = method.params.find { |p| p.kind == :block }
+      return unless block_param&.type_annotation.is_a?(IR::FunctionType)
+
+      block_type = block_param.type_annotation
+      expected_arg_count = block_type.param_types.length
+
+      # Find all yield statements in method body
+      yields = find_yields_in_body(method.body)
+      return if yields.empty?
+
+      location = method.location ? "#{file_path}:#{method.location}" : file_path
+      method_name = class_def ? "#{class_def.name}##{method.name}" : method.name
+
+      yields.each do |yield_node|
+        actual_arg_count = yield_node.arguments.length
+
+        next if actual_arg_count == expected_arg_count
+
+        raise TypeCheckError.new(
+          message: "Yield argument count mismatch in '#{method_name}': " \
+                   "block expects #{expected_arg_count} argument(s) but yield passes #{actual_arg_count}",
+          location: location,
+          expected: "#{expected_arg_count} argument(s)",
+          actual: "#{actual_arg_count} argument(s)"
+        )
+      end
+    end
+
+    # Find all yield nodes in a method body
+    # @param node [IR::Node] IR node to search
+    # @return [Array<IR::Yield>] yield nodes found
+    def find_yields_in_body(node)
+      yields = []
+      return yields unless node
+
+      case node
+      when IR::Yield
+        yields << node
+      when IR::Block
+        node.statements.each { |stmt| yields.concat(find_yields_in_body(stmt)) }
+      when IR::Conditional
+        yields.concat(find_yields_in_body(node.then_branch))
+        yields.concat(find_yields_in_body(node.else_branch))
+      when IR::Loop
+        yields.concat(find_yields_in_body(node.body))
+      when IR::Assignment
+        yields.concat(find_yields_in_body(node.value))
+      when IR::Return
+        yields.concat(find_yields_in_body(node.value))
+      end
+
+      yields
     end
 
     # Create type environment for class context
