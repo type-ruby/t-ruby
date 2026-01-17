@@ -386,6 +386,20 @@ module TRuby
       end
     end
 
+    # Yield statement
+    class Yield < Node
+      attr_accessor :arguments
+
+      def initialize(arguments: [], **opts)
+        super(**opts)
+        @arguments = arguments
+      end
+
+      def children
+        @arguments
+      end
+    end
+
     # Binary operation
     class BinaryOp < Node
       attr_accessor :operator, :left, :right
@@ -913,6 +927,15 @@ module TRuby
           emit("return #{generate_expression(node.value)}")
         else
           emit("return")
+        end
+      end
+
+      def visit_yield(node)
+        if node.arguments.empty?
+          emit("yield")
+        else
+          args = node.arguments.map { |a| generate_expression(a) }.join(", ")
+          emit("yield(#{args})")
         end
       end
 
