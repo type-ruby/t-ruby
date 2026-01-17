@@ -362,6 +362,62 @@ RSpec.describe TRuby::IR do
 
       expect(output).to include("def greet: (name: String) -> String")
     end
+
+    it "generates RBS method signature with block type" do
+      # Method with block: def each(&block: Proc(Integer) -> void): void
+      method = TRuby::IR::MethodDef.new(
+        name: "each",
+        params: [
+          TRuby::IR::Parameter.new(
+            name: "block",
+            kind: :block,
+            type_annotation: TRuby::IR::FunctionType.new(
+              param_types: [TRuby::IR::SimpleType.new(name: "Integer")],
+              return_type: TRuby::IR::SimpleType.new(name: "void")
+            )
+          ),
+        ],
+        return_type: TRuby::IR::SimpleType.new(name: "void")
+      )
+      program = TRuby::IR::Program.new(declarations: [method])
+
+      output = generator.generate(program)
+
+      expect(output).to include("def each: () { (Integer) -> void } -> void")
+    end
+
+    it "generates RBS method signature with params and block type" do
+      # Method with params and block: def map(initial: T, &block: Proc(T, Integer) -> U): Array<U>
+      method = TRuby::IR::MethodDef.new(
+        name: "map_with_index",
+        params: [
+          TRuby::IR::Parameter.new(
+            name: "initial",
+            type_annotation: TRuby::IR::SimpleType.new(name: "Integer")
+          ),
+          TRuby::IR::Parameter.new(
+            name: "block",
+            kind: :block,
+            type_annotation: TRuby::IR::FunctionType.new(
+              param_types: [
+                TRuby::IR::SimpleType.new(name: "String"),
+                TRuby::IR::SimpleType.new(name: "Integer"),
+              ],
+              return_type: TRuby::IR::SimpleType.new(name: "String")
+            )
+          ),
+        ],
+        return_type: TRuby::IR::GenericType.new(
+          base: "Array",
+          type_args: [TRuby::IR::SimpleType.new(name: "String")]
+        )
+      )
+      program = TRuby::IR::Program.new(declarations: [method])
+
+      output = generator.generate(program)
+
+      expect(output).to include("def map_with_index: (initial: Integer) { (String, Integer) -> String } -> Array[String]")
+    end
   end
 
   describe TRuby::IR::Passes::DeadCodeElimination do

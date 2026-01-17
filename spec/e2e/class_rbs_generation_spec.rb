@@ -298,6 +298,84 @@ RSpec.describe "Class RBS Generation E2E" do
     end
   end
 
+  describe "block type annotation" do
+    it "generates RBS with block signature from Proc type annotation" do
+      Dir.chdir(tmpdir) do
+        create_config_file(<<~YAML)
+          source:
+            include:
+              - src
+          output:
+            ruby_dir: build
+            rbs_dir: sig
+          compiler:
+            generate_rbs: true
+        YAML
+
+        create_trb_file("src/iterator.trb", <<~TRB)
+          class Iterator
+            def each(&block: Proc(Integer) -> void): void
+              yield 1
+              yield 2
+            end
+
+            def map_values(initial: Integer, &block: Proc(Integer, Integer) -> String): Array<String>
+              []
+            end
+          end
+        TRB
+
+        rbs_content = compile_and_get_rbs(File.join(tmpdir, "src/iterator.trb"))
+
+        # Validate RBS syntax using official rbs gem
+        expect_valid_rbs(rbs_content)
+
+        # Block signature should use RBS block syntax: { (params) -> return }
+        expect(rbs_content).to include("def each: () { (Integer) -> void } -> void")
+        expect(rbs_content).to include("def map_values: (initial: Integer) { (Integer, Integer) -> String } -> Array[String]")
+      end
+    end
+
+    it "generates RBS with optional block signature using ?{ } syntax" do
+      Dir.chdir(tmpdir) do
+        create_config_file(<<~YAML)
+          source:
+            include:
+              - src
+          output:
+            ruby_dir: build
+            rbs_dir: sig
+          compiler:
+            generate_rbs: true
+        YAML
+
+        create_trb_file("src/optional_block.trb", <<~TRB)
+          class OptionalBlock
+            def maybe_yield(&block?: Proc(Integer) -> void): void
+              if block_given?
+                yield 1
+              end
+            end
+
+            def required_block(&block: Proc(String) -> String): String
+              yield "hello"
+            end
+          end
+        TRB
+
+        rbs_content = compile_and_get_rbs(File.join(tmpdir, "src/optional_block.trb"))
+
+        # Validate RBS syntax using official rbs gem
+        expect_valid_rbs(rbs_content)
+
+        # Optional block should use ?{ } syntax
+        expect(rbs_content).to include("def maybe_yield: () ?{ (Integer) -> void } -> void")
+        # Required block should use { } syntax (no ?)
+        expect(rbs_content).to include("def required_block: () { (String) -> String } -> String")
+      end
+    end
+  end
+
   describe "HelloWorld integration test" do
     it "generates correct RBS for HelloWorld sample structure" do
       Dir.chdir(tmpdir) do
