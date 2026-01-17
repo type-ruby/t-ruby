@@ -13,14 +13,14 @@ RSpec.describe "Keyword Arguments E2E" do
 
   def create_config(lib_dir)
     File.write(File.join(tmpdir, "trbconfig.yml"), <<~YAML)
-      emit:
-        rb: true
-        rbs: true
-        dtrb: false
-      paths:
-        src: "#{lib_dir}"
-        out: "#{lib_dir}"
-        rbs: "#{lib_dir}"
+      source:
+        include:
+          - "#{lib_dir}"
+      output:
+        ruby_dir: "#{lib_dir}"
+        rbs_dir: "#{lib_dir}"
+      compiler:
+        generate_rbs: true
     YAML
 
     config = TRuby::Config.new(File.join(tmpdir, "trbconfig.yml"))
