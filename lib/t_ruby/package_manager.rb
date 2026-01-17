@@ -4,6 +4,7 @@ require "json"
 require "fileutils"
 require "net/http"
 require "uri"
+require "time"
 
 module TRuby
   # Semantic version parsing and comparison
