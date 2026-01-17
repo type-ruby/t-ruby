@@ -3,6 +3,7 @@ PATH
   specs:
     t-ruby (0.0.43)
       benchmark
+      thor (~> 1.0)
 
 GEM
   remote: https://rubygems.org/
@@ -11,8 +12,8 @@ GEM
     benchmark (0.5.0)
     diff-lcs (1.6.2)
     docile (1.4.1)
-    ffi (1.17.2)
-    ffi (1.17.2-x86_64-linux-gnu)
+    ffi (1.17.3)
+    ffi (1.17.3-x86_64-linux-gnu)
     json (2.17.1)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
@@ -71,9 +72,10 @@ GEM
     simplecov-html (0.13.2)
     simplecov-lcov (0.8.0)
     simplecov_json_formatter (0.1.4)
+    thor (1.4.0)
     unicode-display_width (3.2.0)
       unicode-emoji (~> 4.1)
-    unicode-emoji (4.1.0)
+    unicode-emoji (4.2.0)
 
 PLATFORMS
   ruby

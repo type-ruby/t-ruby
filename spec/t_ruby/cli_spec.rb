@@ -478,6 +478,37 @@ describe TRuby::CLI do
     end
   end
 
+  describe "#run with run command" do
+    it "delegates to t-ruby executable via exec" do
+      cli = TRuby::CLI.new(["run", "test.trb"])
+
+      # exec replaces the process, so we need to mock it
+      allow(cli).to receive(:exec)
+
+      cli.run
+
+      expect(cli).to have_received(:exec).with(
+        a_string_ending_with("bin/t-ruby"),
+        "test.trb"
+      )
+    end
+
+    it "passes additional arguments to t-ruby" do
+      cli = TRuby::CLI.new(["run", "script.trb", "arg1", "arg2"])
+
+      allow(cli).to receive(:exec)
+
+      cli.run
+
+      expect(cli).to have_received(:exec).with(
+        a_string_ending_with("bin/t-ruby"),
+        "script.trb",
+        "arg1",
+        "arg2"
+      )
+    end
+  end
+
   describe "#run with --watch flag" do
     it "starts watch mode with default path" do
       watcher = instance_double(TRuby::Watcher)
