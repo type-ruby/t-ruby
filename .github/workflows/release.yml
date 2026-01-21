@@ -132,41 +132,15 @@ jobs:
     needs: [publish-gem, publish-wasm]
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Generate changelog
-        id: changelog
-        run: |
-          # Get previous tag
-          PREV_TAG=$(git describe --abbrev=0 --tags HEAD^ 2>/dev/null || echo "")
-          CURRENT_TAG=${GITHUB_REF#refs/tags/}
-
-          echo "## What's Changed" > CHANGELOG.md
-          echo "" >> CHANGELOG.md
-
-          if [[ -n "$PREV_TAG" ]]; then
-            # Get commits between tags
-            git log --pretty=format:"* %s (%h)" $PREV_TAG..$CURRENT_TAG >> CHANGELOG.md
-          else
-            # First release - get all commits
-            git log --pretty=format:"* %s (%h)" >> CHANGELOG.md
-          fi
-
-          echo "" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREV_TAG...$CURRENT_TAG" >> CHANGELOG.md
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          body_path: CHANGELOG.md
+          generate_release_notes: true
           files: |
             artifacts/gem/*.gem
             artifacts/wasm/*
