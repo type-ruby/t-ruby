@@ -147,3 +147,42 @@ jobs:
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 문서 저장소 업데이트 트리거
+  trigger-docs-update:
+    name: Trigger Docs Update
+    runs-on: ubuntu-latest
+    needs: create-release
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get last 5 tags
+        id: tags
+        run: |
+          TAGS=$(git tag --sort=-v:refname | head -5 | tr '\n' ',')
+          BASE_TAG=$(git tag --sort=-v:refname | sed -n '6p')
+          if [ -z "$BASE_TAG" ]; then
+            BASE_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          echo "base_tag=$BASE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Get changed files (last 5 releases)
+        id: changed
+        run: |
+          FILES=$(git diff ${{ steps.tags.outputs.base_tag }}..HEAD --name-only | tr '\n' ',')
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+
+      - name: Trigger docs workflow
+        run: |
+          gh workflow run sync-release.yml \
+            --repo type-ruby/t-ruby.github.io \
+            --field version=${GITHUB_REF#refs/tags/v} \
+            --field base_tag=${{ steps.tags.outputs.base_tag }} \
+            --field recent_tags="${{ steps.tags.outputs.tags }}" \
+            --field changed_files="${{ steps.changed.outputs.files }}"
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_PAT }}
