@@ -135,3 +135,20 @@ jobs:
             --field changed_files="${{ steps.changed.outputs.files }}"
         env:
           GH_TOKEN: ${{ secrets.CROSS_REPO_PAT }}
+
+  # WASM 패키지 릴리스 트리거
+  trigger-wasm-release:
+    name: Trigger WASM Release
+    runs-on: ubuntu-latest
+    needs: create-release
+
+    steps:
+      - name: Trigger wasm workflow
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          gh workflow run release.yml \
+            --repo type-ruby/t-ruby-wasm \
+            --field version=$VERSION \
+            --field t_ruby_version=$VERSION
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_PAT }}
