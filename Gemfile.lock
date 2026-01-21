@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    t-ruby (0.0.44)
+    t-ruby (0.0.45)
       benchmark
       thor (~> 1.0)
 

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.45] - 2026-01-21
+
+### Fixed
+- Remove non-existent `rbs_generator.rb` from WASM build script (#42)
+
 ## [0.0.44] - 2026-01-17
 
 ### Added
