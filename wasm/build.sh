@@ -31,7 +31,6 @@ CORE_FILES=(
   "intersection_type_parser.rb"
   "type_erasure.rb"
   "error_handler.rb"
-  "rbs_generator.rb"
   "declaration_generator.rb"
   "compiler.rb"
   "constraint_checker.rb"
