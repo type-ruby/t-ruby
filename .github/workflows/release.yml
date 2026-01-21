@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   packages: write
+  id-token: write  # OIDC Trusted Publishing
 
 jobs:
   # 테스트 먼저 실행
@@ -65,12 +66,8 @@ jobs:
       - name: Build gem
         run: gem build t_ruby.gemspec
 
-      - name: Publish to RubyGems
-        run: |
-          mkdir -p ~/.gem
-          echo -e "---\n:rubygems_api_key: ${{ secrets.RUBYGEMS_API_KEY }}" > ~/.gem/credentials
-          chmod 0600 ~/.gem/credentials
-          gem push t-ruby-${{ steps.version.outputs.version }}.gem
+      - name: Publish to RubyGems (OIDC Trusted Publishing)
+        uses: rubygems/release-gem@v1
 
       - name: Upload gem artifact
         uses: actions/upload-artifact@v4
