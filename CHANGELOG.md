@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.0.45] - 2026-01-21
+## [0.0.46] - 2026-01-21
+
+### Changed
+- Switch to OIDC Trusted Publishing for RubyGems deployment
 
 ### Fixed
 - Remove non-existent `rbs_generator.rb` from WASM build script (#42)
