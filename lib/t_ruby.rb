@@ -9,6 +9,7 @@ require_relative "t_ruby/config"
 # Core infrastructure (must be loaded first)
 require_relative "t_ruby/string_utils"
 require_relative "t_ruby/ir"
+require_relative "t_ruby/errors/type_slot_error"
 require_relative "t_ruby/parser_combinator"
 require_relative "t_ruby/scanner"
 require_relative "t_ruby/smt_solver"
@@ -31,6 +32,9 @@ require_relative "t_ruby/lsp_server"
 require_relative "t_ruby/watcher"
 require_relative "t_ruby/runner"
 require_relative "t_ruby/cli"
+
+# Type Resolution
+require_relative "t_ruby/type_resolution/slot_resolver"
 
 # Milestone 4: Advanced Features
 require_relative "t_ruby/constraint_checker"

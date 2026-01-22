@@ -3,6 +3,13 @@
 module TRuby
   # Enhanced Parser using Parser Combinator for complex type expressions
   # Maintains backward compatibility with original Parser interface
+  #
+  # This class serves as a facade that can delegate to either:
+  # 1. Legacy regex-based parsing (default)
+  # 2. New TokenDeclarationParser with TypeSlot support (opt-in)
+  #
+  # To use the new parser, set use_token_parser: true or
+  # set TRUBY_NEW_PARSER=1 environment variable.
   class Parser
     # Type names that are recognized as valid
     VALID_TYPES = %w[String Integer Boolean Array Hash Symbol void nil].freeze
@@ -15,21 +22,144 @@ module TRuby
     # Visibility modifiers for method definitions
     VISIBILITY_PATTERN = '(?:(?:private|protected|public)\s+)?'
 
-    # TODO: Replace regex-based parsing with TokenDeclarationParser
+    # @deprecated The regex-based parsing will be replaced by TokenDeclarationParser.
     # See: lib/t_ruby/parser_combinator/token/token_declaration_parser.rb
 
     attr_reader :source, :ir_program
 
-    def initialize(source, parse_body: true)
+    def initialize(source, parse_body: true, use_token_parser: nil)
       @source = source
       @lines = source.split("\n")
       @parse_body = parse_body
+      @use_token_parser = use_token_parser
       @type_parser = ParserCombinator::TypeParser.new
       @body_parser = ParserCombinator::TokenBodyParser.new if parse_body
       @ir_program = nil
     end
 
     def parse
+      if use_token_parser?
+        parse_with_token_parser
+      else
+        parse_with_legacy_parser
+      end
+    rescue Scanner::ScanError => e
+      raise ParseError.new(e.message, line: e.line, column: e.column)
+    end
+
+    private
+
+    # Check if token parser should be used
+    def use_token_parser?
+      return @use_token_parser unless @use_token_parser.nil?
+
+      ENV["TRUBY_NEW_PARSER"] == "1"
+    end
+
+    # Parse using the new TokenDeclarationParser with TypeSlot support
+    def parse_with_token_parser
+      scanner = Scanner.new(@source)
+      tokens = scanner.scan_all
+      token_parser = ParserCombinator::TokenDeclarationParser.new
+
+      program_result = token_parser.parse_program(tokens)
+
+      if program_result.success?
+        @ir_program = program_result.value
+        convert_ir_to_legacy_format(@ir_program)
+      else
+        raise ParseError.new(
+          program_result.error,
+          line: token_parser.errors.first&.line,
+          column: token_parser.errors.first&.column
+        )
+      end
+    end
+
+    # Convert IR::Program to legacy hash format for backward compatibility
+    def convert_ir_to_legacy_format(program)
+      functions = []
+      type_aliases = []
+      interfaces = []
+      classes = []
+
+      program.declarations.each do |decl|
+        case decl
+        when IR::MethodDef
+          functions << convert_method_to_legacy(decl)
+        when IR::TypeAlias
+          type_aliases << convert_type_alias_to_legacy(decl)
+        when IR::Interface
+          interfaces << convert_interface_to_legacy(decl)
+        when IR::ClassDecl
+          classes << convert_class_to_legacy(decl)
+        end
+      end
+
+      {
+        type: :success,
+        functions: functions,
+        type_aliases: type_aliases,
+        interfaces: interfaces,
+        classes: classes,
+      }
+    end
+
+    def convert_method_to_legacy(method_def)
+      params = method_def.params.map do |param|
+        {
+          name: param.name,
+          type: param.type_annotation&.to_s,
+          ir_type: param.type_annotation,
+          kind: param.kind || :required,
+        }
+      end
+
+      {
+        name: method_def.name,
+        params: params,
+        return_type: method_def.return_type&.to_s,
+        ir_return_type: method_def.return_type,
+        visibility: method_def.visibility || :public,
+        body_ir: method_def.body,
+      }
+    end
+
+    def convert_type_alias_to_legacy(type_alias)
+      {
+        name: type_alias.name,
+        definition: type_alias.definition&.to_s,
+        ir_type: type_alias.definition,
+      }
+    end
+
+    def convert_interface_to_legacy(interface_def)
+      members = interface_def.members.map do |member|
+        {
+          name: member[:name] || member.name,
+          type: member[:type]&.to_s || member.type&.to_s,
+          ir_type: member[:type] || member.type,
+        }
+      end
+
+      { name: interface_def.name, members: members }
+    end
+
+    def convert_class_to_legacy(class_def)
+      methods = (class_def.body || []).select { |d| d.is_a?(IR::MethodDef) }.map do |m|
+        convert_method_to_legacy(m)
+      end
+
+      {
+        name: class_def.name,
+        superclass: class_def.superclass,
+        methods: methods,
+        instance_vars: [],
+      }
+    end
+
+    # @deprecated Legacy regex-based parser. Will be removed in future version.
+    def parse_with_legacy_parser
       functions = []
       type_aliases = []
       interfaces = []
@@ -100,9 +230,9 @@ module TRuby
       @ir_program = builder.build(result, source: @source)
 
       result
-    rescue Scanner::ScanError => e
-      raise ParseError.new(e.message, line: e.line, column: e.column)
     end
+
+    public
 
     # Parse to IR directly (new API)
     def parse_to_ir
