@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "ir/type_slot"
+
 module TRuby
   module IR
     # Base class for all IR nodes
@@ -128,9 +130,9 @@ module TRuby
 
     # Method definition
     class MethodDef < Node
-      attr_accessor :name, :params, :return_type, :body, :visibility, :type_params
+      attr_accessor :name, :params, :return_type, :body, :visibility, :type_params, :return_type_slot
 
-      def initialize(name:, params: [], return_type: nil, body: nil, visibility: :public, type_params: [], **opts)
+      def initialize(name:, params: [], return_type: nil, body: nil, visibility: :public, type_params: [], return_type_slot: nil, **opts)
         super(**opts)
         @name = name
         @params = params
@@ -138,6 +140,7 @@ module TRuby
         @body = body
         @visibility = visibility
         @type_params = type_params
+        @return_type_slot = return_type_slot
       end
 
       def children
@@ -147,19 +150,21 @@ module TRuby
 
     # Method parameter
     class Parameter < Node
-      attr_accessor :name, :type_annotation, :default_value, :kind, :interface_ref
+      attr_accessor :name, :type_annotation, :default_value, :kind, :interface_ref, :type_slot
 
       # kind: :required, :optional, :rest, :keyrest, :block, :keyword
       # :keyword - 키워드 인자 (구조분해): { name: String } → def foo(name:)
       # :keyrest - 더블 스플랫: **opts: Type → def foo(**opts)
       # interface_ref - interface 참조 타입 (예: }: UserParams 부분)
-      def initialize(name:, type_annotation: nil, default_value: nil, kind: :required, interface_ref: nil, **opts)
+      # type_slot - TypeSlot for this parameter's type annotation position
+      def initialize(name:, type_annotation: nil, default_value: nil, kind: :required, interface_ref: nil, type_slot: nil, **opts)
         super(**opts)
         @name = name
         @type_annotation = type_annotation
         @default_value = default_value
         @kind = kind
         @interface_ref = interface_ref
+        @type_slot = type_slot
       end
     end
 

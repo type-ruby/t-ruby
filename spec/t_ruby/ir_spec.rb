@@ -575,6 +575,22 @@ RSpec.describe TRuby::IR do
         method = described_class.new(name: "test", body: nil)
         expect(method.children).to eq([])
       end
+
+      it "has return_type_slot attribute" do
+        method = described_class.new(name: "test")
+        slot = TRuby::IR::TypeSlot.new(kind: :return, location: { line: 1, column: 0 })
+        method.return_type_slot = slot
+        expect(method.return_type_slot).to eq(slot)
+      end
+    end
+
+    describe TRuby::IR::Parameter do
+      it "has type_slot attribute" do
+        param = described_class.new(name: "x")
+        slot = TRuby::IR::TypeSlot.new(kind: :parameter, location: { line: 1, column: 5 })
+        param.type_slot = slot
+        expect(param.type_slot).to eq(slot)
+      end
     end
 
     describe TRuby::IR::Block do
