@@ -33,6 +33,9 @@ require_relative "t_ruby/watcher"
 require_relative "t_ruby/runner"
 require_relative "t_ruby/cli"
 
+# Type Resolution
+require_relative "t_ruby/type_resolution/slot_resolver"
+
 # Milestone 4: Advanced Features
 require_relative "t_ruby/constraint_checker"
 require_relative "t_ruby/type_inferencer"
