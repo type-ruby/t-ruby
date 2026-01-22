@@ -11,14 +11,9 @@ GEM
     benchmark (0.5.0)
     diff-lcs (1.6.2)
     docile (1.4.1)
-    ffi (1.17.2)
-    ffi (1.17.2-x86_64-linux-gnu)
     json (2.17.1)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
-    listen (3.9.0)
-      rb-fsevent (~> 0.10, >= 0.10.3)
-      rb-inotify (~> 0.9, >= 0.9.10)
     logger (1.7.0)
     parallel (1.27.0)
     parser (3.3.10.0)
@@ -28,9 +23,6 @@ GEM
     racc (1.8.1)
     rainbow (3.1.1)
     rake (13.3.1)
-    rb-fsevent (0.11.2)
-    rb-inotify (0.11.1)
-      ffi (~> 1.0)
     rbs (3.10.0)
       logger
     regexp_parser (2.11.3)
@@ -73,14 +65,13 @@ GEM
     simplecov_json_formatter (0.1.4)
     unicode-display_width (3.2.0)
       unicode-emoji (~> 4.1)
-    unicode-emoji (4.1.0)
+    unicode-emoji (4.2.0)
 
 PLATFORMS
   ruby
   x86_64-linux
 
 DEPENDENCIES
-  listen (~> 3.8)
   rake (~> 13.0)
   rbs (~> 3.0)
   rspec (~> 3.0)

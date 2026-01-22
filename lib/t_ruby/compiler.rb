@@ -804,7 +804,7 @@ module TRuby
     # Extract parameters from string, handling nested parentheses and braces
     # Returns [params_string, remainder] or [nil, nil] if no match
     def extract_balanced_params(str)
-      paren_depth = 1  # We're already past the opening paren
+      paren_depth = 1 # We're already past the opening paren
       brace_depth = 0
       bracket_depth = 0
       pos = 0
