@@ -159,7 +159,9 @@ module TRuby
     end
 
     # @deprecated Legacy regex-based parser. Will be removed in future version.
+    # Use `use_token_parser: true` or set TRUBY_NEW_PARSER=1 to use the new parser.
     def parse_with_legacy_parser
+      emit_deprecation_warning
       functions = []
       type_aliases = []
       interfaces = []
@@ -775,6 +777,25 @@ module TRuby
       end
 
       [{ name: interface_name, members: members }, i]
+    end
+
+    # Emit deprecation warning for legacy parser (once per process)
+    def emit_deprecation_warning
+      return if self.class.deprecation_warned?
+
+      self.class.mark_deprecation_warned
+      warn "[DEPRECATION] The regex-based parser is deprecated and will be removed in a future version. " \
+           "Set TRUBY_NEW_PARSER=1 or use `use_token_parser: true` to opt into the new TokenDeclarationParser."
+    end
+
+    class << self
+      def deprecation_warned?
+        @deprecation_warned ||= false
+      end
+
+      def mark_deprecation_warned
+        @deprecation_warned = true
+      end
     end
   end
 end
