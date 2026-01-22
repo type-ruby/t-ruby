@@ -19,13 +19,13 @@ RSpec.describe "T-Ruby E2E Integration" do
 
       # Create trbconfig.yml config to set output dir
       File.write(File.join(tmpdir, "trbconfig.yml"), <<~YAML)
-        emit:
-          rb: true
-          rbs: false
-          dtrb: false
-        paths:
-          src: "#{lib_dir}"
-          out: "#{lib_dir}"
+        source:
+          include:
+            - "#{lib_dir}"
+        output:
+          ruby_dir: "#{lib_dir}"
+        compiler:
+          generate_rbs: false
       YAML
 
       # Main application file
@@ -95,13 +95,13 @@ RSpec.describe "T-Ruby E2E Integration" do
 
       # Create trbconfig.yml config to set output dir
       File.write(File.join(tmpdir, "trbconfig.yml"), <<~YAML)
-        emit:
-          rb: true
-          rbs: false
-          dtrb: false
-        paths:
-          src: "#{lib_dir}"
-          out: "#{lib_dir}"
+        source:
+          include:
+            - "#{lib_dir}"
+        output:
+          ruby_dir: "#{lib_dir}"
+        compiler:
+          generate_rbs: false
       YAML
 
       # Create initial file
