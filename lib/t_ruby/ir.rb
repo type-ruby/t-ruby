@@ -147,19 +147,21 @@ module TRuby
 
     # Method parameter
     class Parameter < Node
-      attr_accessor :name, :type_annotation, :default_value, :kind, :interface_ref
+      attr_accessor :name, :type_annotation, :default_value, :kind, :interface_ref, :optional
 
       # kind: :required, :optional, :rest, :keyrest, :block, :keyword
       # :keyword - 키워드 인자 (구조분해): { name: String } → def foo(name:)
       # :keyrest - 더블 스플랫: **opts: Type → def foo(**opts)
       # interface_ref - interface 참조 타입 (예: }: UserParams 부분)
-      def initialize(name:, type_annotation: nil, default_value: nil, kind: :required, interface_ref: nil, **opts)
+      # optional - for block params: true if block is optional (&block?)
+      def initialize(name:, type_annotation: nil, default_value: nil, kind: :required, interface_ref: nil, optional: false, **opts)
         super(**opts)
         @name = name
         @type_annotation = type_annotation
         @default_value = default_value
         @kind = kind
         @interface_ref = interface_ref
+        @optional = optional
       end
     end
 
@@ -613,22 +615,40 @@ module TRuby
 
     # Function/Proc type ((String, Integer) -> Boolean)
     class FunctionType < TypeNode
-      attr_accessor :param_types, :return_type
+      attr_accessor :param_types, :return_type, :callable_kind
 
-      def initialize(return_type:, param_types: [], **opts)
+      # callable_kind: :proc, :lambda, or nil (generic function type)
+      def initialize(return_type:, param_types: [], callable_kind: nil, **opts)
         super(**opts)
         @param_types = param_types
         @return_type = return_type
+        @callable_kind = callable_kind
       end
 
       def to_rbs
+        # RBS doesn't distinguish between Proc and Lambda
         params = @param_types.map(&:to_rbs).join(", ")
         "^(#{params}) -> #{@return_type.to_rbs}"
       end
 
       def to_trb
         params = @param_types.map(&:to_trb).join(", ")
-        "(#{params}) -> #{@return_type.to_trb}"
+        case @callable_kind
+        when :proc
+          "Proc(#{params}) -> #{@return_type.to_trb}"
+        when :lambda
+          "Lambda(#{params}) -> #{@return_type.to_trb}"
+        else
+          "(#{params}) -> #{@return_type.to_trb}"
+        end
+      end
+
+      def proc?
+        @callable_kind == :proc
+      end
+
+      def lambda?
+        @callable_kind == :lambda
       end
     end
 
@@ -825,7 +845,9 @@ module TRuby
         params = (info[:params] || []).map do |param|
           Parameter.new(
             name: param[:name],
-            type_annotation: param[:type] ? parse_type(param[:type]) : nil
+            type_annotation: param[:ir_type] || (param[:type] ? parse_type(param[:type]) : nil),
+            kind: param[:kind] || :required,
+            optional: param[:optional] || false
           )
         end
 

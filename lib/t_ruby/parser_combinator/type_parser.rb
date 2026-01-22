@@ -66,6 +66,18 @@ module TRuby
           IR::FunctionType.new(param_types: params, return_type: ret)
         end
 
+        # Proc type: Proc(Params) -> ReturnType (Ruby-familiar syntax)
+        proc_keyword = lexeme(string("Proc"))
+        proc_type = (proc_keyword >> param_list >> arrow >> type_expr).map do |((_proc, params), _arrow), ret|
+          IR::FunctionType.new(param_types: params, return_type: ret, callable_kind: :proc)
+        end
+
+        # Lambda type: Lambda(Params) -> ReturnType
+        lambda_keyword = lexeme(string("Lambda"))
+        lambda_type = (lambda_keyword >> param_list >> arrow >> type_expr).map do |((_lambda, params), _arrow), ret|
+          IR::FunctionType.new(param_types: params, return_type: ret, callable_kind: :lambda)
+        end
+
         # Tuple type: [Type, Type, ...]
         tuple_type = (
           lexeme(char("[")) >>
@@ -75,6 +87,8 @@ module TRuby
 
         # Primary type (before operators)
         primary_type = choice(
+          proc_type,
+          lambda_type,
           function_type,
           tuple_type,
           paren_type,

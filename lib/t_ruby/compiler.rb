@@ -382,9 +382,13 @@ module TRuby
         case decl
         when IR::MethodDef
           check_method_return_type(decl, nil, file_path)
+          check_yield_arguments(decl, nil, file_path)
         when IR::ClassDecl
           decl.body.each do |member|
-            check_method_return_type(member, decl, file_path) if member.is_a?(IR::MethodDef)
+            next unless member.is_a?(IR::MethodDef)
+
+            check_method_return_type(member, decl, file_path)
+            check_yield_arguments(member, decl, file_path)
           end
         end
       end
@@ -527,7 +531,6 @@ module TRuby
 
       yields
     end
-
 
     # Create type environment for class context
     # @param class_def [IR::ClassDecl] class declaration
