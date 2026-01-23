@@ -633,11 +633,68 @@ module TRuby
       end
 
       def to_rbs
-        "[#{@element_types.map(&:to_rbs).join(", ")}]"
+        # Check if tuple has rest element
+        has_rest = @element_types.any? { |t| t.is_a?(TupleRestElement) }
+
+        if has_rest
+          # Fallback: convert to union array (RBS doesn't support tuple rest)
+          all_types = @element_types.flat_map do |t|
+            t.is_a?(TupleRestElement) ? t.element_type : t
+          end
+          type_names = all_types.map(&:to_rbs).uniq
+          "Array[#{type_names.join(" | ")}]"
+        else
+          "[#{@element_types.map(&:to_rbs).join(", ")}]"
+        end
       end
 
       def to_trb
         "[#{@element_types.map(&:to_trb).join(", ")}]"
+      end
+
+      # Validate tuple structure
+      def validate!
+        rest_indices = @element_types.each_with_index
+                                     .select { |t, _| t.is_a?(TupleRestElement) }
+                                     .map(&:last)
+
+        if rest_indices.length > 1
+          raise TypeError, "Tuple can have at most one rest element"
+        end
+
+        if rest_indices.any? && rest_indices.first != @element_types.length - 1
+          raise TypeError, "Rest element must be at the end of tuple"
+        end
+
+        self
+      end
+    end
+
+    # Tuple rest element (*Integer[] - variable length elements)
+    class TupleRestElement < TypeNode
+      attr_accessor :inner_type
+
+      def initialize(inner_type:, **opts)
+        super(**opts)
+        @inner_type = inner_type
+      end
+
+      def to_rbs
+        # RBS doesn't support tuple rest, fallback to untyped
+        "*untyped"
+      end
+
+      def to_trb
+        "*#{@inner_type.to_trb}"
+      end
+
+      # Extract element type from Array type
+      def element_type
+        if @inner_type.is_a?(GenericType) && @inner_type.base == "Array"
+          @inner_type.type_args.first
+        else
+          @inner_type
+        end
       end
     end
 

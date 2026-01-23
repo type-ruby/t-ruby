@@ -103,6 +103,62 @@ RSpec.describe TRuby::IR do
       expect(type.to_rbs).to eq("[String, Integer]")
       expect(type.to_trb).to eq("[String, Integer]")
     end
+
+    it "converts tuple with rest element to RBS (fallback to union array)" do
+      string_type = TRuby::IR::SimpleType.new(name: "String")
+      rest_int = TRuby::IR::TupleRestElement.new(
+        inner_type: TRuby::IR::GenericType.new(base: "Array", type_args: [
+                                                 TRuby::IR::SimpleType.new(name: "Integer"),
+                                               ])
+      )
+      tuple = described_class.new(element_types: [string_type, rest_int])
+
+      # RBS fallback: tuple with rest → union array
+      expect(tuple.to_rbs).to eq("Array[String | Integer]")
+    end
+
+    it "preserves tuple with rest in TRB format" do
+      string_type = TRuby::IR::SimpleType.new(name: "String")
+      rest_int = TRuby::IR::TupleRestElement.new(
+        inner_type: TRuby::IR::GenericType.new(base: "Array", type_args: [
+                                                 TRuby::IR::SimpleType.new(name: "Integer"),
+                                               ])
+      )
+      tuple = described_class.new(element_types: [string_type, rest_int])
+
+      expect(tuple.to_trb).to eq("[String, *Array<Integer>]")
+    end
+  end
+
+  describe TRuby::IR::TupleRestElement do
+    it "converts to TRB format" do
+      inner = TRuby::IR::GenericType.new(base: "Array", type_args: [
+                                           TRuby::IR::SimpleType.new(name: "Integer"),
+                                         ])
+      rest = described_class.new(inner_type: inner)
+
+      expect(rest.to_trb).to eq("*Array<Integer>")
+    end
+
+    it "converts to RBS format (fallback to untyped)" do
+      inner = TRuby::IR::GenericType.new(base: "Array", type_args: [
+                                           TRuby::IR::SimpleType.new(name: "Integer"),
+                                         ])
+      rest = described_class.new(inner_type: inner)
+
+      # RBS doesn't support tuple rest, fallback
+      expect(rest.to_rbs).to eq("*untyped")
+    end
+
+    it "extracts element type from Array type" do
+      inner = TRuby::IR::GenericType.new(base: "Array", type_args: [
+                                           TRuby::IR::SimpleType.new(name: "Integer"),
+                                         ])
+      rest = described_class.new(inner_type: inner)
+
+      expect(rest.element_type).to be_a(TRuby::IR::SimpleType)
+      expect(rest.element_type.name).to eq("Integer")
+    end
   end
 
   describe TRuby::IR::Builder do

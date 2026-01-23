@@ -66,12 +66,17 @@ module TRuby
           IR::FunctionType.new(param_types: params, return_type: ret)
         end
 
-        # Tuple type: [Type, Type, ...]
+        # Tuple type: [Type, Type, ...] or [Type, *Type[]]
+        # Note: Uses lazy reference to @tuple_element which is defined after base_type
         tuple_type = (
           lexeme(char("[")) >>
-          type_expr.sep_by1(lexeme(char(","))) <<
+          lazy { @tuple_element }.sep_by1(lexeme(char(","))) <<
           lexeme(char("]"))
-        ).map { |(_, types)| IR::TupleType.new(element_types: types) }
+        ).map do |(_, types)|
+          tuple = IR::TupleType.new(element_types: types)
+          tuple.validate! # Validates rest element position
+          tuple
+        end
 
         # Primary type (before operators)
         primary_type = choice(
@@ -100,6 +105,15 @@ module TRuby
             end
           end
         end
+
+        # Rest element for tuple: *Type[] or *Array<Type>
+        # Defined after base_type so it can reference it
+        rest_element = (lexeme(char("*")) >> base_type).map do |(_, inner)|
+          IR::TupleRestElement.new(inner_type: inner)
+        end
+
+        # Tuple element: Type or *Type (rest element)
+        @tuple_element = rest_element | type_expr
 
         # Union type: Type | Type | ...
         union_op = lexeme(char("|"))
