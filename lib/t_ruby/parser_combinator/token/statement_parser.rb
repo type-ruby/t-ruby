@@ -22,6 +22,8 @@ module TRuby
         case token.type
         when :return
           parse_return(tokens, position)
+        when :yield
+          parse_yield(tokens, position)
         when :if
           parse_if(tokens, position)
         when :unless
@@ -93,6 +95,45 @@ module TRuby
 
         node = IR::Return.new(value: expr_result.value)
         TokenParseResult.success(node, tokens, expr_result.position)
+      end
+
+      def parse_yield(tokens, position)
+        position += 1 # consume 'yield'
+
+        # Check if there are arguments
+        position = skip_newlines_if_not_modifier(tokens, position)
+
+        if position >= tokens.length ||
+           tokens[position].type == :eof ||
+           tokens[position].type == :newline ||
+           end_of_statement?(tokens, position)
+          node = IR::Yield.new(arguments: [])
+          return TokenParseResult.success(node, tokens, position)
+        end
+
+        # Parse arguments (comma-separated expressions)
+        arguments = []
+        expr_result = @expression_parser.parse_expression(tokens, position)
+        return expr_result if expr_result.failure?
+
+        arguments << expr_result.value
+        position = expr_result.position
+
+        while tokens[position]&.type == :comma
+          position += 1
+          expr_result = @expression_parser.parse_expression(tokens, position)
+          return expr_result if expr_result.failure?
+
+          arguments << expr_result.value
+          position = expr_result.position
+        end
+
+        # Check for modifier
+        modifier_result = parse_modifier(tokens, position, IR::Yield.new(arguments: arguments))
+        return modifier_result if modifier_result.success? && modifier_result.value.is_a?(IR::Conditional)
+
+        node = IR::Yield.new(arguments: arguments)
+        TokenParseResult.success(node, tokens, position)
       end
 
       def parse_if(tokens, position)

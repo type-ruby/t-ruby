@@ -307,6 +307,10 @@ module TRuby
           # Hash literal
           parse_hash_literal(tokens, position)
 
+        when :yield
+          # Yield expression: yield or yield(args)
+          parse_yield_expression(tokens, position)
+
         else
           TokenParseResult.failure("Unexpected token: #{token.type}", tokens, position)
         end
@@ -530,6 +534,26 @@ module TRuby
 
         # Create interpolated string node
         node = IR::InterpolatedString.new(parts: parts)
+        TokenParseResult.success(node, tokens, position)
+      end
+
+      # Parse yield as an expression: yield, yield(args), yield arg
+      def parse_yield_expression(tokens, position)
+        position += 1 # consume 'yield'
+
+        # Check for parenthesized arguments: yield(arg1, arg2)
+        if tokens[position]&.type == :lparen
+          args_result = parse_arguments(tokens, position)
+          return args_result if args_result.failure?
+
+          node = IR::Yield.new(arguments: args_result.value)
+          return TokenParseResult.success(node, tokens, args_result.position)
+        end
+
+        # No arguments or space-separated single argument
+        # For expression context, we only support yield() or yield without args
+        # Space-separated args like "yield x" are handled in statement context
+        node = IR::Yield.new(arguments: [])
         TokenParseResult.success(node, tokens, position)
       end
 
