@@ -400,7 +400,11 @@ module TRuby
         elsif param.match?(/^\w+:\s*\{/)
           param_info = parse_hash_literal_parameter(param)
           parameters << param_info if param_info
-        # 4. 일반 위치 인자: name: Type 또는 name: Type = default
+        # 4. Block parameter: &block or &block: Type
+        elsif param.start_with?("&")
+          param_info = parse_block_parameter(param)
+          parameters << param_info if param_info
+        # 5. 일반 위치 인자: name: Type 또는 name: Type = default
         else
           param_info = parse_single_parameter(param)
           parameters << param_info if param_info
@@ -460,6 +464,31 @@ module TRuby
         name: param_name,
         type: type_str,
         kind: :keyrest,
+      }
+
+      if type_str
+        type_result = @type_parser.parse(type_str)
+        result[:ir_type] = type_result[:type] if type_result[:success]
+      end
+
+      result
+    end
+
+    # Block parameter parsing: &block or &block: Proc(T) -> R
+    def parse_block_parameter(param)
+      # &name or &name? or &name: Type or &name?: Type
+      match = param.match(/^&(\w+)(\?)?(?::\s*(.+?))?$/)
+      return nil unless match
+
+      param_name = match[1]
+      optional = !match[2].nil?
+      type_str = match[3]&.strip
+
+      result = {
+        name: param_name,
+        type: type_str,
+        kind: :block,
+        optional: optional,
       }
 
       if type_str

@@ -150,20 +150,22 @@ module TRuby
 
     # Method parameter
     class Parameter < Node
-      attr_accessor :name, :type_annotation, :default_value, :kind, :interface_ref, :type_slot
+      attr_accessor :name, :type_annotation, :default_value, :kind, :interface_ref, :optional, :type_slot
 
       # kind: :required, :optional, :rest, :keyrest, :block, :keyword
       # :keyword - 키워드 인자 (구조분해): { name: String } → def foo(name:)
       # :keyrest - 더블 스플랫: **opts: Type → def foo(**opts)
       # interface_ref - interface 참조 타입 (예: }: UserParams 부분)
+      # optional - for block params: true if block is optional (&block?)
       # type_slot - TypeSlot for this parameter's type annotation position
-      def initialize(name:, type_annotation: nil, default_value: nil, kind: :required, interface_ref: nil, type_slot: nil, **opts)
+      def initialize(name:, type_annotation: nil, default_value: nil, kind: :required, interface_ref: nil, optional: false, type_slot: nil, **opts)
         super(**opts)
         @name = name
         @type_annotation = type_annotation
         @default_value = default_value
         @kind = kind
         @interface_ref = interface_ref
+        @optional = optional
         @type_slot = type_slot
       end
     end
@@ -391,6 +393,20 @@ module TRuby
       end
     end
 
+    # Yield statement: yield or yield(args)
+    class Yield < Node
+      attr_accessor :arguments
+
+      def initialize(arguments: [], **opts)
+        super(**opts)
+        @arguments = arguments
+      end
+
+      def children
+        @arguments
+      end
+    end
+
     # Binary operation
     class BinaryOp < Node
       attr_accessor :operator, :left, :right
@@ -604,22 +620,40 @@ module TRuby
 
     # Function/Proc type ((String, Integer) -> Boolean)
     class FunctionType < TypeNode
-      attr_accessor :param_types, :return_type
+      attr_accessor :param_types, :return_type, :callable_kind
 
-      def initialize(return_type:, param_types: [], **opts)
+      # callable_kind: :proc, :lambda, or nil (generic function type)
+      def initialize(return_type:, param_types: [], callable_kind: nil, **opts)
         super(**opts)
         @param_types = param_types
         @return_type = return_type
+        @callable_kind = callable_kind
       end
 
       def to_rbs
+        # RBS doesn't distinguish between Proc and Lambda
         params = @param_types.map(&:to_rbs).join(", ")
         "^(#{params}) -> #{@return_type.to_rbs}"
       end
 
       def to_trb
         params = @param_types.map(&:to_trb).join(", ")
-        "(#{params}) -> #{@return_type.to_trb}"
+        case @callable_kind
+        when :proc
+          "Proc(#{params}) -> #{@return_type.to_trb}"
+        when :lambda
+          "Lambda(#{params}) -> #{@return_type.to_trb}"
+        else
+          "(#{params}) -> #{@return_type.to_trb}"
+        end
+      end
+
+      def proc?
+        @callable_kind == :proc
+      end
+
+      def lambda?
+        @callable_kind == :lambda
       end
     end
 
@@ -873,7 +907,9 @@ module TRuby
         params = (info[:params] || []).map do |param|
           Parameter.new(
             name: param[:name],
-            type_annotation: param[:type] ? parse_type(param[:type]) : nil
+            type_annotation: param[:ir_type] || (param[:type] ? parse_type(param[:type]) : nil),
+            kind: param[:kind] || :required,
+            optional: param[:optional] || false
           )
         end
 
@@ -975,6 +1011,15 @@ module TRuby
           emit("return #{generate_expression(node.value)}")
         else
           emit("return")
+        end
+      end
+
+      def visit_yield(node)
+        if node.arguments.empty?
+          emit("yield")
+        else
+          args = node.arguments.map { |a| generate_expression(a) }.join(", ")
+          emit("yield(#{args})")
         end
       end
 
@@ -1083,10 +1128,25 @@ module TRuby
       end
 
       def visit_method_def(node)
-        params = node.params.map do |param|
+        # Separate block params from regular params
+        regular_params = node.params.reject { |p| p.kind == :block }
+        block_param = node.params.find { |p| p.kind == :block }
+
+        params = regular_params.map do |param|
           type = param.type_annotation&.to_rbs || "untyped"
           "#{param.name}: #{type}"
         end.join(", ")
+
+        # Build block signature if block param has FunctionType annotation
+        block_sig = nil
+        if block_param&.type_annotation.is_a?(FunctionType)
+          func_type = block_param.type_annotation
+          block_params = func_type.param_types.map(&:to_rbs).join(", ")
+          block_return = func_type.return_type.to_rbs
+          # Use ?{ } for optional blocks, { } for required blocks
+          prefix = block_param.optional ? "?" : ""
+          block_sig = "#{prefix}{ (#{block_params}) -> #{block_return} }"
+        end
 
         # 반환 타입: 명시적 타입 > 추론된 타입 > untyped
         return_type = node.return_type&.to_rbs
@@ -1103,7 +1163,13 @@ module TRuby
 
         return_type ||= "untyped"
         visibility_prefix = format_visibility(node.visibility)
-        emit("#{visibility_prefix}def #{node.name}: (#{params}) -> #{return_type}")
+
+        # Include block signature in RBS output: (params) { block } -> return
+        if block_sig
+          emit("#{visibility_prefix}def #{node.name}: (#{params}) #{block_sig} -> #{return_type}")
+        else
+          emit("#{visibility_prefix}def #{node.name}: (#{params}) -> #{return_type}")
+        end
       end
 
       def visit_class_decl(node)

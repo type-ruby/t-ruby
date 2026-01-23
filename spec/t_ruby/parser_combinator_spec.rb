@@ -361,6 +361,89 @@ RSpec.describe TRuby::ParserCombinator do
         expect(result[:type].return_type.name).to eq("Boolean")
       end
 
+      it "parses Proc type with single parameter" do
+        result = parser.parse("Proc(Integer) -> String")
+        expect(result[:success]).to be true
+        expect(result[:type]).to be_a(TRuby::IR::FunctionType)
+        expect(result[:type].param_types.length).to eq(1)
+        expect(result[:type].param_types.first.name).to eq("Integer")
+        expect(result[:type].return_type.name).to eq("String")
+      end
+
+      it "parses Proc type with multiple parameters" do
+        result = parser.parse("Proc(String, Integer) -> Boolean")
+        expect(result[:success]).to be true
+        expect(result[:type]).to be_a(TRuby::IR::FunctionType)
+        expect(result[:type].param_types.length).to eq(2)
+        expect(result[:type].return_type.name).to eq("Boolean")
+      end
+
+      it "parses Proc type with no parameters" do
+        result = parser.parse("Proc() -> void")
+        expect(result[:success]).to be true
+        expect(result[:type]).to be_a(TRuby::IR::FunctionType)
+        expect(result[:type].param_types).to be_empty
+        expect(result[:type].return_type.name).to eq("void")
+      end
+
+      it "parses Proc type with generic return type" do
+        result = parser.parse("Proc(Integer) -> Array<String>")
+        expect(result[:success]).to be true
+        expect(result[:type]).to be_a(TRuby::IR::FunctionType)
+        expect(result[:type].return_type).to be_a(TRuby::IR::GenericType)
+        expect(result[:type].return_type.base).to eq("Array")
+      end
+
+      it "converts Proc type to correct RBS format" do
+        result = parser.parse("Proc(String, Integer) -> Boolean")
+        expect(result[:success]).to be true
+        expect(result[:type].to_rbs).to eq("^(String, Integer) -> Boolean")
+      end
+
+      it "parses Proc type with callable_kind :proc" do
+        result = parser.parse("Proc(Integer) -> String")
+        expect(result[:success]).to be true
+        expect(result[:type].callable_kind).to eq(:proc)
+        expect(result[:type].proc?).to be true
+        expect(result[:type].lambda?).to be false
+      end
+
+      it "parses Lambda type with single parameter" do
+        result = parser.parse("Lambda(Integer) -> String")
+        expect(result[:success]).to be true
+        expect(result[:type]).to be_a(TRuby::IR::FunctionType)
+        expect(result[:type].param_types.length).to eq(1)
+        expect(result[:type].param_types.first.name).to eq("Integer")
+        expect(result[:type].return_type.name).to eq("String")
+      end
+
+      it "parses Lambda type with callable_kind :lambda" do
+        result = parser.parse("Lambda(String) -> void")
+        expect(result[:success]).to be true
+        expect(result[:type].callable_kind).to eq(:lambda)
+        expect(result[:type].lambda?).to be true
+        expect(result[:type].proc?).to be false
+      end
+
+      it "converts Lambda type to correct RBS format (same as Proc)" do
+        result = parser.parse("Lambda(String, Integer) -> Boolean")
+        expect(result[:success]).to be true
+        # RBS doesn't distinguish between Proc and Lambda
+        expect(result[:type].to_rbs).to eq("^(String, Integer) -> Boolean")
+      end
+
+      it "converts Lambda type to correct t-ruby format" do
+        result = parser.parse("Lambda(Integer) -> String")
+        expect(result[:success]).to be true
+        expect(result[:type].to_trb).to eq("Lambda(Integer) -> String")
+      end
+
+      it "converts Proc type to correct t-ruby format" do
+        result = parser.parse("Proc(Integer) -> String")
+        expect(result[:success]).to be true
+        expect(result[:type].to_trb).to eq("Proc(Integer) -> String")
+      end
+
       it "parses tuple type" do
         result = parser.parse("[String, Integer, Boolean]")
         expect(result[:success]).to be true

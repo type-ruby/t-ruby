@@ -382,9 +382,13 @@ module TRuby
         case decl
         when IR::MethodDef
           check_method_return_type(decl, nil, file_path)
+          check_yield_arguments(decl, nil, file_path)
         when IR::ClassDecl
           decl.body.each do |member|
-            check_method_return_type(member, decl, file_path) if member.is_a?(IR::MethodDef)
+            next unless member.is_a?(IR::MethodDef)
+
+            check_method_return_type(member, decl, file_path)
+            check_yield_arguments(member, decl, file_path)
           end
         end
       end
@@ -420,6 +424,66 @@ module TRuby
         expected: declared_type,
         actual: inferred_type
       )
+    end
+
+    # Check yield statements match block parameter signature
+    # @param method [IR::MethodDef] method to check
+    # @param class_def [IR::ClassDecl, nil] containing class if any
+    # @param file_path [String] source file path for error messages
+    def check_yield_arguments(method, class_def, file_path)
+      # Find block parameter with FunctionType annotation
+      block_param = method.params.find { |p| p.kind == :block }
+      return unless block_param&.type_annotation.is_a?(IR::FunctionType)
+
+      block_type = block_param.type_annotation
+      expected_arg_count = block_type.param_types.length
+
+      # Find all yield statements in method body
+      yields = find_yields_in_body(method.body)
+      return if yields.empty?
+
+      location = method.location ? "#{file_path}:#{method.location}" : file_path
+      method_name = class_def ? "#{class_def.name}##{method.name}" : method.name
+
+      yields.each do |yield_node|
+        actual_arg_count = yield_node.arguments.length
+
+        next if actual_arg_count == expected_arg_count
+
+        raise TypeCheckError.new(
+          message: "Yield argument count mismatch in '#{method_name}': " \
+                   "block expects #{expected_arg_count} argument(s) but yield passes #{actual_arg_count}",
+          location: location,
+          expected: "#{expected_arg_count} argument(s)",
+          actual: "#{actual_arg_count} argument(s)"
+        )
+      end
+    end
+
+    # Find all yield nodes in a method body
+    # @param node [IR::Node] IR node to search
+    # @return [Array<IR::Yield>] yield nodes found
+    def find_yields_in_body(node)
+      yields = []
+      return yields unless node
+
+      case node
+      when IR::Yield
+        yields << node
+      when IR::Block
+        node.statements.each { |stmt| yields.concat(find_yields_in_body(stmt)) }
+      when IR::Conditional
+        yields.concat(find_yields_in_body(node.then_branch))
+        yields.concat(find_yields_in_body(node.else_branch))
+      when IR::Loop
+        yields.concat(find_yields_in_body(node.body))
+      when IR::Assignment
+        yields.concat(find_yields_in_body(node.value))
+      when IR::Return
+        yields.concat(find_yields_in_body(node.value))
+      end
+
+      yields
     end
 
     # Create type environment for class context
@@ -656,21 +720,119 @@ module TRuby
     def erase_parameter_types(source)
       result = source.dup
 
-      # Match function definitions and remove type annotations from parameters
-      # Also supports visibility modifiers: private def, protected def, public def
-      result.gsub!(/^(\s*#{TRuby::VISIBILITY_PATTERN}def\s+#{TRuby::METHOD_NAME_PATTERN}\s*\()([^)]+)(\)\s*)(?::\s*[^\n]+)?(\s*$)/) do |_match|
-        indent = ::Regexp.last_match(1)
-        params = ::Regexp.last_match(2)
-        close_paren = ::Regexp.last_match(3)
-        ending = ::Regexp.last_match(4)
+      # Process each method definition individually
+      # to handle nested parentheses in types like Proc(Integer) -> String
+      lines = result.lines
+      output_lines = []
+      i = 0
 
-        # Remove type annotations from each parameter
-        cleaned_params = remove_param_types(params)
+      while i < lines.length
+        line = lines[i]
 
-        "#{indent}#{cleaned_params}#{close_paren.rstrip}#{ending}"
+        # Check if line starts a method definition
+        if (match = line.match(/^(\s*#{TRuby::VISIBILITY_PATTERN}def\s+#{TRuby::METHOD_NAME_PATTERN}\s*\()/))
+          prefix = match[1]
+          rest_of_line = line[match.end(0)..]
+          start_line = i
+
+          # Collect the full parameter section (may span multiple lines)
+          param_text = rest_of_line
+          paren_depth = 1
+          brace_depth = 0
+          bracket_depth = 0
+          found_close = false
+
+          # Find matching closing paren within current line first
+          param_text.each_char do |char|
+            case char
+            when "(" then paren_depth += 1
+            when ")"
+              paren_depth -= 1
+              if paren_depth.zero? && brace_depth.zero?
+                found_close = true
+                break
+              end
+            when "{" then brace_depth += 1
+            when "}" then brace_depth -= 1
+            when "[" then bracket_depth += 1
+            when "]" then bracket_depth -= 1
+            end
+          end
+
+          # If not found, continue to next lines
+          while !found_close && i + 1 < lines.length
+            i += 1
+            param_text += lines[i]
+            lines[i].each_char do |char|
+              case char
+              when "(" then paren_depth += 1
+              when ")"
+                paren_depth -= 1
+                if paren_depth.zero? && brace_depth.zero?
+                  found_close = true
+                  break
+                end
+              when "{" then brace_depth += 1
+              when "}" then brace_depth -= 1
+              when "[" then bracket_depth += 1
+              when "]" then bracket_depth -= 1
+              end
+            end
+          end
+
+          # Extract params and remainder
+          params, remainder = extract_balanced_params(param_text)
+
+          if params && found_close
+            cleaned_params = remove_param_types(params)
+            remainder = remainder.sub(/^\s*:\s*[^\n]+/, "")
+            output_lines << "#{prefix}#{cleaned_params})#{remainder}"
+          else
+            # Couldn't process, keep original lines
+            (start_line..i).each { |j| output_lines << lines[j] }
+          end
+        else
+          output_lines << line
+        end
+
+        i += 1
       end
 
-      result
+      output_lines.join
+    end
+
+    # Extract parameters from string, handling nested parentheses and braces
+    # Returns [params_string, remainder] or [nil, nil] if no match
+    def extract_balanced_params(str)
+      paren_depth = 1 # We're already past the opening paren
+      brace_depth = 0
+      bracket_depth = 0
+      pos = 0
+
+      str.each_char.with_index do |char, i|
+        case char
+        when "("
+          paren_depth += 1
+        when ")"
+          paren_depth -= 1
+          if paren_depth.zero? && brace_depth.zero? && bracket_depth.zero?
+            pos = i
+            break
+          end
+        when "{"
+          brace_depth += 1
+        when "}"
+          brace_depth -= 1
+        when "["
+          bracket_depth += 1
+        when "]"
+          bracket_depth -= 1
+        end
+      end
+
+      return [nil, nil] if paren_depth != 0
+
+      [str[0...pos], str[(pos + 1)..]]
     end
 
     # Remove type annotations from parameter list
