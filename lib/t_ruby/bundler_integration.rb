@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "time"
 
 module TRuby
   # Integrates T-Ruby type packages with Bundler/RubyGems ecosystem

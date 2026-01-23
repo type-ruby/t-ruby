@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "time"
 require_relative "docs_example_verifier"
 
 module TRuby

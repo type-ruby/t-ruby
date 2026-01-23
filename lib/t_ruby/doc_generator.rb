@@ -2,6 +2,7 @@
 
 require "json"
 require "fileutils"
+require "time"
 
 module TRuby
   # API Documentation Generator

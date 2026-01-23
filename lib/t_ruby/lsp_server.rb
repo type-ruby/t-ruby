@@ -491,7 +491,7 @@ module TRuby
     end
 
     def type_completions
-      BUILT_IN_TYPES.map do |type|
+      completions = BUILT_IN_TYPES.map do |type|
         {
           "label" => type,
           "kind" => CompletionItemKind::CLASS,
@@ -499,6 +499,27 @@ module TRuby
           "documentation" => "T-Ruby built-in type: #{type}",
         }
       end
+
+      # Add tuple type completions
+      completions << {
+        "label" => "[T, U]",
+        "kind" => CompletionItemKind::STRUCT,
+        "detail" => "Tuple type",
+        "documentation" => "Fixed-length array with typed elements.\n\nExample: `[String, Integer]`",
+        "insertText" => "[${1:Type}, ${2:Type}]",
+        "insertTextFormat" => 2, # Snippet format
+      }
+
+      completions << {
+        "label" => "[T, *U[]]",
+        "kind" => CompletionItemKind::STRUCT,
+        "detail" => "Tuple with rest",
+        "documentation" => "Tuple with variable-length rest elements.\n\nExample: `[Header, *Row[]]`",
+        "insertText" => "[${1:Type}, *${2:Type}[]]",
+        "insertTextFormat" => 2,
+      }
+
+      completions
     end
 
     def keyword_completions
@@ -616,6 +637,20 @@ module TRuby
       # Check if it's a built-in type
       if BUILT_IN_TYPES.include?(word)
         return "**#{word}** - Built-in T-Ruby type"
+      end
+
+      # Check if it's a tuple type pattern
+      if word.match?(/^\[.*\]$/)
+        return "**Tuple Type**\n\nFixed-length array with typed elements.\n\n" \
+               "Each position can have a different type.\n\n" \
+               "Example: `[String, Integer, Boolean]`"
+      end
+
+      # Check if it's a rest element pattern
+      if word.start_with?("*") && (word.include?("[]") || word.include?("<"))
+        return "**Rest Element**\n\nVariable-length elements at the end of tuple.\n\n" \
+               "Syntax: `*Type[]` or `*Array<Type>`\n\n" \
+               "Example: `[Header, *Row[]]`"
       end
 
       # Check if it's a type alias

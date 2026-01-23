@@ -17,11 +17,12 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir["lib/**/*.rb", "bin/*", "LICENSE", "README.md"]
   spec.bindir = "bin"
-  spec.executables = ["trc"]
+  spec.executables = %w[trc t-ruby]
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
   spec.add_dependency "benchmark"
+  spec.add_dependency "thor", "~> 1.0"
 
   # Development dependencies are specified in Gemfile, not here
   # (per RuboCop Gemspec/DevelopmentDependencies rule)
