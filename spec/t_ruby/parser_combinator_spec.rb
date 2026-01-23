@@ -451,6 +451,35 @@ RSpec.describe TRuby::ParserCombinator do
         expect(result[:type].element_types.length).to eq(3)
       end
 
+      describe "tuple with rest element" do
+        it "parses tuple with rest element" do
+          result = parser.parse("[String, *Integer[]]")
+          expect(result[:success]).to be true
+          expect(result[:type]).to be_a(TRuby::IR::TupleType)
+          expect(result[:type].element_types.length).to eq(2)
+          expect(result[:type].element_types[1]).to be_a(TRuby::IR::TupleRestElement)
+          expect(result[:type].element_types[1].inner_type).to be_a(TRuby::IR::GenericType)
+        end
+
+        it "parses tuple with generic rest element" do
+          result = parser.parse("[Header, *Array<Row>]")
+          expect(result[:success]).to be true
+          expect(result[:type].element_types[1]).to be_a(TRuby::IR::TupleRestElement)
+        end
+
+        it "raises error when rest element is not at end" do
+          expect do
+            parser.parse("[*String[], Integer]")
+          end.to raise_error(TypeError, /Rest element must be at the end of tuple/)
+        end
+
+        it "raises error when multiple rest elements" do
+          expect do
+            parser.parse("[*String[], *Integer[]]")
+          end.to raise_error(TypeError, /Tuple can have at most one rest element/)
+        end
+      end
+
       it "parses complex nested type" do
         result = parser.parse("Map<String, Array<Tuple<Integer, String>>> | nil")
         expect(result[:success]).to be true

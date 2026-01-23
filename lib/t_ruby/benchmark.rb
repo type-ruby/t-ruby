@@ -3,6 +3,7 @@
 require "benchmark"
 require "json"
 require "fileutils"
+require "time"
 
 module TRuby
   # Benchmark suite for T-Ruby performance measurement

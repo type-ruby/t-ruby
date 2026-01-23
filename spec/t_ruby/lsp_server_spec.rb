@@ -243,6 +243,33 @@ RSpec.describe TRuby::LSPServer do
 
       expect(labels).to include("type", "interface", "def", "end")
     end
+
+    it "provides tuple type completions" do
+      response = send_request("textDocument/completion", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 1, "character" => 17 },
+                              })
+
+      items = response["result"]["items"]
+      labels = items.map { |i| i["label"] }
+
+      expect(labels).to include("[T, U]", "[T, *U[]]")
+    end
+
+    it "provides tuple completion with snippet format" do
+      response = send_request("textDocument/completion", {
+                                "textDocument" => { "uri" => "file:///test.trb" },
+                                "position" => { "line" => 1, "character" => 17 },
+                              })
+
+      items = response["result"]["items"]
+      tuple_item = items.find { |i| i["label"] == "[T, U]" }
+
+      expect(tuple_item).not_to be_nil
+      expect(tuple_item["detail"]).to eq("Tuple type")
+      expect(tuple_item["insertText"]).to eq("[${1:Type}, ${2:Type}]")
+      expect(tuple_item["insertTextFormat"]).to eq(2) # Snippet format
+    end
   end
 
   describe "textDocument/hover" do

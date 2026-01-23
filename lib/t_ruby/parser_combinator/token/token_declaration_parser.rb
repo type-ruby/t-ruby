@@ -193,7 +193,7 @@ module TRuby
           # Parse parameter list
           unless tokens[position].type == :rparen
             loop do
-              param_result = parse_parameter(tokens, position)
+              param_result = parse_parameter(tokens, position, method_name: method_name)
               return param_result if param_result.failure?
 
               # Handle keyword args group which returns an array
@@ -215,10 +215,14 @@ module TRuby
           position += 1
         end
 
+        # Track return type location for TypeSlot
+        return_type_location = { line: def_line, column: def_column }
+
         # Parse return type
         return_type = nil
         if position < tokens.length && tokens[position].type == :colon
           colon_token = tokens[position]
+          return_type_location = { line: colon_token.line, column: colon_token.column }
 
           # Check: no space allowed before colon (method name or ) must be adjacent to :)
           prev_token = tokens[position - 1]
@@ -288,13 +292,22 @@ module TRuby
           position += 1
         end
 
+        # Create return_type_slot for TypeSlot infrastructure
+        return_type_slot = IR::TypeSlot.new(
+          kind: :return,
+          location: return_type_location,
+          context: { method_name: method_name }
+        )
+        return_type_slot.explicit_type = return_type if return_type
+
         node = IR::MethodDef.new(
           name: method_name,
           params: params,
           return_type: return_type,
           body: body_result.value,
           visibility: visibility,
-          location: "#{def_line}:#{def_column}"
+          location: "#{def_line}:#{def_column}",
+          return_type_slot: return_type_slot
         )
         TokenParseResult.success(node, tokens, position)
       end
@@ -310,21 +323,27 @@ module TRuby
         end
       end
 
-      def parse_parameter(tokens, position)
+      def parse_parameter(tokens, position, method_name: nil)
         return TokenParseResult.failure("Expected parameter", tokens, position) if position >= tokens.length
+
+        # Capture location for TypeSlot
+        param_token = tokens[position]
+        param_location = { line: param_token.line, column: param_token.column }
 
         # Check for different parameter types
         case tokens[position].type
         when :lbrace
           # Keyword args group: { name: Type, age: Type = default }
-          return parse_keyword_args_group(tokens, position)
+          return parse_keyword_args_group(tokens, position, method_name: method_name)
 
         when :star
           # Splat parameter *args
           position += 1
           return TokenParseResult.failure("Expected parameter name after *", tokens, position) if position >= tokens.length
 
-          name = tokens[position].value
+          name_token = tokens[position]
+          name = name_token.value
+          param_location = { line: name_token.line, column: name_token.column }
           position += 1
 
           # Check for type annotation: *args: Type
@@ -338,7 +357,8 @@ module TRuby
             position = type_result.position
           end
 
-          param = IR::Parameter.new(name: name, kind: :rest, type_annotation: type_annotation)
+          type_slot = create_param_type_slot(name, type_annotation, param_location, method_name)
+          param = IR::Parameter.new(name: name, kind: :rest, type_annotation: type_annotation, type_slot: type_slot)
           return TokenParseResult.success(param, tokens, position)
 
         when :star_star
@@ -346,7 +366,9 @@ module TRuby
           position += 1
           return TokenParseResult.failure("Expected parameter name after **", tokens, position) if position >= tokens.length
 
-          name = tokens[position].value
+          name_token = tokens[position]
+          name = name_token.value
+          param_location = { line: name_token.line, column: name_token.column }
           position += 1
 
           # Check for type annotation: **opts: Type
@@ -360,7 +382,8 @@ module TRuby
             position = type_result.position
           end
 
-          param = IR::Parameter.new(name: name, kind: :keyrest, type_annotation: type_annotation)
+          type_slot = create_param_type_slot(name, type_annotation, param_location, method_name)
+          param = IR::Parameter.new(name: name, kind: :keyrest, type_annotation: type_annotation, type_slot: type_slot)
           return TokenParseResult.success(param, tokens, position)
 
         when :amp
@@ -368,7 +391,9 @@ module TRuby
           position += 1
           return TokenParseResult.failure("Expected parameter name after &", tokens, position) if position >= tokens.length
 
-          name = tokens[position].value
+          name_token = tokens[position]
+          name = name_token.value
+          param_location = { line: name_token.line, column: name_token.column }
           position += 1
 
           # Check for type annotation: &block: Type
@@ -382,7 +407,8 @@ module TRuby
             position = type_result.position
           end
 
-          param = IR::Parameter.new(name: name, kind: :block, type_annotation: type_annotation)
+          type_slot = create_param_type_slot(name, type_annotation, param_location, method_name)
+          param = IR::Parameter.new(name: name, kind: :block, type_annotation: type_annotation, type_slot: type_slot)
           return TokenParseResult.success(param, tokens, position)
         end
 
@@ -415,12 +441,24 @@ module TRuby
         end
 
         kind = default_value ? :optional : :required
-        param = IR::Parameter.new(name: name, type_annotation: type_annotation, default_value: default_value, kind: kind)
+        type_slot = create_param_type_slot(name, type_annotation, param_location, method_name)
+        param = IR::Parameter.new(name: name, type_annotation: type_annotation, default_value: default_value, kind: kind, type_slot: type_slot)
         TokenParseResult.success(param, tokens, position)
       end
 
+      # Helper to create TypeSlot for parameter
+      def create_param_type_slot(param_name, type_annotation, location, method_name)
+        type_slot = IR::TypeSlot.new(
+          kind: :parameter,
+          location: location,
+          context: { method_name: method_name, param_name: param_name }
+        )
+        type_slot.explicit_type = type_annotation if type_annotation
+        type_slot
+      end
+
       # Parse keyword args group: { name: Type, age: Type = default } or { name:, age: default }: InterfaceName
-      def parse_keyword_args_group(tokens, position)
+      def parse_keyword_args_group(tokens, position, method_name: nil)
         position += 1 # consume '{'
 
         params = []
@@ -432,7 +470,9 @@ module TRuby
           # Parse each keyword arg: name: Type or name: Type = default or name: or name: default
           return TokenParseResult.failure("Expected parameter name", tokens, position) unless tokens[position].type == :identifier
 
-          name = tokens[position].value
+          name_token = tokens[position]
+          name = name_token.value
+          param_location = { line: name_token.line, column: name_token.column }
           position += 1
 
           type_annotation = nil
@@ -469,7 +509,12 @@ module TRuby
             default_value = true
           end
 
-          params << IR::Parameter.new(name: name, type_annotation: type_annotation, default_value: default_value, kind: :keyword)
+          type_slot = create_param_type_slot(name, type_annotation, param_location, method_name)
+          param = IR::Parameter.new(
+            name: name, type_annotation: type_annotation, default_value: default_value,
+            kind: :keyword, type_slot: type_slot
+          )
+          params << param
 
           # Skip comma
           if position < tokens.length && tokens[position].type == :comma

@@ -1,34 +1,12 @@
 # T-Ruby Project Roadmap
 
-> **Single Source of Truth**: 공식 로드맵은 문서 사이트를 참조하세요.
-> https://type-ruby.github.io/docs/project/roadmap
+> **Single Source of Truth**: 로드맵은 GitHub에서 관리됩니다.
 
-이 파일은 개발자용 빠른 참조입니다. 상세 내용은 공식 문서를 확인하세요.
+## Links
 
-## Quick Status
-
-**Current Version**: v0.0.38
-**Current Milestone**: 7 (Next Generation)
-
-## Completed Milestones
-
-| Milestone | Description | Status |
-|-----------|-------------|--------|
-| 1 | Basic Type Parsing & Erasure | ✅ |
-| 2 | Core Type System | ✅ |
-| 3 | Ecosystem & Tooling | ✅ |
-| 4 | Advanced Features | ✅ |
-| 5 | Infrastructure (IR, Parser Combinator, SMT) | ✅ |
-| 6 | Integration & Production Readiness | ✅ |
-
-## Current Focus: Milestone 7
-
-| Feature | Status |
-|---------|--------|
-| External SMT Solver (Z3) | ⏳ Planned |
-| LSP v3 | ⏳ Planned |
-| Type-safe Metaprogramming | ⏳ Planned |
-| Gradual Typing Migration | ⏳ Planned |
+- **[GitHub Project Board](https://github.com/orgs/type-ruby/projects/1)** - 작업 현황
+- **[Milestones](https://github.com/type-ruby/t-ruby/milestones)** - 버전별 진행 상황
+- **[Roadmap Issues](https://github.com/type-ruby/t-ruby/labels/roadmap)** - 로드맵 관련 이슈
 
 ## Architecture
 
@@ -57,4 +35,4 @@
 
 ---
 
-*For detailed roadmap, features, and release information, visit the [official documentation](https://type-ruby.github.io/docs/project/roadmap).*
+*For detailed roadmap, features, and release information, visit [GitHub Project Board](https://github.com/orgs/type-ruby/projects/1).*

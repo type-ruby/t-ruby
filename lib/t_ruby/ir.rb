@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "ir/type_slot"
+
 module TRuby
   module IR
     # Base class for all IR nodes
@@ -128,9 +130,9 @@ module TRuby
 
     # Method definition
     class MethodDef < Node
-      attr_accessor :name, :params, :return_type, :body, :visibility, :type_params
+      attr_accessor :name, :params, :return_type, :body, :visibility, :type_params, :return_type_slot
 
-      def initialize(name:, params: [], return_type: nil, body: nil, visibility: :public, type_params: [], **opts)
+      def initialize(name:, params: [], return_type: nil, body: nil, visibility: :public, type_params: [], return_type_slot: nil, **opts)
         super(**opts)
         @name = name
         @params = params
@@ -138,6 +140,7 @@ module TRuby
         @body = body
         @visibility = visibility
         @type_params = type_params
+        @return_type_slot = return_type_slot
       end
 
       def children
@@ -147,14 +150,15 @@ module TRuby
 
     # Method parameter
     class Parameter < Node
-      attr_accessor :name, :type_annotation, :default_value, :kind, :interface_ref, :optional
+      attr_accessor :name, :type_annotation, :default_value, :kind, :interface_ref, :optional, :type_slot
 
       # kind: :required, :optional, :rest, :keyrest, :block, :keyword
       # :keyword - 키워드 인자 (구조분해): { name: String } → def foo(name:)
       # :keyrest - 더블 스플랫: **opts: Type → def foo(**opts)
       # interface_ref - interface 참조 타입 (예: }: UserParams 부분)
       # optional - for block params: true if block is optional (&block?)
-      def initialize(name:, type_annotation: nil, default_value: nil, kind: :required, interface_ref: nil, optional: false, **opts)
+      # type_slot - TypeSlot for this parameter's type annotation position
+      def initialize(name:, type_annotation: nil, default_value: nil, kind: :required, interface_ref: nil, optional: false, type_slot: nil, **opts)
         super(**opts)
         @name = name
         @type_annotation = type_annotation
@@ -162,6 +166,7 @@ module TRuby
         @kind = kind
         @interface_ref = interface_ref
         @optional = optional
+        @type_slot = type_slot
       end
     end
 
@@ -662,11 +667,68 @@ module TRuby
       end
 
       def to_rbs
-        "[#{@element_types.map(&:to_rbs).join(", ")}]"
+        # Check if tuple has rest element
+        has_rest = @element_types.any? { |t| t.is_a?(TupleRestElement) }
+
+        if has_rest
+          # Fallback: convert to union array (RBS doesn't support tuple rest)
+          all_types = @element_types.flat_map do |t|
+            t.is_a?(TupleRestElement) ? t.element_type : t
+          end
+          type_names = all_types.map(&:to_rbs).uniq
+          "Array[#{type_names.join(" | ")}]"
+        else
+          "[#{@element_types.map(&:to_rbs).join(", ")}]"
+        end
       end
 
       def to_trb
         "[#{@element_types.map(&:to_trb).join(", ")}]"
+      end
+
+      # Validate tuple structure
+      def validate!
+        rest_indices = @element_types.each_with_index
+                                     .select { |t, _| t.is_a?(TupleRestElement) }
+                                     .map(&:last)
+
+        if rest_indices.length > 1
+          raise TypeError, "Tuple can have at most one rest element"
+        end
+
+        if rest_indices.any? && rest_indices.first != @element_types.length - 1
+          raise TypeError, "Rest element must be at the end of tuple"
+        end
+
+        self
+      end
+    end
+
+    # Tuple rest element (*Integer[] - variable length elements)
+    class TupleRestElement < TypeNode
+      attr_accessor :inner_type
+
+      def initialize(inner_type:, **opts)
+        super(**opts)
+        @inner_type = inner_type
+      end
+
+      def to_rbs
+        # RBS doesn't support tuple rest, fallback to untyped
+        "*untyped"
+      end
+
+      def to_trb
+        "*#{@inner_type.to_trb}"
+      end
+
+      # Extract element type from Array type
+      def element_type
+        if @inner_type.is_a?(GenericType) && @inner_type.base == "Array"
+          @inner_type.type_args.first
+        else
+          @inner_type
+        end
       end
     end
 
